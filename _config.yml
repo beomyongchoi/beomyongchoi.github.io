@@ -1,14 +1,21 @@
 # 기본 사이트 설정
 title: BYAI
 email: dev.bychoi@gmail.com
-description:
-  인간 시대의 끝이 도래했다.
-url: "https://beomyongchoi.github.io
+description: The time of man has come to an end
+url: "https://beomyongchoi.github.io"
 baseurl: ""
 
 # 빌드 설정
-theme: minima
+remote_theme: riggraz/no-style-please
+
+# no-style-please 전용 설정
+theme_config:
+  appearance: "auto" # "light", "dark", 또는 "auto" (시스템 설정 따라감)
+  date_format: "%Y-%m-%d" # 포스트 날짜 형식
+  show_description: true # 블로그 설명 표시 여부
+
 plugins:
+  - jekyll-remote-theme
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-sitemap
