@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title | escape }} - {{ site.title | escape }}</title>
+  <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
+</head>
+<body>
+  <header>
+    <h1><a href="{{ "/" | relative_url }}">{{ site.title | escape }}</a></h1>
+    <p>{{ site.description | escape }}</p>
+  </header>
+  <main>
+    {{ content }}
+  </main>
+  <footer>
+    <p>Powered by Jekyll</p>
+  </footer>
+</body>
+</html>
