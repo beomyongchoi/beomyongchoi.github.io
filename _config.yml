@@ -1,14 +1,26 @@
-# 기본 사이트 설정
-title: BYAI
-email: dev.bychoi@gmail.com
-description: The time of man has come to an end
+# Setup
+title: Gravity
+tagline: Hitchhiking AI's Cosmos
+description: AI를 여행하는 히치하이커를 위한 안내서
+author: Beomyong Choi
 url: "https://beomyongchoi.github.io"
-baseurl: ""
+baseurl: ''
+paginate: 5
+permalink: pretty
 
-# Lanyon 테마를 위한 사용자 정보
+# About/contact
 author:
-  name: beomyong choi
+  name: Beomyong Choi
   url: https://github.com/beomyongchoi
+  email: dev.bychoi@gmail.com
+  location: Seoul, Korea
+
+# Gems
+plugins:
+  - jekyll-paginate
+
+# Custom vars
+version:             0.1.0
 
 # 빌드 설정
 plugins:
@@ -16,10 +28,6 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
   - jekyll-paginate
-
-# 페이지네이션
-paginate: 10
-paginate_path: "/page:num/"
 
 # 마크다운 설정
 markdown: kramdown
