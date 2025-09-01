@@ -1,43 +1,49 @@
 <!DOCTYPE html>
-<html lang="{{ site.lang | default: 'en-US' }}">
+<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ page.title | default: site.title }}</title>
-    {% if site.description %}
-    <meta name="description" content="{{ site.description }}">
-    {% endif %}
-    {% seo %}
-    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
-</head>
+  {% include head.html %}
 
-<body>
-    <header>
-        <h1><a href="{{ '/' | relative_url }}">{{ site.title }}</a></h1>
-        {% if site.theme_config.show_description %}
-        <p>{{ site.description }}</p>
-        {% endif %}
-        <nav>
-            {% if site.data.menu %}
-            {% for item in site.data.menu %}
-            {% if item.post_list %}
-            <a href="{{ '/posts' | relative_url }}">Posts</a>
-            {% else %}
-            <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
-            {% endif %}
-            {% endfor %}
-            {% endif %}
-        </nav>
-    </header>
+  <body>
 
-    <main>
+    {% include sidebar.html %}
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content.
+         -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="{{ site.baseurl }}/" title="Home">{{ site.title }}</a>
+            <small>{{ site.tagline }}</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
         {{ content }}
-    </main>
+      </div>
+    </div>
 
-    <footer>
-        <p>&copy; {{ site.time | date: '%Y' }} {{ site.author | default: site.title }}</p>
-    </footer>
-</body>
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
 
+    <script>
+      (function(document) {
+        var toggle = document.querySelector('.sidebar-toggle');
+        var sidebar = document.querySelector('#sidebar');
+        var checkbox = document.querySelector('#sidebar-checkbox');
+
+        document.addEventListener('click', function(e) {
+          var target = e.target;
+
+          if(!checkbox.checked ||
+             sidebar.contains(target) ||
+             (target === checkbox || target === toggle))
+            return;
+
+          checkbox.checked = false;
+        }, false);
+      })(document);
+    </script>
+  </body>
 </html>

@@ -5,20 +5,21 @@ description: The time of man has come to an end
 url: "https://beomyongchoi.github.io"
 baseurl: ""
 
+# Lanyon 테마를 위한 사용자 정보
+author:
+  name: beomyong choi
+  url: https://github.com/beomyongchoi
+
 # 빌드 설정
-remote_theme: riggraz/no-style-please
-
-# no-style-please 전용 설정
-theme_config:
-  appearance: "auto" # "light", "dark", 또는 "auto" (시스템 설정 따라감)
-  date_format: "%Y-%m-%d" # 포스트 날짜 형식
-  show_description: true # 블로그 설명 표시 여부
-
 plugins:
-  - jekyll-remote-theme
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-sitemap
+  - jekyll-paginate
+
+# 페이지네이션
+paginate: 10
+paginate_path: "/page:num/"
 
 # 마크다운 설정
 markdown: kramdown
