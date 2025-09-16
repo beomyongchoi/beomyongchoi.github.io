@@ -20,4 +20,5 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
-
+site:
+  version: '1.0.0'
