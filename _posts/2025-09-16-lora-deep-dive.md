@@ -1,4 +1,4 @@
-### [최종 수정 제안] LoRA (Low-Rank Adaptation)에 대한 고찰
+### LoRA (Low-Rank Adaptation)에 대한 고찰
 
 최근 LLM의 파라미터 효율적 파인튜닝(PEFT)이 중요한 화두로 떠오르면서, 다양한 기법 중 LoRA(Low-Rank Adaptation)에 대해 깊이 살펴볼 기회가 있었습니다. LoRA는 파인튜닝의 높은 비용 문제를 해결하는 매우 실용적이면서도 독창적인 접근법을 제시합니다.
 
