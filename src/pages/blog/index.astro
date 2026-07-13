@@ -1,0 +1,31 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostList from "../../components/PostList.astro";
+import { SITE } from "../../consts";
+
+const posts = (
+  await getCollection("blog", (p) => p.data.lang === "ko" && !p.data.draft)
+).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const items = posts.map((p) => ({
+  href: `/blog/${p.id}/`,
+  title: p.data.title,
+  description: p.data.description,
+  pubDate: p.data.pubDate,
+  tags: p.data.tags,
+}));
+---
+
+<BaseLayout
+  title={`블로그 — ${SITE.authorKo}`}
+  description="AI·AEO·백엔드 엔지니어링에 대해 배우고 정리한 기록입니다."
+  locale="ko"
+  path="/blog/"
+>
+  <header class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">블로그</h1>
+    <p class="mt-3 text-muted">AI·AEO·백엔드 엔지니어링에 대해 배우고 정리한 기록입니다.</p>
+  </header>
+  <PostList posts={items} locale="ko" emptyText="아직 글이 없습니다." />
+</BaseLayout>

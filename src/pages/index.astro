@@ -1,7 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
 import { T } from "../consts";
 const s = T.ko;
+
+const latest = (await getCollection("blog", (p) => p.data.lang === "ko" && !p.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
 ---
 
 <BaseLayout title={s.title} description={s.description} locale="ko" path="/">
@@ -15,10 +20,29 @@ const s = T.ko;
     </p>
   </section>
 
-  <section
-    class="mt-12 rounded-xl border border-border bg-surface px-6 py-8"
-  >
-    <h2 class="text-lg font-semibold">{s.wipTitle}</h2>
-    <p class="mt-2 text-muted">{s.wipBody}</p>
-  </section>
+  {
+    latest.length > 0 && (
+      <section class="mt-16">
+        <div class="flex items-baseline justify-between">
+          <h2 class="text-lg font-semibold">최근 글</h2>
+          <a href="/blog/" class="text-sm text-muted hover:text-accent">전체 보기 →</a>
+        </div>
+        <ul class="mt-4 divide-y divide-border">
+          {latest.map((p) => (
+            <li class="py-4">
+              <a href={`/blog/${p.id}/`} class="group block">
+                <div class="flex items-baseline justify-between gap-4">
+                  <h3 class="font-medium group-hover:text-accent">{p.data.title}</h3>
+                  <time datetime={p.data.pubDate.toISOString()} class="shrink-0 text-sm text-muted">
+                    {p.data.pubDate.toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}
+                  </time>
+                </div>
+                <p class="mt-1 text-sm text-muted">{p.data.description}</p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
 </BaseLayout>

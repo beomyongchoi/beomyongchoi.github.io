@@ -1,0 +1,53 @@
+---
+import { LOCALE_TAG, type Locale } from "../consts";
+
+interface PostItem {
+  href: string;
+  title: string;
+  description: string;
+  pubDate: Date;
+  tags: string[];
+}
+interface Props {
+  posts: PostItem[];
+  locale: Locale;
+  emptyText: string;
+}
+const { posts, locale, emptyText } = Astro.props;
+const fmt = (d: Date) =>
+  d.toLocaleDateString(LOCALE_TAG[locale], { year: "numeric", month: "long", day: "numeric" });
+---
+
+{
+  posts.length === 0 ? (
+    <p class="text-muted">{emptyText}</p>
+  ) : (
+    <ul class="divide-y divide-border">
+      {posts.map((post) => (
+        <li class="py-6 first:pt-0">
+          <a href={post.href} class="group block">
+            <div class="flex items-baseline justify-between gap-4">
+              <h2 class="text-lg font-semibold tracking-tight group-hover:text-accent">
+                {post.title}
+              </h2>
+              <time
+                datetime={post.pubDate.toISOString()}
+                class="shrink-0 text-sm text-muted"
+              >
+                {fmt(post.pubDate)}
+              </time>
+            </div>
+            <p class="mt-1 text-muted">{post.description}</p>
+            {post.tags.length > 0 && (
+              <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted">
+                {post.tags.map((tag) => (
+                  <span>#{tag}</span>
+                ))}
+              </div>
+            )}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}

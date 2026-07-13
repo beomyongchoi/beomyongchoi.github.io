@@ -9,6 +9,7 @@ export const SITE = {
   authorKo: "최범용",
   email: "dev.bychoi@gmail.com",
   github: "https://github.com/beomyongchoi",
+  linkedin: "https://www.linkedin.com/in/beomyong-choi-079973109/",
   defaultLocale: "ko",
   locales: ["ko", "en"],
 } as const;

@@ -1,7 +1,12 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
 import { T } from "../../consts";
 const s = T.en;
+
+const latest = (await getCollection("blog", (p) => p.data.lang === "en" && !p.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
 ---
 
 <BaseLayout title={s.title} description={s.description} locale="en" path="/">
@@ -15,8 +20,29 @@ const s = T.en;
     </p>
   </section>
 
-  <section class="mt-12 rounded-xl border border-border bg-surface px-6 py-8">
-    <h2 class="text-lg font-semibold">{s.wipTitle}</h2>
-    <p class="mt-2 text-muted">{s.wipBody}</p>
-  </section>
+  {
+    latest.length > 0 ? (
+      <section class="mt-16">
+        <div class="flex items-baseline justify-between">
+          <h2 class="text-lg font-semibold">Latest posts</h2>
+          <a href="/en/blog/" class="text-sm text-muted hover:text-accent">View all →</a>
+        </div>
+        <ul class="mt-4 divide-y divide-border">
+          {latest.map((p) => (
+            <li class="py-4">
+              <a href={`/en/blog/${p.id}/`} class="group block">
+                <h3 class="font-medium group-hover:text-accent">{p.data.title}</h3>
+                <p class="mt-1 text-sm text-muted">{p.data.description}</p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : (
+      <section class="mt-16 rounded-xl border border-border bg-surface px-6 py-8">
+        <h2 class="text-lg font-semibold">{s.wipTitle}</h2>
+        <p class="mt-2 text-muted">{s.wipBody}</p>
+      </section>
+    )
+  }
 </BaseLayout>
