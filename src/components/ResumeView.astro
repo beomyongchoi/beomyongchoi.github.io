@@ -1,0 +1,103 @@
+---
+import { SITE, type Locale } from "../consts";
+import { summary, jobs, education, training, skills } from "../data/resume";
+interface Props { locale: Locale; }
+const { locale } = Astro.props;
+const isKo = locale === "ko";
+const tx = {
+  experience: isKo ? "경력" : "Experience",
+  education: isKo ? "학력" : "Education",
+  training: isKo ? "교육" : "Training",
+  skills: isKo ? "기술" : "Skills",
+  present: isKo ? "현재" : "Present",
+};
+---
+
+<div class="space-y-12">
+  <p class="text-lg leading-relaxed text-muted">{summary[locale]}</p>
+
+  <div class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+    <a href={`mailto:${SITE.email}`} class="text-accent hover:underline">{SITE.email}</a>
+    <a href={SITE.github} class="text-accent hover:underline">GitHub</a>
+    <a href={SITE.linkedin} class="text-accent hover:underline">LinkedIn</a>
+  </div>
+
+  <section>
+    <h2 class="border-b border-border pb-2 text-sm font-semibold uppercase tracking-wide text-muted">
+      {tx.experience}
+    </h2>
+    <div class="mt-6 space-y-8">
+      {
+        jobs.map((job) => (
+          <div class="grid gap-1 sm:grid-cols-[9rem_1fr]">
+            <div class="text-sm text-muted">
+              <div>{job.period}</div>
+            </div>
+            <div>
+              <div class="flex flex-wrap items-baseline gap-x-2">
+                <h3 class="font-semibold">{job.company[locale]}</h3>
+                {job.current && (
+                  <span class="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                    {tx.present}
+                  </span>
+                )}
+              </div>
+              <p class="text-sm text-accent">{job.role[locale]}</p>
+              <ul class="mt-2 list-disc space-y-1 pl-4 text-sm text-muted marker:text-border">
+                {job.bullets.map((b) => (
+                  <li>{b[locale]}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section>
+    <h2 class="border-b border-border pb-2 text-sm font-semibold uppercase tracking-wide text-muted">
+      {tx.education}
+    </h2>
+    <div class="mt-6 grid gap-1 sm:grid-cols-[9rem_1fr]">
+      <div class="text-sm text-muted">{education.period}</div>
+      <div>
+        <h3 class="font-semibold">{education.school[locale]}</h3>
+        <p class="text-sm text-muted">{education.degree[locale]}</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="border-b border-border pb-2 text-sm font-semibold uppercase tracking-wide text-muted">
+      {tx.training}
+    </h2>
+    <div class="mt-6 grid gap-1 sm:grid-cols-[9rem_1fr]">
+      <div class="text-sm text-muted">{training.period}</div>
+      <div>
+        <h3 class="font-semibold">{training.name[locale]}</h3>
+        <p class="text-sm text-muted">{training.desc[locale]}</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="border-b border-border pb-2 text-sm font-semibold uppercase tracking-wide text-muted">
+      {tx.skills}
+    </h2>
+    <dl class="mt-6 space-y-4">
+      {
+        skills.map((group) => (
+          <div class="grid gap-1 sm:grid-cols-[9rem_1fr]">
+            <dt class="text-sm text-muted">{group.label[locale]}</dt>
+            <dd class="flex flex-wrap gap-1.5">
+              {group.items.map((item) => (
+                <span class="rounded border border-border px-2 py-0.5 text-xs">{item}</span>
+              ))}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+</div>

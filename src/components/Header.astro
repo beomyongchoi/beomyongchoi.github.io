@@ -11,10 +11,12 @@ const s = T[locale];
 const base = locale === "ko" ? "" : "/en";
 const otherHref = locale === "ko" ? `/en${path}` : path;
 
-// TODO: work/about/resume 페이지 완성 후 네비에 다시 노출.
 const nav = [
   { href: `${base}/`, label: s.nav.home },
+  { href: `${base}/work/`, label: s.nav.work },
   { href: `${base}/blog/`, label: s.nav.blog },
+  { href: `${base}/about/`, label: s.nav.about },
+  { href: `${base}/resume/`, label: s.nav.resume },
 ];
 ---
 

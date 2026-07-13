@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ResumeView from "../components/ResumeView.astro";
+import { SITE } from "../consts";
+
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: SITE.authorKo,
+  alternateName: SITE.author,
+  url: SITE.url,
+  email: `mailto:${SITE.email}`,
+  jobTitle: "AEO 엔지니어 · 풀스택 개발자",
+  alumniOf: { "@type": "CollegeOrUniversity", name: "Hanyang University" },
+  knowsAbout: [
+    "Answer Engine Optimization",
+    "SEO",
+    "Large Language Models",
+    "Backend Engineering",
+    "Microservices",
+    "AWS",
+  ],
+  sameAs: [SITE.github, SITE.linkedin],
+};
+---
+
+<BaseLayout
+  title={`이력서 — ${SITE.authorKo}`}
+  description="최범용의 이력서 — 커머스·물류 백엔드에서 AEO 엔지니어까지, 9년 이상의 경력과 기술 스택."
+  locale="ko"
+  path="/resume/"
+  jsonLd={[personLd]}
+>
+  <header class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{SITE.authorKo}</h1>
+    <p class="mt-2 text-accent">AEO 엔지니어 · 풀스택 개발자</p>
+  </header>
+  <ResumeView locale="ko" />
+</BaseLayout>

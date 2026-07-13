@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ResumeView from "../../components/ResumeView.astro";
+import { SITE } from "../../consts";
+
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: SITE.author,
+  alternateName: SITE.authorKo,
+  url: SITE.url,
+  email: `mailto:${SITE.email}`,
+  jobTitle: "AEO Engineer & Full-stack Developer",
+  alumniOf: { "@type": "CollegeOrUniversity", name: "Hanyang University" },
+  knowsAbout: [
+    "Answer Engine Optimization",
+    "SEO",
+    "Large Language Models",
+    "Backend Engineering",
+    "Microservices",
+    "AWS",
+  ],
+  sameAs: [SITE.github, SITE.linkedin],
+};
+---
+
+<BaseLayout
+  title={`Resume — ${SITE.author}`}
+  description="Beomyong Choi's resume — from commerce and logistics backend to AEO engineer, with 9+ years of experience and a full stack."
+  locale="en"
+  path="/resume/"
+  jsonLd={[personLd]}
+>
+  <header class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{SITE.author}</h1>
+    <p class="mt-2 text-accent">AEO Engineer &amp; Full-stack Developer</p>
+  </header>
+  <ResumeView locale="en" />
+</BaseLayout>

@@ -1,0 +1,20 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import WorkGrid from "../../../components/WorkGrid.astro";
+import { SITE } from "../../../consts";
+---
+
+<BaseLayout
+  title={`Work — ${SITE.author}`}
+  description="From an AEO measurement platform to hotel-operations SaaS and AI-friendly content infra — recent work."
+  locale="en"
+  path="/work/"
+>
+  <header class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Work</h1>
+    <p class="mt-3 text-muted">
+      From an AEO measurement platform to hotel-operations SaaS and AI-friendly content infra — recent work.
+    </p>
+  </header>
+  <WorkGrid locale="en" />
+</BaseLayout>

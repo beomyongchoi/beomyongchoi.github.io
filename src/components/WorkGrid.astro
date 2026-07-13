@@ -1,0 +1,42 @@
+---
+import { projects } from "../data/projects";
+import type { Locale } from "../consts";
+interface Props { locale: Locale; }
+const { locale } = Astro.props;
+---
+
+<div class="grid gap-5 sm:grid-cols-2">
+  {
+    projects.map((p) => (
+      <article class="flex flex-col rounded-xl border border-border bg-surface p-6">
+        <div class="flex items-start justify-between gap-3">
+          <h2 class="text-base font-semibold tracking-tight">{p.title[locale]}</h2>
+          {p.featured && (
+            <span class="shrink-0 rounded-full border border-accent/40 px-2 py-0.5 text-xs font-medium text-accent">
+              {locale === "ko" ? "대표" : "Featured"}
+            </span>
+          )}
+        </div>
+        <p class="mt-1 text-sm text-accent">{p.role[locale]}</p>
+        <p class="mt-3 flex-1 text-sm leading-relaxed text-muted">{p.summary[locale]}</p>
+
+        {p.metrics && (
+          <dl class="mt-4 grid grid-cols-3 gap-2 rounded-lg border border-border bg-bg p-3 text-center">
+            {p.metrics.map((m) => (
+              <div>
+                <dt class="text-[11px] leading-tight text-muted">{m.label[locale]}</dt>
+                <dd class="mt-0.5 text-sm font-semibold">{m.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        <ul class="mt-4 flex flex-wrap gap-1.5">
+          {p.stack.map((tech) => (
+            <li class="rounded border border-border px-2 py-0.5 text-xs text-muted">{tech}</li>
+          ))}
+        </ul>
+      </article>
+    ))
+  }
+</div>
