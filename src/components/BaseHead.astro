@@ -1,0 +1,98 @@
+---
+// SEO + AEO head. Emits full meta, Open Graph, Twitter, hreflang alternates,
+// canonical, and JSON-LD structured data so answer engines can cite this site.
+import { SITE, LOCALE_TAG, type Locale } from "../consts";
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+  /** Path WITHOUT locale prefix, always starting with "/". e.g. "/", "/blog/foo/" */
+  path?: string;
+  image?: string;
+  /** "website" | "article" | "profile" */
+  ogType?: string;
+  /** Extra JSON-LD objects to inline (Article, BreadcrumbList, FAQPage, ...) */
+  jsonLd?: Record<string, unknown>[];
+}
+
+const {
+  title,
+  description,
+  locale,
+  path = "/",
+  image = "/og-default.png",
+  ogType = "website",
+  jsonLd = [],
+} = Astro.props;
+
+const canonicalPath = locale === "ko" ? path : `/en${path}`;
+const canonical = new URL(canonicalPath, SITE.url).href;
+const ogImage = new URL(image, SITE.url).href;
+
+// hreflang alternates for the current path across locales.
+const alternates = [
+  { hreflang: "ko", href: new URL(path, SITE.url).href },
+  { hreflang: "en", href: new URL(`/en${path}`, SITE.url).href },
+  { hreflang: "x-default", href: new URL(path, SITE.url).href },
+];
+
+// Person entity — the backbone of AEO. Establishes the author as an entity.
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: locale === "ko" ? SITE.authorKo : SITE.author,
+  alternateName: locale === "ko" ? SITE.author : SITE.authorKo,
+  url: SITE.url,
+  jobTitle: locale === "ko" ? "AEO 엔지니어 · 풀스택 개발자" : "AEO Engineer & Full-stack Developer",
+  knowsAbout: [
+    "Answer Engine Optimization",
+    "Generative Engine Optimization",
+    "SEO",
+    "Large Language Models",
+    "Backend Engineering",
+    "Full-stack Development",
+  ],
+  sameAs: [SITE.github],
+};
+
+const structuredData = [personLd, ...jsonLd];
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<meta name="author" content={locale === "ko" ? SITE.authorKo : SITE.author} />
+<link rel="canonical" href={canonical} />
+
+{alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+
+<!-- Open Graph -->
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={SITE.author} />
+<meta property="og:locale" content={LOCALE_TAG[locale].replace("-", "_")} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+
+<!-- Icons & feed -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="sitemap" href="/sitemap-index.xml" />
+
+<!-- Structured data (JSON-LD) -->
+{
+  structuredData.map((obj) => (
+    <script type="application/ld+json" set:html={JSON.stringify(obj)} />
+  ))
+}

@@ -1,0 +1,26 @@
+# Beomyong Choi (최범용)
+
+> AEO Engineer & Full-stack Developer. A backend engineer who moved into Answer
+> Engine Optimization (AEO) — measuring and improving how brands surface inside
+> AI answer engines such as ChatGPT, Gemini, Claude, and Perplexity. Builds the
+> measurement platforms and content infrastructure behind that work.
+
+This site is a portfolio, engineering blog, and resume in one place. It is being
+rebuilt; sections below will fill in over time.
+
+## Focus areas
+- Answer Engine Optimization (AEO) / Generative Engine Optimization (GEO)
+- LLM-based measurement pipelines (query generation → search → multi-model analysis)
+- Full-stack product engineering (Next.js, Fastify, Prisma) and cloud infra (GCP)
+- Backend engineering foundations
+
+## Sections
+- Home: https://beomyongchoi.github.io/
+- Work (case studies): https://beomyongchoi.github.io/work/
+- Blog: https://beomyongchoi.github.io/blog/
+- About: https://beomyongchoi.github.io/about/
+- Resume: https://beomyongchoi.github.io/resume/
+
+## Contact
+- GitHub: https://github.com/beomyongchoi
+- Email: dev.bychoi@gmail.com

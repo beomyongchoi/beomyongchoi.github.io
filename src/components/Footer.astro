@@ -1,0 +1,19 @@
+---
+import { SITE, T, type Locale } from "../consts";
+interface Props { locale: Locale; }
+const { locale } = Astro.props;
+const s = T[locale];
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-24 border-t border-border">
+  <div
+    class="mx-auto flex max-w-3xl flex-col gap-2 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between"
+  >
+    <p>© {year} {s.siteName}</p>
+    <div class="flex gap-4">
+      <a href={SITE.github} class="hover:text-fg" rel="me">GitHub</a>
+      <a href={`mailto:${SITE.email}`} class="hover:text-fg">Email</a>
+    </div>
+  </div>
+</footer>

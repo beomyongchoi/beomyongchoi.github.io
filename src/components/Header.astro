@@ -1,0 +1,45 @@
+---
+import { T, type Locale } from "../consts";
+
+interface Props {
+  locale: Locale;
+  /** Current path without locale prefix, for the language switch link. */
+  path?: string;
+}
+const { locale, path = "/" } = Astro.props;
+const s = T[locale];
+const base = locale === "ko" ? "" : "/en";
+const otherHref = locale === "ko" ? `/en${path}` : path;
+
+const nav = [
+  { href: `${base}/`, label: s.nav.home },
+  { href: `${base}/work/`, label: s.nav.work },
+  { href: `${base}/blog/`, label: s.nav.blog },
+  { href: `${base}/about/`, label: s.nav.about },
+  { href: `${base}/resume/`, label: s.nav.resume },
+];
+---
+
+<header class="border-b border-border">
+  <div class="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
+    <a href={`${base}/`} class="font-semibold tracking-tight hover:text-accent">
+      {s.siteName}
+    </a>
+    <nav class="flex items-center gap-4 text-sm">
+      {
+        nav.slice(1).map((item) => (
+          <a href={item.href} class="text-muted transition-colors hover:text-fg">
+            {item.label}
+          </a>
+        ))
+      }
+      <a
+        href={otherHref}
+        class="rounded border border-border px-2 py-0.5 text-xs font-medium text-muted transition-colors hover:border-accent hover:text-accent"
+        aria-label="Switch language"
+      >
+        {s.langSwitch}
+      </a>
+    </nav>
+  </div>
+</header>
