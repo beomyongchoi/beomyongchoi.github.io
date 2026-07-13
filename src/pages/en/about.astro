@@ -5,7 +5,7 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`About — ${SITE.author}`}
-  description="From backend engineer to AEO engineer — how my search-and-data work in commerce and logistics carried over into the age of AI answer engines."
+  description="A backend engineer of nine years, now building AI. I worked on search and data in commerce and logistics; these days I build AI products and work on AEO."
   locale="en"
   path="/about/"
   ogType="profile"
@@ -13,55 +13,37 @@ import { SITE } from "../../consts";
   <div class="prose prose-zinc max-w-none dark:prose-invert prose-headings:tracking-tight prose-a:text-accent">
     <h1>About</h1>
 
+    <p>I've been a backend engineer for nine years. Now I build AI.</p>
+
+    <h2>Backend</h2>
     <p>
-      I'm Beomyong Choi — a backend engineer who moved into AI, now focused on Answer Engine
-      Optimization (AEO).
+      I started at FinTalk, a fintech startup. Then I spent five-plus years at WeMakePrice on its
+      commerce platform — building search that pulled the lowest-price product from catalogs, and
+      running crawler pipelines that collected thousands of records a day. During real-time
+      search-keyword events, I handled tens of thousands of concurrent users.
+    </p>
+    <p>
+      At Hanexpress I designed the shared modules and architecture for logistics solutions
+      (WMS/FMS) and built an AWS EKS microservices platform — from code to infra.
     </p>
 
-    <h2>A backend engineer who worked on search and data</h2>
+    <h2>AI</h2>
     <p>
-      I spent most of my career in the backend of large-scale services. I started at FinTalk, a
-      fintech startup, building a matching service for financial advisors. Then I spent five-plus
-      years at WeMakePrice, one of Korea's large e-commerce platforms.
+      Watching LLMs change search pulled me in. I finished AIFFEL's AI research track, studied NLP,
+      and built a RAG-based Q&amp;A system.
     </p>
     <p>
-      At WeMakePrice I worked deep on <strong>search and data</strong>: I built a system that
-      automatically extracted the lowest-price product from catalogs, shipped product search, and
-      ran crawler pipelines (AWS SQS) that collected thousands of records a day from shopping sites
-      and influencer social feeds. I also handled traffic spikes of tens of thousands of concurrent
-      users during real-time-search-keyword events.
+      These days I work on AEO (Answer Engine Optimization) — measuring and improving how AIs like
+      ChatGPT and Perplexity talk about a brand. I build pipelines that query several models at once
+      and apply them to real clients in hospitality and construction.
     </p>
-    <p>
-      Later, at Hanexpress, I designed the shared modules and system architecture for logistics
-      fulfillment solutions (WMS/FMS) and built an AWS EKS–based microservices platform end to end —
-      which gave me a view of everything from application code to infra operations.
-    </p>
+    <p>The search-and-data work from commerce led straight here.</p>
 
-    <h2>AI, and the next chapter of search</h2>
+    <h2>What's next</h2>
+    <p>I want to design AI systems that scale.</p>
     <p>
-      Watching LLMs change how search works pulled me toward AI. I completed AIFFEL's AI research
-      track, went deep into NLP, and researched and built a RAG-based Q&amp;A system with my team.
-    </p>
-    <p>
-      Now I focus on <strong>AEO (Answer Engine Optimization)</strong> — measuring and improving how
-      brands show up inside AI answer engines like ChatGPT, Gemini, Claude, and Perplexity. I design
-      measurement pipelines (LangGraph) that query multiple models at once, and I've applied them to
-      real clients to move the numbers.
-    </p>
-    <p>
-      Looking back, the search-and-data work I did in commerce carried straight over into AEO for
-      the age of AI search.
-    </p>
-
-    <h2>Where I'm headed</h2>
-    <p>
-      I want to grow into an <strong>AI architect</strong> who designs scalable, cost-efficient AI
-      systems — solving practical problems with a view of the whole system so AI services can grow
-      reliably.
-    </p>
-    <p>
-      For more, see my <a href="/en/resume/">resume</a> and <a href="/en/work/">work</a>, or reach
-      out by <a href={`mailto:${SITE.email}`}>email</a> or <a href={SITE.linkedin}>LinkedIn</a>.
+      <a href="/en/resume/">Resume</a> · <a href="/en/work/">Work</a> ·
+      <a href={`mailto:${SITE.email}`}>Email</a> · <a href={SITE.linkedin}>LinkedIn</a>
     </p>
   </div>
 </BaseLayout>

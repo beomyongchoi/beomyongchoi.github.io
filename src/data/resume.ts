@@ -16,8 +16,8 @@ export interface SkillGroup {
 }
 
 export const summary: L = {
-  ko: "안정적인 백엔드 시스템 설계·운영 경험을 바탕으로 AI 서비스 개발 역량을 갖춘 엔지니어입니다. 커머스·물류 도메인에서 검색·데이터 파이프라인과 대규모 트래픽, AWS EKS 기반 MSA를 다뤘고, 현재는 AEO(Answer Engine Optimization) 측정 플랫폼을 설계·운영하고 있습니다.",
-  en: "A backend engineer with solid experience designing and operating large-scale systems, now building AI products. I've worked on search and data pipelines, high-traffic systems, and AWS EKS–based microservices across commerce and logistics — and I currently design and run an AEO (Answer Engine Optimization) measurement platform.",
+  ko: "9년차 백엔드 엔지니어입니다. 커머스와 물류에서 검색·데이터 파이프라인, 대규모 트래픽, AWS EKS 기반 MSA를 다뤘습니다. 지금은 AI 서비스와 AEO를 만듭니다.",
+  en: "A backend engineer of nine years. I've worked on search and data pipelines, high-traffic systems, and AWS EKS microservices across commerce and logistics. Now I build AI products and work on AEO.",
 };
 
 export const jobs: Job[] = [
