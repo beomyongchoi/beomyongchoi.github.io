@@ -36,6 +36,15 @@ const { locale } = Astro.props;
             <li class="rounded border border-border px-2 py-0.5 text-xs text-muted">{tech}</li>
           ))}
         </ul>
+
+        {p.detail && (
+          <a
+            href={`${locale === "ko" ? "" : "/en"}/work/${p.slug}/`}
+            class="mt-4 text-sm font-medium text-accent hover:underline"
+          >
+            {locale === "ko" ? "자세히 보기 →" : "Read more →"}
+          </a>
+        )}
       </article>
     ))
   }

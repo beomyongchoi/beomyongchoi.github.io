@@ -1,0 +1,23 @@
+---
+import { projects } from "../../../data/projects";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ProjectDetail from "../../../components/ProjectDetail.astro";
+import { SITE } from "../../../consts";
+
+export function getStaticPaths() {
+  return projects
+    .filter((p) => p.detail)
+    .map((p) => ({ params: { slug: p.slug }, props: { project: p } }));
+}
+
+const { project } = Astro.props;
+---
+
+<BaseLayout
+  title={`${project.title.en} — ${SITE.author}`}
+  description={project.summary.en}
+  locale="en"
+  path={`/work/${project.slug}/`}
+>
+  <ProjectDetail project={project} locale="en" />
+</BaseLayout>

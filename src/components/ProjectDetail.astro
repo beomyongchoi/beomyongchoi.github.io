@@ -1,0 +1,74 @@
+---
+import type { Locale } from "../consts";
+import type { Project } from "../data/projects";
+interface Props { project: Project; locale: Locale; }
+const { project, locale } = Astro.props;
+const d = project.detail!;
+const back = locale === "ko" ? "/work/" : "/en/work/";
+const tx =
+  locale === "ko"
+    ? { back: "작업", context: "배경", did: "한 일", outcome: "결과" }
+    : { back: "Work", context: "Context", did: "What I did", outcome: "Outcome" };
+---
+
+<article>
+  <a href={back} class="text-sm text-muted hover:text-accent">← {tx.back}</a>
+
+  <header class="mt-4 border-b border-border pb-8">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{project.title[locale]}</h1>
+    <p class="mt-2 text-accent">{project.role[locale]}</p>
+    <p class="mt-4 leading-relaxed text-muted">{project.summary[locale]}</p>
+
+    {
+      project.metrics && (
+        <dl class="mt-6 grid grid-cols-3 gap-3 rounded-lg border border-border bg-surface p-4 text-center">
+          {project.metrics.map((m) => (
+            <div>
+              <dt class="text-xs text-muted">{m.label[locale]}</dt>
+              <dd class="mt-1 text-lg font-semibold">{m.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+
+    <ul class="mt-6 flex flex-wrap gap-1.5">
+      {project.stack.map((t) => (
+        <li class="rounded border border-border px-2 py-0.5 text-xs text-muted">{t}</li>
+      ))}
+    </ul>
+  </header>
+
+  <section class="mt-10">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">{tx.context}</h2>
+    <p class="mt-3 leading-relaxed">{d.problem[locale]}</p>
+  </section>
+
+  <section class="mt-10">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">{tx.did}</h2>
+    <ul class="mt-3 space-y-3">
+      {
+        d.approach.map((a) => (
+          <li class="flex gap-3">
+            <span class="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+            <span class="leading-relaxed">{a[locale]}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="mt-10">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">{tx.outcome}</h2>
+    <ul class="mt-3 space-y-3">
+      {
+        d.result.map((r) => (
+          <li class="flex gap-3">
+            <span class="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+            <span class="leading-relaxed">{r[locale]}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</article>

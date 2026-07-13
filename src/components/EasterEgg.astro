@@ -1,0 +1,152 @@
+---
+// Hidden mini-game. Enter the Konami code (↑↑↓↓←→←→ B A) anywhere to play.
+// A tiny obstacle-jumper — a nod to Chrome's offline dino.
+---
+
+<div
+  id="egg-overlay"
+  class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+>
+  <div class="w-full max-w-2xl rounded-xl border border-border bg-surface p-5 shadow-xl">
+    <div class="flex items-center justify-between">
+      <p class="text-sm font-medium">
+        <span class="text-accent">↑↑↓↓←→←→ B A</span>
+        <span class="text-muted"> — 찾았네요 👀</span>
+      </p>
+      <button id="egg-close" class="text-muted hover:text-fg" aria-label="Close">✕</button>
+    </div>
+    <canvas
+      id="egg-canvas"
+      width="600"
+      height="200"
+      class="mt-4 w-full rounded-lg border border-border bg-bg"></canvas>
+    <p id="egg-score" class="mt-3 text-center text-sm text-muted"></p>
+  </div>
+</div>
+
+<script>
+  const KONAMI = [
+    "ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown",
+    "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a",
+  ];
+
+  // Console greeting for the curious devs.
+  console.log("%cBeomyong Choi", "color:#2563eb;font-size:20px;font-weight:700");
+  console.log(
+    "%c개발자시군요 👋  소스 보러 오셨나요?  히든 게임: ↑↑↓↓←→←→ B A",
+    "color:#a1a1aa;font-size:13px",
+  );
+  console.log("%c함께 일하고 싶다면 → dev.bychoi@gmail.com", "color:#a1a1aa;font-size:13px");
+
+  let idx = 0;
+  let running = false;
+
+  window.addEventListener("keydown", (e) => {
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    idx = key === KONAMI[idx] ? idx + 1 : key === KONAMI[0] ? 1 : 0;
+    if (idx === KONAMI.length) {
+      idx = 0;
+      startGame();
+    }
+  });
+
+  function startGame() {
+    const overlay = document.getElementById("egg-overlay");
+    if (!overlay || running) return;
+    running = true;
+    overlay.classList.remove("hidden");
+    overlay.classList.add("flex");
+
+    const canvas = document.getElementById("egg-canvas") as HTMLCanvasElement;
+    const ctx = canvas.getContext("2d")!;
+    const scoreEl = document.getElementById("egg-score")!;
+    const W = canvas.width, H = canvas.height;
+    const SIZE = 22, GROUND = H - 34;
+    const GRAV = 0.9, JUMP = -14;
+
+    let player = { y: GROUND, vy: 0, jumping: false };
+    let obstacles: { x: number; y: number; w: number; h: number }[] = [];
+    let score = 0, speed = 5, frame = 0, over = false, raf = 0;
+
+    function jump() {
+      if (over) { reset(); return; }
+      if (!player.jumping) { player.vy = JUMP; player.jumping = true; }
+    }
+
+    function reset() {
+      player = { y: GROUND, vy: 0, jumping: false };
+      obstacles = []; score = 0; speed = 5; frame = 0; over = false;
+      loop();
+    }
+
+    function loop() {
+      if (over) return;
+      raf = requestAnimationFrame(loop);
+      frame++;
+      ctx.clearRect(0, 0, W, H);
+
+      // ground line
+      ctx.strokeStyle = "#3f3f46";
+      ctx.beginPath();
+      ctx.moveTo(0, GROUND + SIZE);
+      ctx.lineTo(W, GROUND + SIZE);
+      ctx.stroke();
+
+      // player physics
+      player.vy += GRAV;
+      player.y += player.vy;
+      if (player.y >= GROUND) { player.y = GROUND; player.vy = 0; player.jumping = false; }
+      ctx.fillStyle = "#2563eb";
+      ctx.fillRect(60, player.y, SIZE, SIZE);
+
+      // spawn obstacles
+      const gap = Math.max(55, 100 - Math.floor(score / 200));
+      if (frame % gap === 0) {
+        const h = 18 + Math.random() * 26;
+        obstacles.push({ x: W, y: GROUND + SIZE - h, w: 15, h });
+      }
+
+      // move + collide
+      ctx.fillStyle = "#a1a1aa";
+      for (const o of obstacles) {
+        o.x -= speed;
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+        if (60 < o.x + o.w && 60 + SIZE > o.x && player.y + SIZE > o.y) over = true;
+      }
+      obstacles = obstacles.filter((o) => o.x + o.w > 0);
+
+      score++;
+      speed = 5 + score / 600;
+      const s = Math.floor(score / 10);
+      scoreEl.textContent = over
+        ? `게임 오버 — 점수 ${s} · Space/클릭으로 재시작`
+        : `점수 ${s} · Space 또는 클릭으로 점프 · Esc로 닫기`;
+
+      if (over) {
+        ctx.fillStyle = "#fafafa";
+        ctx.font = "700 26px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", W / 2, H / 2);
+      }
+    }
+
+    function keyHandler(e: KeyboardEvent) {
+      if (e.code === "Space") { e.preventDefault(); jump(); }
+      else if (e.key === "Escape") close();
+    }
+    function close() {
+      over = true;
+      running = false;
+      cancelAnimationFrame(raf);
+      overlay!.classList.add("hidden");
+      overlay!.classList.remove("flex");
+      canvas.removeEventListener("click", jump);
+      document.removeEventListener("keydown", keyHandler);
+    }
+
+    canvas.addEventListener("click", jump);
+    document.addEventListener("keydown", keyHandler);
+    document.getElementById("egg-close")!.onclick = close;
+    reset();
+  }
+</script>
