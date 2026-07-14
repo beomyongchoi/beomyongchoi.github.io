@@ -11,7 +11,7 @@ const tx = {
   skills: isKo ? "기술" : "Skills",
   present: isKo ? "현재" : "Present",
   pdf: isKo ? "PDF 다운로드" : "Download PDF",
-  pdfSwitch: isKo ? "스위치 에디션" : "Switch Edition",
+  pdfGameboy: isKo ? "게임보이 에디션" : "Game Boy Edition",
 };
 ---
 
@@ -33,12 +33,12 @@ const tx = {
       <span aria-hidden="true">↓</span> {tx.pdf}
     </a>
     <a
-      href="/resume-beomyong-choi-switch.pdf"
+      href="/resume-beomyong-choi-gameboy.pdf"
       download
       class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:border-accent hover:text-accent"
-      title={isKo ? "재미로 만든 닌텐도 스위치 콘셉트 이력서" : "A Nintendo Switch–themed résumé, just for fun"}
+      title={isKo ? "재미로 만든 게임보이 콘셉트 이력서 (8비트)" : "A Game Boy–themed résumé in 8-bit, just for fun"}
     >
-      <span aria-hidden="true">🎮</span> {tx.pdfSwitch}
+      <span aria-hidden="true">🎮</span> {tx.pdfGameboy}
     </a>
   </div>
 

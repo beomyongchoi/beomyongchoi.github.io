@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --body:  #cdc9bd;   /* Game Boy warm gray */
+    --body2: #b9b4a6;
+    --edge:  #a7a294;
+    --panel: #3a3a36;   /* dark screen bezel */
+    --lcd0:  #9bbc0f;   /* lightest green */
+    --lcd1:  #8bac0f;
+    --lcd2:  #306230;   /* dark green */
+    --lcd3:  #0f380f;   /* darkest = ink */
+    --mag:   #9b2257;   /* A/B button magenta */
+    --navy:  #2a2f6b;
+    --maroon:#7a1f3d;
+  }
+  html, body {
+    font-family: ui-monospace, "SF Mono", "Menlo", "Courier New", monospace;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page {
+    width: 210mm; height: 297mm; background: #e7e4dc;
+    display: flex; align-items: center; justify-content: center; padding: 10mm;
+  }
+
+  /* ---------- Game Boy body ---------- */
+  .gb {
+    width: 100%; height: 100%;
+    background: linear-gradient(155deg, #d7d3c7, var(--body) 40%, var(--body2));
+    border-radius: 16px 16px 62px 16px;   /* signature big bottom-right radius */
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -3px 8px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.22);
+    padding: 20px 22px 24px;
+    display: flex; flex-direction: column;
+  }
+
+  /* top: power switch + label row */
+  .top { display: flex; align-items: center; gap: 8px; font-size: 8px; color: #6f6b60; letter-spacing: 0.12em; }
+  .power { display: flex; align-items: center; gap: 4px; }
+  .pswitch { width: 22px; height: 9px; background: var(--edge); border-radius: 5px; box-shadow: inset 0 1px 1px rgba(0,0,0,0.25); position: relative; }
+  .pswitch::after { content:""; position:absolute; left:1px; top:1px; width:9px; height:7px; background:#7d7869; border-radius:3px; }
+  .top .line { flex: 1; height: 3px; background: repeating-linear-gradient(90deg, var(--edge) 0 6px, transparent 6px 10px); border-radius: 2px; }
+
+  /* ---------- screen bezel ---------- */
+  .bezel {
+    margin-top: 12px;
+    background: var(--panel);
+    border-radius: 10px 10px 26px 10px;
+    padding: 14px 30px 16px;
+    position: relative;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+  }
+  /* decorative pinstripes (navy + maroon) top-left of bezel */
+  .stripes { position: absolute; top: 0; left: 14px; width: 46px; height: 8px; display: flex; gap: 3px; }
+  .stripes i { flex: 1; height: 100%; border-radius: 0 0 2px 2px; }
+  .stripes .n { background: var(--navy); }
+  .stripes .m { background: var(--maroon); }
+  .bezel .dm { text-align: center; color: #b9b5a6; font-size: 7.5px; letter-spacing: 0.34em; margin-bottom: 8px; }
+  .bezel .led { position: absolute; top: 15px; left: 12px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .bezel .led .dot { width: 7px; height: 7px; border-radius: 50%; background: #d24b3e; box-shadow: 0 0 4px rgba(210,75,62,0.8); }
+  .bezel .led .lb { font-size: 5.5px; color:#b9b5a6; letter-spacing:0.1em; }
+
+  /* ---------- LCD ---------- */
+  .lcd {
+    background: var(--lcd0); color: var(--lcd3);
+    border-radius: 4px; padding: 18px 16px 20px; overflow: hidden;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(15,56,15,0.055) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(15,56,15,0.055) 0 1px, transparent 1px 3px);
+    background-size: 3px 3px;
+  }
+
+  /* header block */
+  .head { display: flex; justify-content: space-between; align-items: flex-start; }
+  .head .nm { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+  .head .nm small { display:block; font-size: 9px; font-weight: 700; letter-spacing: 0.06em; color: var(--lcd2); margin-top: 4px; }
+  .head .lv { text-align: right; }
+  .head .lv b { font-size: 19px; font-weight: 800; }
+  .head .lv span { display:block; font-size: 8px; color: var(--lcd2); letter-spacing: 0.12em; margin-top: 3px; }
+  .exp { margin-top: 11px; font-size: 9px; letter-spacing: 0.04em; display:flex; align-items:center; gap:7px; }
+  .expbar { flex: 1; height: 11px; border: 1.5px solid var(--lcd3); padding: 1px; display:flex; gap:1px; }
+  .expbar i { flex: 1; background: var(--lcd3); }
+  .expbar i.off { background: transparent; }
+
+  /* RPG window box */
+  .win { position: relative; margin-top: 15px; border: 2px solid var(--lcd3); box-shadow: inset 0 0 0 2px var(--lcd0), inset 0 0 0 3px var(--lcd3); padding: 12px 12px 11px; }
+  .win > .wt { position: absolute; top: -8px; left: 9px; background: var(--lcd0); padding: 0 6px; font-size: 9px; font-weight: 800; letter-spacing: 0.16em; }
+
+  /* stats */
+  .stat { display: flex; align-items: center; font-size: 10px; letter-spacing: 0.04em; padding: 3px 0; }
+  .stat .k { width: 78px; font-weight: 700; }
+  .stat .d { letter-spacing: 1.5px; }
+  .stat .n { margin-left: auto; font-size: 8px; color: var(--lcd2); font-weight:700; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+
+  /* party / career */
+  .party { font-size: 9.5px; }
+  .prow { display: flex; align-items: baseline; gap: 7px; padding: 4px 0; border-bottom: 1px dotted rgba(15,56,15,0.28); }
+  .prow:last-child { border-bottom: 0; }
+  .prow .ic { width: 9px; }
+  .prow .co { font-weight: 800; width: 108px; }
+  .prow .yr { color: var(--lcd2); width: 34px; }
+  .prow .ds { flex: 1; }
+  .prow .tut { color: var(--maroon); font-weight: 800; }
+
+  /* items */
+  .items { font-size: 9.5px; line-height: 1.9; letter-spacing: 0.02em; }
+  .items b { font-weight: 800; }
+
+  /* contact line */
+  .contact { margin-top: 12px; font-size: 9px; letter-spacing: 0.05em; display:flex; flex-wrap:wrap; gap: 4px 14px; }
+  .contact .b { display:inline-flex; align-items:center; gap:5px; }
+  .contact .k { width:14px; height:14px; border-radius:50%; background: var(--lcd3); color: var(--lcd0); font-weight:800; font-size:9px; display:inline-flex; align-items:center; justify-content:center; }
+
+  /* ---------- wordmark ---------- */
+  .brand { margin-top: 20px; padding-left: 6px; display: flex; align-items: baseline; gap: 9px; }
+  .brand .mk { font-style: italic; font-weight: 900; font-size: 34px; color: #4b4741; letter-spacing: -0.02em; }
+  .brand .mk em { color: var(--mag); font-style: italic; }
+  .brand .tm { font-size: 11px; color: #6f6b60; vertical-align: super; }
+  .brand .sys { font-size: 8.5px; color: #8a8676; letter-spacing: 0.24em; margin-left: auto; align-self:center; }
+
+  /* ---------- controls ---------- */
+  .controls { flex: 1; position: relative; margin-top: 10px; }
+  /* D-pad */
+  .dpad { position: absolute; left: 30px; top: 44%; transform: translateY(-50%); width: 118px; height: 118px; }
+  .dpad .bar { position: absolute; background: #2f2f2c; box-shadow: inset 0 0 4px rgba(0,0,0,0.5); border-radius: 6px; }
+  .dpad .h { top: 41px; left: 0; width: 118px; height: 36px; }
+  .dpad .v { left: 41px; top: 0; width: 36px; height: 118px; }
+  .dpad .c { position:absolute; left:48px; top:48px; width:22px; height:22px; border-radius:50%; background:#242422; }
+  /* A/B buttons */
+  .ab { position: absolute; right: 34px; top: 44%; transform: translateY(-55%) rotate(-25deg); width: 150px; height: 96px; }
+  .ab .btn { position: absolute; width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #b83a6a, var(--mag) 70%); box-shadow: inset 0 -3px 4px rgba(0,0,0,0.35), 0 2px 3px rgba(0,0,0,0.3); }
+  .ab .b { left: 0; top: 34px; } .ab .a { right: 0; top: 0; }
+  .ab .lab { position: absolute; font-size: 13px; font-weight: 800; color: #6f6b60; }
+  .ab .la { right: 12px; top: 56px; } .ab .lb { left: 14px; top: 90px; }
+  /* start / select */
+  .ss { position: absolute; left: 50%; bottom: 66px; transform: translateX(-50%) rotate(-25deg); display: flex; gap: 22px; }
+  .ss .pill { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .ss .cap { width: 44px; height: 13px; border-radius: 7px; background: #6f6b61; box-shadow: inset 0 1px 1px rgba(0,0,0,0.35); }
+  .ss .lb { font-size: 9px; font-weight: 800; color: #6f6b60; letter-spacing: 0.08em; }
+  /* speaker */
+  .spk { position: absolute; right: 30px; bottom: 26px; width: 92px; height: 64px; transform: rotate(-25deg); display:flex; gap:10px; }
+  .spk i { width: 6px; height: 100%; background: var(--edge); border-radius: 4px; box-shadow: inset 0 0 2px rgba(0,0,0,0.25); }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="gb">
+
+      <div class="top">
+        <div class="power"><div class="pswitch"></div><span>◁ OFF · ON ▷</span></div>
+        <div class="line"></div>
+      </div>
+
+      <div class="bezel">
+        <div class="stripes"><i class="n"></i><i class="m"></i></div>
+        <div class="led"><div class="dot"></div><div class="lb">POWER</div></div>
+        <div class="dm">DOT MATRIX WITH STEREO SOUND</div>
+
+        <div class="lcd">
+          <div class="head">
+            <div class="nm">최범용<small>CHOI BEOMYONG</small></div>
+            <div class="lv"><b>Lv.9</b><span>SINCE 2013</span></div>
+          </div>
+          <div class="exp">
+            <span>EXP</span>
+            <span class="expbar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="off"></i><i class="off"></i></span>
+            <span>BACKEND ▸ AI</span>
+          </div>
+
+          <div class="win">
+            <div class="wt">STATS</div>
+            <div class="two">
+              <div class="stat"><span class="k">BACKEND</span><span class="d">●●●●●</span></div>
+              <div class="stat"><span class="k">INFRA</span><span class="d">●●●●○</span></div>
+              <div class="stat"><span class="k">DATA/SCALE</span><span class="d">●●●●○</span></div>
+              <div class="stat"><span class="k">AI / ML</span><span class="d">●●●●○</span><span class="n">↑</span></div>
+              <div class="stat"><span class="k">CLOUD</span><span class="d">●●●●○</span></div>
+              <div class="stat"><span class="k">AEO</span><span class="d">●●●○○</span><span class="n">NEW!</span></div>
+            </div>
+          </div>
+
+          <div class="win">
+            <div class="wt">PARTY · CAREER</div>
+            <div class="party">
+              <div class="prow"><span class="ic">★</span><span class="co">스텔스 스타트업</span><span class="yr">'25~</span><span class="ds">AEO 측정 플랫폼 · 호텔 SaaS</span></div>
+              <div class="prow"><span class="ic">✦</span><span class="co">한익스프레스</span><span class="yr">'23</span><span class="ds">물류 WMS·FMS · AWS EKS MSA</span></div>
+              <div class="prow"><span class="ic">✦</span><span class="co">위메프</span><span class="yr">'18</span><span class="ds">상품검색 · 크롤러 · 대규모 트래픽</span></div>
+              <div class="prow"><span class="ic">✦</span><span class="co">핀톡 FinTalk</span><span class="yr">'16</span><span class="ds">재무 매칭 서비스 · 안드로이드</span></div>
+              <div class="prow"><span class="ic">·</span><span class="co">유비투스코리아</span><span class="yr">'13</span><span class="ds">QA 인턴 — <span class="tut">TUTORIAL</span></span></div>
+            </div>
+          </div>
+
+          <div class="win">
+            <div class="wt">ITEMS</div>
+            <div class="items">
+              <b>LANG</b> Python · Java · TypeScript<br>
+              <b>BACK</b> Spring · JPA · Django · Node/Express<br>
+              <b>AI</b> PyTorch · RAG · LangGraph · LLM APIs<br>
+              <b>INFRA</b> AWS · K8s(EKS) · Docker · CI/CD &nbsp;|&nbsp; <b>EDU</b> 한양대 CS · AIFFEL
+            </div>
+          </div>
+
+          <div class="contact">
+            <span class="b"><span class="k">A</span> dev.bychoi@gmail.com</span>
+            <span class="b"><span class="k">B</span> github.com/beomyongchoi</span>
+            <span class="b"><span class="k">↓</span> in/beomyong-choi</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="brand">
+        <span class="mk">DEV <em>BOY</em><span class="tm">™</span></span>
+        <span class="sys">PORTFOLIO SYSTEM</span>
+      </div>
+
+      <div class="controls">
+        <div class="dpad">
+          <div class="bar h"></div><div class="bar v"></div><div class="c"></div>
+        </div>
+        <div class="ab">
+          <div class="btn b"></div><div class="btn a"></div>
+          <span class="lab la">A</span><span class="lab lb">B</span>
+        </div>
+        <div class="ss">
+          <div class="pill"><div class="cap"></div><div class="lb">SELECT</div></div>
+          <div class="pill"><div class="cap"></div><div class="lb">START</div></div>
+        </div>
+        <div class="spk"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
