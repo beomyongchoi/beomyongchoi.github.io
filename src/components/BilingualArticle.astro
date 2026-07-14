@@ -1,0 +1,164 @@
+---
+// Interactive bilingual article. Renders aligned KO/EN blocks; a client script
+// lets the reader toggle the primary language and reveals the other language
+// in a popover when text is selected (dragged).
+import type { BiBlock } from "../data/aiParadox";
+interface Props { blocks: BiBlock[] }
+const { blocks } = Astro.props;
+---
+
+<div class="bi-article" id="bi-article">
+  <div class="bi-bar" contenteditable="false">
+    <span class="bi-hint">💡 문장을 드래그하면 반대 언어 원문이 떠요 · Drag any sentence to see the other language</span>
+    <div class="bi-toggle" role="group" aria-label="Primary language">
+      <button type="button" data-lang="ko" class="on">한국어</button>
+      <button type="button" data-lang="en">English</button>
+    </div>
+  </div>
+
+  {
+    blocks.map((b) => {
+      if (b.type === "h2") return <h2 class="bi" data-ko={b.ko} data-en={b.en} set:html={b.ko} />;
+      if (b.type === "p") return <p class="bi" data-ko={b.ko} data-en={b.en} set:html={b.ko} />;
+      if (b.type === "quote")
+        return <blockquote class="bi" data-ko={b.ko} data-en={b.en} set:html={b.ko} />;
+      if (b.type === "list")
+        return (
+          <ul>
+            {b.items.map((it) => (
+              <li class="bi" data-ko={it.ko} data-en={it.en} set:html={it.ko} />
+            ))}
+          </ul>
+        );
+      if (b.type === "figure")
+        return (
+          <figure class="bi-fig">
+            <img src={b.src} alt={b.alt} />
+          </figure>
+        );
+      if (b.type === "hr") return <hr />;
+      if (b.type === "sources") return <div class="bi-sources" set:html={b.html} />;
+      return null;
+    })
+  }
+</div>
+
+<style is:global>
+  .bi-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    margin: 0 0 1.6em; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface);
+  }
+  .prose .bi-bar { margin-top: 0; }
+  .bi-hint { font-size: 13px; color: var(--muted); }
+  .bi-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; flex-shrink: 0; }
+  .bi-toggle button {
+    font: inherit; font-size: 13px; font-weight: 600; padding: 5px 13px; background: transparent;
+    color: var(--muted); border: 0; cursor: pointer; transition: background .15s, color .15s;
+  }
+  .bi-toggle button.on { background: var(--accent); color: var(--accent-fg); }
+
+  .bi { border-radius: 5px; transition: background .15s; }
+  .bi-peek { background: color-mix(in srgb, var(--accent) 14%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
+  @supports not (background: color-mix(in srgb, red, blue)) {
+    .bi-peek { background: rgba(37, 99, 235, 0.13); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.13); }
+  }
+
+  .bi-sources h3 { font-size: 1.05rem; }
+  .bi-fig img { width: 100%; }
+
+  /* Reveal popover (appended to <body>) */
+  .bi-pop {
+    position: absolute; z-index: 70; max-width: min(420px, 88vw); padding: 12px 15px 13px;
+    border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 4px 13px 13px 4px;
+    background: var(--bg); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    font-size: 15px; line-height: 1.62; color: var(--fg);
+  }
+  .bi-pop-tag {
+    display: inline-block; font-size: 10px; letter-spacing: 0.14em; font-weight: 800;
+    color: var(--accent-fg); background: var(--accent); padding: 1px 7px; border-radius: 5px; margin-bottom: 8px;
+  }
+  .bi-pop-body strong { font-weight: 700; }
+  .bi-pop-body em { font-style: italic; }
+  .bi-pop-body a { color: var(--accent); }
+</style>
+
+<script>
+  const article = document.getElementById("bi-article");
+  if (article) {
+    let primary: "ko" | "en" = "ko";
+    const pop = document.createElement("div");
+    pop.className = "bi-pop";
+
+    const hide = () => {
+      if (pop.isConnected) pop.remove();
+      article.querySelectorAll(".bi-peek").forEach((e) => e.classList.remove("bi-peek"));
+    };
+
+    const setLang = (lang: "ko" | "en") => {
+      primary = lang;
+      article.querySelectorAll<HTMLElement>(".bi").forEach((el) => {
+        const html = el.dataset[lang];
+        if (html != null) el.innerHTML = html;
+      });
+      article
+        .querySelectorAll<HTMLElement>(".bi-toggle button")
+        .forEach((b) => b.classList.toggle("on", b.dataset.lang === lang));
+      hide();
+    };
+
+    article.querySelectorAll<HTMLElement>(".bi-toggle button").forEach((b) => {
+      b.addEventListener("click", () => setLang(b.dataset.lang as "ko" | "en"));
+    });
+
+    const reveal = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return hide();
+      const range = sel.getRangeAt(0);
+      let node: Node | null = range.startContainer;
+      if (node.nodeType === 3) node = node.parentElement;
+      const startEl = node as HTMLElement | null;
+      if (!startEl || pop.contains(startEl)) return;
+      const block = startEl.closest(".bi") as HTMLElement | null;
+      if (!block || !article.contains(block)) return hide();
+
+      const other = primary === "ko" ? "en" : "ko";
+      const html = block.dataset[other];
+      if (html == null) return hide();
+
+      const label = other === "en" ? "EN · 영어 원문" : "KO · 한글 원문";
+      pop.innerHTML =
+        '<span class="bi-pop-tag">' + label + '</span><div class="bi-pop-body">' + html + "</div>";
+      block.classList.add("bi-peek");
+      if (!pop.isConnected) document.body.appendChild(pop);
+
+      const r = range.getBoundingClientRect();
+      const pw = pop.offsetWidth;
+      const ph = pop.offsetHeight;
+      const vw = document.documentElement.clientWidth;
+      let left = window.scrollX + r.left;
+      left = Math.min(left, window.scrollX + vw - pw - 12);
+      left = Math.max(left, window.scrollX + 12);
+      let top = window.scrollY + r.bottom + 10;
+      if (r.bottom + ph + 20 > window.innerHeight && r.top - ph - 10 > 0) {
+        top = window.scrollY + r.top - ph - 10;
+      }
+      pop.style.left = left + "px";
+      pop.style.top = top + "px";
+    };
+
+    document.addEventListener("mouseup", () => setTimeout(reveal, 0));
+    document.addEventListener("touchend", () => setTimeout(reveal, 0));
+    document.addEventListener("mousedown", (e) => {
+      if (!pop.contains(e.target as Node)) hide();
+    });
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "Escape") {
+        window.getSelection()?.removeAllRanges();
+        hide();
+      }
+    });
+    document.addEventListener("scroll", hide, { passive: true });
+    window.addEventListener("resize", hide);
+  }
+</script>
