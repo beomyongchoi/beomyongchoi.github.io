@@ -32,6 +32,8 @@ const { blocks, lang = "ko" } = Astro.props;
         );
       if (b.type === "quote")
         return <blockquote class="bi" data-ko={b.ko} data-en={b.en} set:html={b[lang]} />;
+      if (b.type === "callout")
+        return <aside class="bi-callout bi" data-ko={b.ko} data-en={b.en} set:html={b[lang]} />;
       if (b.type === "list")
         return (
           <ul>
@@ -75,7 +77,17 @@ const { blocks, lang = "ko" } = Astro.props;
     text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px;
     text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
   }
-  h2.bi:hover { text-decoration: none; }
+  h2.bi:hover, .bi-callout:hover { text-decoration: none; }
+
+  /* callout box (answer-first TL;DR, tips, warnings) */
+  .bi-callout {
+    display: block; margin: 1.7em 0; padding: 14px 18px;
+    border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 4px 12px 12px 4px;
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface)); font-size: 0.97em; line-height: 1.7;
+  }
+  .bi-callout strong { color: var(--fg); font-weight: 700; }
+  @supports not (background: color-mix(in srgb, red, blue)) { .bi-callout { background: var(--surface); } }
+
   .bi-peek { background: color-mix(in srgb, var(--accent) 15%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
   @supports not (background: color-mix(in srgb, red, blue)) {
     .bi:hover { background: rgba(37, 99, 235, 0.09); }

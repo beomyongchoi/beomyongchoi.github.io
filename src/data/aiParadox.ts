@@ -8,6 +8,7 @@ export type BiBlock =
   | { type: "h2"; ko: string; en: string }
   | { type: "p"; s: S[] }
   | { type: "quote"; ko: string; en: string }
+  | { type: "callout"; ko: string; en: string }
   | { type: "list"; items: S[] }
   | { type: "figure"; src: string; alt: string }
   | { type: "hr" }
@@ -15,6 +16,12 @@ export type BiBlock =
 
 export const blocks: BiBlock[] = [
   { type: "figure", src: "/assets/ai-paradox-hero.png", alt: "AI 코딩의 역설 — 개발자 84%가 AI를 쓰지만 정확도를 믿는 건 29%뿐" },
+
+  {
+    type: "callout",
+    ko: "<strong>결론부터.</strong> 개발자 84%가 AI를 씁니다. 그런데 정확도를 믿는 건 29%뿐입니다. 그러면서도 검증 없이 배포합니다. 코드는 빨리 늘고, 리팩터링은 줄고, 도구는 파편화됩니다. 남는 건 사람의 판단력입니다.",
+    en: "<strong>The short version.</strong> 84% of developers use AI. Only 29% trust its accuracy. They ship it unverified anyway. Code piles up, refactoring shrinks, and the tools fragment. What's left is human judgment.",
+  },
 
   {
     type: "p",
@@ -77,6 +84,12 @@ export const blocks: BiBlock[] = [
     ],
   },
 
+  {
+    type: "callout",
+    ko: "⚠️ <strong>주의</strong> — AI 코드는 '거의 맞음'이 가장 위험합니다. 그럴듯해서 검증을 건너뛰기 쉽습니다. 그 순간 취약점이 그대로 배포됩니다.",
+    en: "⚠️ <strong>Watch out</strong> — with AI code, \"almost right\" is the dangerous part. It looks fine, so it's easy to skip the check. That's the moment the vulnerability ships.",
+  },
+
   { type: "h2", ko: "2. 생산성의 함정 — 60% 더 만들고, 8배 더 베낀다", en: "2. The productivity trap — 60% more code, 8× more copy-paste" },
   {
     type: "p",
@@ -109,6 +122,12 @@ export const blocks: BiBlock[] = [
       { ko: "지금의 배포 속도를 위해 미래의 유지보수 비용을 미루고 있는 셈입니다.", en: "We're trading tomorrow's maintenance cost for today's shipping speed." },
       { ko: "눈앞의 PR은 빨라지지만, 중복은 이자처럼 쌓입니다.", en: "The PR in front of you gets faster; the duplication compounds like interest." },
     ],
+  },
+
+  {
+    type: "callout",
+    ko: "💡 <strong>팁</strong> — 생산성을 PR 개수로만 보지 마세요. 복붙·리팩터링 비율을 같이 추적해야 기술 부채가 눈에 들어옵니다.",
+    en: "💡 <strong>Tip</strong> — don't measure productivity by PR count alone. Track your copy-paste and refactoring ratios too, and the tech debt becomes visible.",
   },
 
   { type: "h2", ko: "3. 시니어의 역설 — 덜 쓰는데 더 번다", en: "3. The senior paradox — they use it less, but gain more" },
