@@ -29,12 +29,19 @@
 
   /* ---------- Game Boy body ---------- */
   .gb {
+    position: relative;
     width: 100%; height: 100%;
-    background: linear-gradient(155deg, #d7d3c7, var(--body) 40%, var(--body2));
+    background: var(--body);           /* flat, no gradient */
     border-radius: 16px 16px 62px 16px;   /* signature big bottom-right radius */
-    box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -3px 8px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.22);
+    box-shadow: inset 0 0 0 2px var(--edge);
     padding: 20px 22px 24px;
     display: flex; flex-direction: column;
+  }
+  /* grain / noise overlay across the whole console */
+  .grain {
+    position: absolute; inset: 0; z-index: 9; pointer-events: none;
+    border-radius: inherit; mix-blend-mode: multiply; opacity: 0.16;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   /* top: power switch + label row */
@@ -65,13 +72,23 @@
 
   /* ---------- LCD ---------- */
   .lcd {
+    position: relative;
     background: var(--lcd0); color: var(--lcd3);
-    border-radius: 4px; padding: 18px 16px 20px; overflow: hidden;
+    border-radius: 2px; padding: 18px 16px 20px; overflow: hidden;
     background-image:
-      repeating-linear-gradient(0deg, rgba(15,56,15,0.055) 0 1px, transparent 1px 3px),
-      repeating-linear-gradient(90deg, rgba(15,56,15,0.055) 0 1px, transparent 1px 3px);
-    background-size: 3px 3px;
+      repeating-linear-gradient(0deg, rgba(15,56,15,0.10) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(90deg, rgba(15,56,15,0.10) 0 1px, transparent 1px 4px);
+    background-size: 4px 4px;
   }
+  /* LCD scanlines + green grain, layered above content */
+  .lcd::after {
+    content: ""; position: absolute; inset: 0; z-index: 8; pointer-events: none;
+    mix-blend-mode: multiply; opacity: 0.5;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(15,56,15,0.16) 0 1px, transparent 1px 4px),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  }
+  .lcd > * { position: relative; z-index: 2; }
 
   /* header block */
   .head { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -116,10 +133,12 @@
   .contact .k { width:14px; height:14px; border-radius:50%; background: var(--lcd3); color: var(--lcd0); font-weight:800; font-size:9px; display:inline-flex; align-items:center; justify-content:center; }
 
   /* ---------- wordmark ---------- */
-  .brand { margin-top: 20px; padding-left: 6px; display: flex; align-items: baseline; gap: 9px; }
-  .brand .mk { font-style: italic; font-weight: 900; font-size: 34px; color: #4b4741; letter-spacing: -0.02em; }
-  .brand .mk em { color: var(--mag); font-style: italic; }
-  .brand .tm { font-size: 11px; color: #6f6b60; vertical-align: super; }
+  .brand { margin-top: 20px; padding-left: 6px; display: flex; align-items: baseline; gap: 12px; }
+  .brand .mk { font-family: "Arial Black", "Helvetica Neue", sans-serif; font-style: normal; font-weight: 900;
+    font-size: 40px; color: #3f3b35; letter-spacing: 0.10em;
+    filter: url(#pix); -webkit-filter: url(#pix); }   /* pixelate → chunky 8-bit */
+  .brand .mk em { color: var(--mag); font-style: normal; }
+  .brand .tm { font-size: 12px; color: #6f6b60; vertical-align: super; }
   .brand .sys { font-size: 8.5px; color: #8a8676; letter-spacing: 0.24em; margin-left: auto; align-self:center; }
 
   /* ---------- controls ---------- */
@@ -132,7 +151,7 @@
   .dpad .c { position:absolute; left:48px; top:48px; width:22px; height:22px; border-radius:50%; background:#242422; }
   /* A/B buttons */
   .ab { position: absolute; right: 34px; top: 44%; transform: translateY(-55%) rotate(-25deg); width: 150px; height: 96px; }
-  .ab .btn { position: absolute; width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #b83a6a, var(--mag) 70%); box-shadow: inset 0 -3px 4px rgba(0,0,0,0.35), 0 2px 3px rgba(0,0,0,0.3); }
+  .ab .btn { position: absolute; width: 50px; height: 50px; border-radius: 50%; background: var(--mag); box-shadow: inset 0 -5px 0 rgba(0,0,0,0.28); }
   .ab .b { left: 0; top: 34px; } .ab .a { right: 0; top: 0; }
   .ab .lab { position: absolute; font-size: 13px; font-weight: 800; color: #6f6b60; }
   .ab .la { right: 12px; top: 56px; } .ab .lb { left: 14px; top: 90px; }
@@ -147,6 +166,16 @@
 </style>
 </head>
 <body>
+  <!-- 8-bit pixelate filter: samples one pixel per NxN cell, then dilates to fill -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="pix" x="0" y="0" width="100%" height="100%">
+      <feFlood x="0" y="0" width="1" height="1" flood-color="#000"/>
+      <feComposite width="4" height="4"/>
+      <feTile result="a"/>
+      <feComposite in="SourceGraphic" in2="a" operator="in"/>
+      <feMorphology operator="dilate" radius="2"/>
+    </filter>
+  </svg>
   <div class="page">
     <div class="gb">
 
@@ -232,6 +261,7 @@
         <div class="spk"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </div>
 
+      <div class="grain"></div>
     </div>
   </div>
 </body>
