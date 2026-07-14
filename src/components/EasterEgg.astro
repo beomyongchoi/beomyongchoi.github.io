@@ -50,6 +50,9 @@
     }
   });
 
+  // The footer hint (a dim 🎮) launches the game without typing the code.
+  window.addEventListener("konami:launch", () => startGame());
+
   function startGame() {
     const overlay = document.getElementById("egg-overlay");
     if (!overlay || running) return;

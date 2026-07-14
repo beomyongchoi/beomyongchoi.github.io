@@ -9,6 +9,8 @@ const blog = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     lang: z.enum(["ko", "en"]).default("ko"),
+    /** Shared route slug across locales, for matching hreflang. Defaults to file id. */
+    translationKey: z.string().optional(),
     tags: z.array(z.string()).default([]),
     heroImage: z.string().optional(),
     draft: z.boolean().default(false),

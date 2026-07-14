@@ -10,7 +10,16 @@ const year = new Date().getFullYear();
   <div
     class="mx-auto flex max-w-3xl flex-col gap-2 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between"
   >
-    <p>© {year} {s.siteName}</p>
+    <p class="flex items-center gap-2">
+      <span>© {year} {s.siteName}</span>
+      <button
+        id="egg-hint"
+        type="button"
+        title="↑↑↓↓←→←→ B A"
+        aria-label={locale === "ko" ? "히든 게임 열기" : "Open hidden game"}
+        class="text-xs opacity-25 transition hover:scale-110 hover:opacity-100"
+      >🎮</button>
+    </p>
     <div class="flex gap-4">
       <a href={SITE.github} class="hover:text-fg" rel="me">GitHub</a>
       <a href={SITE.linkedin} class="hover:text-fg" rel="me">LinkedIn</a>
@@ -18,3 +27,9 @@ const year = new Date().getFullYear();
     </div>
   </div>
 </footer>
+
+<script>
+  document
+    .getElementById("egg-hint")
+    ?.addEventListener("click", () => window.dispatchEvent(new CustomEvent("konami:launch")));
+</script>

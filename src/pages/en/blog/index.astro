@@ -9,7 +9,7 @@ const posts = (
 ).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 const items = posts.map((p) => ({
-  href: `/en/blog/${p.id}/`,
+  href: `/en/blog/${p.data.translationKey ?? p.id}/`,
   title: p.data.title,
   description: p.data.description,
   pubDate: p.data.pubDate,
