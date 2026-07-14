@@ -5,6 +5,9 @@
 import type { BiBlock } from "../data/aiParadox";
 interface Props { blocks: BiBlock[]; lang?: "ko" | "en" }
 const { blocks, lang = "ko" } = Astro.props;
+
+// One fixed icon per callout tone (house rule — keep it to a single icon).
+const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip: "💡" };
 ---
 
 <div class="bi-article" id="bi-article" data-lang={lang}>
@@ -33,7 +36,9 @@ const { blocks, lang = "ko" } = Astro.props;
       if (b.type === "quote")
         return <blockquote class="bi" data-ko={b.ko} data-en={b.en} set:html={b[lang]} />;
       if (b.type === "callout")
-        return <aside class="bi-callout bi" data-ko={b.ko} data-en={b.en} set:html={b[lang]} />;
+        return (
+          <aside class="bi-callout bi" data-icon={CALLOUT_ICON[b.tone]} data-ko={b.ko} data-en={b.en} set:html={b[lang]} />
+        );
       if (b.type === "list")
         return (
           <ul>
@@ -85,6 +90,7 @@ const { blocks, lang = "ko" } = Astro.props;
     border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 4px 12px 12px 4px;
     background: color-mix(in srgb, var(--accent) 6%, var(--surface)); font-size: 0.97em; line-height: 1.7;
   }
+  .bi-callout[data-icon]::before { content: attr(data-icon) " "; margin-right: 4px; }
   .bi-callout strong { color: var(--fg); font-weight: 700; }
   @supports not (background: color-mix(in srgb, red, blue)) { .bi-callout { background: var(--surface); } }
 
