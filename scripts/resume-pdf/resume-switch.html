@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --blue: #00c3e3;   /* Joy-Con neon blue */
+    --red:  #ff4554;   /* Joy-Con neon red */
+    --body: #1b1b1f;   /* console body */
+    --scr1: #0a0f1e;   /* screen bg */
+    --scr2: #111a30;
+    --neon: #46e6ff;
+    --ink: #eaf2ff;
+    --dim: #8ea0c0;
+  }
+  html, body {
+    font-family: -apple-system, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", "Menlo", monospace; }
+  .page {
+    width: 297mm; height: 210mm; background: #dfe3ea;
+    display: flex; align-items: center; justify-content: center; padding: 7mm;
+  }
+  .console { display: flex; width: 100%; height: 100%; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.28)); }
+
+  /* ---------------- Joy-Cons ---------------- */
+  .joycon { width: 62px; position: relative; background: var(--blue); }
+  .joycon.left  { border-radius: 46px 12px 12px 46px; background: linear-gradient(160deg,#12d0ef,#00b4d6); }
+  .joycon.right { border-radius: 12px 46px 46px 12px; background: linear-gradient(200deg,#ff5b68,#f5303f); }
+  .joycon .rail { position: absolute; top: 8%; bottom: 8%; width: 5px; background: rgba(0,0,0,0.28); }
+  .joycon.left .rail { right: 0; border-radius: 4px 0 0 4px; }
+  .joycon.right .rail { left: 0; border-radius: 0 4px 4px 0; }
+  /* analog stick */
+  .stick { position: absolute; left: 50%; transform: translateX(-50%); width: 34px; height: 34px;
+    border-radius: 50%; background: radial-gradient(circle at 38% 34%, #4a4a52, #17171b 72%);
+    box-shadow: inset 0 0 0 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.4); }
+  .joycon.left .stick { top: 46px; }
+  .joycon.right .stick { bottom: 46px; }
+  /* small round button */
+  .rbtn { position: absolute; left: 50%; transform: translateX(-50%); width: 15px; height: 15px;
+    border-radius: 50%; background: rgba(0,0,0,0.30); color: #fff; font-size: 8px; line-height: 15px; text-align: center; }
+  /* d-pad cluster (left, lower) */
+  .dpad { position: absolute; left: 50%; transform: translateX(-50%); bottom: 78px; width: 46px; height: 46px; }
+  .dpad .rbtn { left: auto; transform: none; }
+  .dpad .up   { top: 0;   left: 15px; }
+  .dpad .dn   { bottom: 0; left: 15px; }
+  .dpad .lf   { left: 0;  top: 15px; }
+  .dpad .rt   { right: 0; top: 15px; }
+  /* ABXY cluster (right, upper) */
+  .abxy { position: absolute; left: 50%; transform: translateX(-50%); top: 74px; width: 48px; height: 48px; }
+  .abxy .rbtn { left: auto; transform: none; width: 17px; height: 17px; line-height: 17px; font-weight: 700; background: rgba(0,0,0,0.32); }
+  .abxy .x { top: 0; left: 16px; }
+  .abxy .b { bottom: 0; left: 16px; }
+  .abxy .y { left: 0; top: 16px; }
+  .abxy .a { right: 0; top: 16px; }
+  .mini { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: rgba(0,0,0,0.28);
+    color:#fff; font-size:9px; line-height:12px; text-align:center; }
+  .joycon.left .minus  { top: 16px; right: 14px; }
+  .joycon.left .capture{ bottom: 16px; left: 50%; transform: translateX(-50%); border-radius: 3px; }
+  .joycon.right .plus  { top: 16px; left: 14px; }
+  .joycon.right .home  { bottom: 16px; left: 50%; transform: translateX(-50%); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35); }
+
+  /* ---------------- Screen ---------------- */
+  .bezel { flex: 1; background: var(--body); padding: 12px; }
+  .screen {
+    width: 100%; height: 100%; border-radius: 8px; overflow: hidden;
+    background: radial-gradient(120% 140% at 15% 0%, var(--scr2), var(--scr1) 60%);
+    color: var(--ink); padding: 16px 18px; display: flex; flex-direction: column;
+    background-image:
+      linear-gradient(rgba(70,230,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(70,230,255,0.05) 1px, transparent 1px),
+      radial-gradient(120% 140% at 15% 0%, var(--scr2), var(--scr1) 60%);
+    background-size: 22px 22px, 22px 22px, 100% 100%;
+  }
+
+  /* top HUD */
+  .hud { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid rgba(70,230,255,0.18); }
+  .p1 { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg,var(--blue),var(--red));
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; color: #0a0f1e; }
+  .p1 .tag { font-size: 9px; letter-spacing: 0.25em; color: var(--neon); }
+  .p1 .nm { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+  .p1 .nm small { font-size: 11px; font-weight: 500; color: var(--dim); margin-left: 6px; }
+  .lv { text-align: right; }
+  .lv .badge { display: inline-block; font-weight: 800; font-size: 17px; color: #0a0f1e; background: var(--neon);
+    padding: 2px 12px; border-radius: 20px; box-shadow: 0 0 12px rgba(70,230,255,0.5); }
+  .lv .sub { font-size: 8.5px; letter-spacing: 0.2em; color: var(--dim); margin-top: 4px; }
+
+  .cls { font-size: 10px; letter-spacing: 0.28em; color: var(--red); margin: 10px 0 2px; font-weight: 700; }
+  .cls b { color: var(--blue); }
+  .bio { font-size: 10px; line-height: 1.5; color: #cdd8ee; max-width: 100%; }
+
+  .grid { flex: 1; display: grid; grid-template-columns: 1fr 1.35fr; gap: 16px; margin-top: 14px; min-height: 0; }
+  .panel { border: 1px solid rgba(70,230,255,0.16); border-radius: 8px; padding: 10px 12px; background: rgba(10,16,32,0.4); }
+  .panel.tall { display: flex; flex-direction: column; }
+  .pbody { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; padding: 2px 0; }
+  .ptitle { font-size: 9px; letter-spacing: 0.22em; color: var(--neon); margin-bottom: 9px; display: flex; align-items: center; gap: 6px; }
+  .ptitle::before { content: ""; width: 6px; height: 6px; background: var(--neon); border-radius: 1px; box-shadow: 0 0 6px var(--neon); }
+
+  /* stat bars */
+  .stat { margin-bottom: 8px; }
+  .stat .row { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 3px; color: #d5def0; }
+  .bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg,var(--blue),var(--neon)); box-shadow: 0 0 8px rgba(70,230,255,0.5); }
+
+  /* quest log */
+  .quest { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,0.08); }
+  .quest:last-child { border-bottom: 0; }
+  .qicon { font-size: 11px; line-height: 1.2; }
+  .qmain .qh { display: flex; align-items: baseline; gap: 8px; }
+  .qmain .co { font-size: 11px; font-weight: 700; }
+  .qmain .pr { font-size: 8px; color: var(--dim); }
+  .qmain .ds { font-size: 8.5px; color: #b9c6e0; line-height: 1.4; margin-top: 1px; }
+  .status { margin-left: auto; font-size: 7.5px; font-weight: 700; letter-spacing: 0.1em; padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
+  .st-cur { color: #0a0f1e; background: var(--neon); }
+  .st-clr { color: var(--neon); border: 1px solid rgba(70,230,255,0.4); }
+  .st-tut { color: var(--red); border: 1px solid rgba(255,69,84,0.5); }
+
+  /* bottom strip */
+  .bottom { margin-top: 14px; display: grid; grid-template-columns: 1.7fr 1fr; gap: 12px; align-items: stretch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font-size: 8px; padding: 2px 7px; border-radius: 5px; background: rgba(70,230,255,0.10); border: 1px solid rgba(70,230,255,0.25); color: #d7ecff; }
+  .ach { font-size: 9px; color: #cdd8ee; line-height: 1.7; }
+  .ach b { color: var(--neon); }
+
+  /* button legend footer */
+  .legend { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(70,230,255,0.18);
+    display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 8.5px; color: #cdd8ee; }
+  .key { display: inline-flex; align-items: center; gap: 6px; }
+  .btn { width: 15px; height: 15px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 800; color: #fff; }
+  .k-a { background: var(--red); } .k-b { background: var(--red); }
+  .k-x { background: var(--red); } .k-y { background: var(--red); }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="console">
+
+      <!-- LEFT JOY-CON -->
+      <div class="joycon left">
+        <div class="rail"></div>
+        <div class="mini minus mono">−</div>
+        <div class="stick"></div>
+        <div class="dpad">
+          <div class="rbtn up">▲</div><div class="rbtn dn">▼</div>
+          <div class="rbtn lf">◀</div><div class="rbtn rt">▶</div>
+        </div>
+        <div class="mini capture">◉</div>
+      </div>
+
+      <!-- SCREEN -->
+      <div class="bezel">
+        <div class="screen">
+
+          <div class="hud">
+            <div class="p1">
+              <div class="avatar">b</div>
+              <div>
+                <div class="tag mono">▶ PLAYER 01</div>
+                <div class="nm">최범용 <small>Beomyong Choi</small></div>
+              </div>
+            </div>
+            <div class="lv">
+              <span class="badge mono">LV.9</span>
+              <div class="sub mono">SINCE 2013 · 9 YRS</div>
+            </div>
+          </div>
+
+          <div class="cls mono">CLASS &nbsp;·&nbsp; <b>BACKEND</b> × AI ENGINEER</div>
+          <div class="bio">커머스·물류에서 검색과 데이터 파이프라인, 대규모 트래픽, AWS EKS 기반 MSA를 다뤄온 9년차 백엔드. 지금은 AI 서비스와 AEO를 만든다.</div>
+
+          <div class="grid">
+            <!-- STATS -->
+            <div class="panel tall">
+              <div class="ptitle mono">STATS</div>
+              <div class="pbody">
+                <div class="stat"><div class="row"><span>Backend</span><span class="mono">Lv.MAX</span></div><div class="bar"><div class="fill" style="width:96%"></div></div></div>
+                <div class="stat"><div class="row"><span>Infra / Cloud</span><span class="mono">88</span></div><div class="bar"><div class="fill" style="width:88%"></div></div></div>
+                <div class="stat"><div class="row"><span>Data / Scale</span><span class="mono">85</span></div><div class="bar"><div class="fill" style="width:85%"></div></div></div>
+                <div class="stat"><div class="row"><span>AI / ML</span><span class="mono">78 ↑</span></div><div class="bar"><div class="fill" style="width:78%"></div></div></div>
+                <div class="stat"><div class="row"><span>AEO</span><span class="mono">NEW!</span></div><div class="bar"><div class="fill" style="width:72%"></div></div></div>
+              </div>
+            </div>
+
+            <!-- QUEST LOG -->
+            <div class="panel tall">
+              <div class="ptitle mono">QUEST LOG</div>
+              <div class="pbody">
+              <div class="quest">
+                <div class="qicon">★</div>
+                <div class="qmain">
+                  <div class="qh"><span class="co">스텔스 스타트업</span><span class="pr mono">2025~</span><span class="status st-cur mono">IN PROGRESS</span></div>
+                  <div class="ds">AEO 측정 플랫폼 설계·개발(FastAPI·LangGraph) · 호텔 SaaS · AI 가시성 지표 개선</div>
+                </div>
+              </div>
+              <div class="quest">
+                <div class="qicon">✓</div>
+                <div class="qmain">
+                  <div class="qh"><span class="co">한익스프레스</span><span class="pr mono">2023–25</span><span class="status st-clr mono">CLEARED</span></div>
+                  <div class="ds">물류 풀필먼트 WMS·FMS 공통 모듈 · AWS EKS 기반 MSA 플랫폼 구축</div>
+                </div>
+              </div>
+              <div class="quest">
+                <div class="qicon">✓</div>
+                <div class="qmain">
+                  <div class="qh"><span class="co">위메프</span><span class="pr mono">2018–23</span><span class="status st-clr mono">CLEARED</span></div>
+                  <div class="ds">최저가 추출·상품 검색(AI셀렉트) · 크롤러+SQS 파이프라인 · 동접 1–5만 트래픽 대응</div>
+                </div>
+              </div>
+              <div class="quest">
+                <div class="qicon">✓</div>
+                <div class="qmain">
+                  <div class="qh"><span class="co">핀톡 FinTalk</span><span class="pr mono">2016–18</span><span class="status st-clr mono">CLEARED</span></div>
+                  <div class="ds">재무전문가–고객 매칭 서비스(Django·GAE) · 재무계산기 안드로이드 앱</div>
+                </div>
+              </div>
+              <div class="quest">
+                <div class="qicon">◆</div>
+                <div class="qmain">
+                  <div class="qh"><span class="co">유비투스코리아</span><span class="pr mono">2013</span><span class="status st-tut mono">TUTORIAL</span></div>
+                  <div class="ds">QA 인턴 — 커리어의 튜토리얼 스테이지</div>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom">
+            <div class="panel">
+              <div class="ptitle mono">INVENTORY</div>
+              <div class="chips">
+                <span class="chip">Python</span><span class="chip">Java</span><span class="chip">TypeScript</span>
+                <span class="chip">Spring / JPA</span><span class="chip">Django</span><span class="chip">Node · Express</span>
+                <span class="chip">PyTorch</span><span class="chip">RAG</span><span class="chip">LangGraph</span>
+                <span class="chip">AWS</span><span class="chip">K8s (EKS)</span><span class="chip">Docker</span><span class="chip">CI/CD</span>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="ptitle mono">ACHIEVEMENTS</div>
+              <div class="ach">🎓 <b>한양대</b> 컴퓨터공학 학사<br>🧠 <b>AIFFEL</b> — RAG 질의응답 시스템 (2025)</div>
+            </div>
+          </div>
+
+          <div class="legend mono">
+            <span class="key"><span class="btn k-a">A</span> dev.bychoi@gmail.com</span>
+            <span class="key"><span class="btn k-b">B</span> github.com/beomyongchoi</span>
+            <span class="key"><span class="btn k-y">Y</span> in/beomyong-choi</span>
+            <span class="key"><span class="btn k-x">X</span> beomyongchoi.github.io</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT JOY-CON -->
+      <div class="joycon right">
+        <div class="rail"></div>
+        <div class="mini plus mono">+</div>
+        <div class="abxy">
+          <div class="rbtn x">X</div><div class="rbtn b">B</div>
+          <div class="rbtn y">Y</div><div class="rbtn a">A</div>
+        </div>
+        <div class="stick"></div>
+        <div class="mini home">⌂</div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

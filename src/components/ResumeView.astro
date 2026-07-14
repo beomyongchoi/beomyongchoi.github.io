@@ -10,6 +10,8 @@ const tx = {
   training: isKo ? "교육" : "Training",
   skills: isKo ? "기술" : "Skills",
   present: isKo ? "현재" : "Present",
+  pdf: isKo ? "PDF 다운로드" : "Download PDF",
+  pdfSwitch: isKo ? "스위치 에디션" : "Switch Edition",
 };
 ---
 
@@ -20,6 +22,24 @@ const tx = {
     <a href={`mailto:${SITE.email}`} class="text-accent hover:underline">{SITE.email}</a>
     <a href={SITE.github} class="text-accent hover:underline">GitHub</a>
     <a href={SITE.linkedin} class="text-accent hover:underline">LinkedIn</a>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <a
+      href="/resume-beomyong-choi.pdf"
+      download
+      class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+    >
+      <span aria-hidden="true">↓</span> {tx.pdf}
+    </a>
+    <a
+      href="/resume-beomyong-choi-switch.pdf"
+      download
+      class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:border-accent hover:text-accent"
+      title={isKo ? "재미로 만든 닌텐도 스위치 콘셉트 이력서" : "A Nintendo Switch–themed résumé, just for fun"}
+    >
+      <span aria-hidden="true">🎮</span> {tx.pdfSwitch}
+    </a>
   </div>
 
   <section>

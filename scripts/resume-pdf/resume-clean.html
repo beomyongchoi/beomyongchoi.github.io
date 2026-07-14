@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ink: #17171b;
+    --accent: #2563eb;
+    --muted: #6b7280;
+    --line: #e6e8ec;
+    --soft: #f6f7f9;
+  }
+  html, body {
+    font-family: -apple-system, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 18mm 16mm 14mm;
+  }
+  /* Header */
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+  .name { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+  .name .en { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 8px; }
+  .role { font-size: 13px; font-weight: 600; color: var(--accent); margin-top: 4px; }
+  .contact { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 10.5px; color: var(--muted); }
+  .contact a { color: var(--muted); text-decoration: none; }
+  .contact b { color: var(--ink); font-weight: 600; }
+
+  .summary { margin-top: 14px; font-size: 11.5px; line-height: 1.6; color: #33343a; }
+
+  .cols { display: grid; grid-template-columns: 1fr 2.15fr; gap: 22px; margin-top: 20px; }
+
+  h2.sec {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 9px;
+  }
+  .block + .block { margin-top: 20px; }
+
+  /* Skills */
+  .skill-g { margin-bottom: 11px; }
+  .skill-g .lab { font-size: 10.5px; font-weight: 700; margin-bottom: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font-size: 9.5px; background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 2px 6px; color: #3a3b42; }
+
+  /* Education / Training */
+  .edu .t { font-size: 11px; font-weight: 700; }
+  .edu .s { font-size: 10px; color: #45464d; margin-top: 2px; line-height: 1.45; }
+  .edu .p { font-size: 9.5px; color: var(--muted); margin-top: 2px; }
+
+  /* Experience */
+  .job { position: relative; padding-left: 15px; padding-bottom: 15px; border-left: 1.5px solid var(--line); }
+  .job:last-child { padding-bottom: 0; }
+  .job::before {
+    content: ""; position: absolute; left: -5px; top: 3px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--accent); border: 1.5px solid #fff;
+  }
+  .job.cur::before { box-shadow: 0 0 0 2px rgba(37,99,235,0.25); }
+  .job .head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .job .co { font-size: 12.5px; font-weight: 700; }
+  .job .per { font-size: 9.5px; color: var(--muted); white-space: nowrap; }
+  .job .ro { font-size: 10.5px; font-weight: 600; color: var(--accent); margin-top: 1px; }
+  .job ul { margin-top: 6px; padding-left: 0; list-style: none; }
+  .job li { position: relative; font-size: 10.5px; line-height: 1.5; color: #35363c; padding-left: 11px; margin-top: 3px; }
+  .job li::before { content: ""; position: absolute; left: 0; top: 7px; width: 3px; height: 3px; border-radius: 50%; background: #b9bcc4; }
+
+  footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 8.5px; color: #9aa0a8; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="name">최범용<span class="en">Beomyong Choi</span></div>
+      <div class="role">백엔드 · AI 엔지니어 &nbsp;·&nbsp; Backend &amp; AI Engineer</div>
+      <div class="contact">
+        <span><b>Email</b> dev.bychoi@gmail.com</span>
+        <span><b>GitHub</b> github.com/beomyongchoi</span>
+        <span><b>LinkedIn</b> in/beomyong-choi</span>
+        <span><b>Web</b> beomyongchoi.github.io</span>
+      </div>
+    </header>
+
+    <p class="summary">9년차 백엔드 엔지니어입니다. 커머스와 물류에서 검색·데이터 파이프라인, 대규모 트래픽, AWS EKS 기반 MSA를 다뤘습니다. 지금은 AI 서비스와 AEO를 만듭니다.</p>
+
+    <div class="cols">
+      <aside>
+        <div class="block">
+          <h2 class="sec">Skills</h2>
+          <div class="skill-g"><div class="lab">언어</div><div class="chips"><span class="chip">Python</span><span class="chip">Java</span><span class="chip">TypeScript</span></div></div>
+          <div class="skill-g"><div class="lab">백엔드</div><div class="chips"><span class="chip">Spring</span><span class="chip">JPA</span><span class="chip">Django</span><span class="chip">Node.js / Express</span><span class="chip">Fastify</span></div></div>
+          <div class="skill-g"><div class="lab">AI / ML</div><div class="chips"><span class="chip">PyTorch</span><span class="chip">NLP</span><span class="chip">RAG</span><span class="chip">LangChain / LangGraph</span><span class="chip">LLM APIs</span></div></div>
+          <div class="skill-g"><div class="lab">인프라</div><div class="chips"><span class="chip">AWS</span><span class="chip">GCP</span><span class="chip">Docker</span><span class="chip">Kubernetes (EKS)</span><span class="chip">Nginx</span><span class="chip">CI/CD</span><span class="chip">MLOps</span></div></div>
+        </div>
+
+        <div class="block">
+          <h2 class="sec">Education</h2>
+          <div class="edu">
+            <div class="t">한양대학교</div>
+            <div class="s">컴퓨터공학부 (컴퓨터공학) 졸업</div>
+            <div class="p">2009.03 – 2017.08</div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 class="sec">Training</h2>
+          <div class="edu">
+            <div class="t">아이펠(AIFFEL) 리서치 과정 수료</div>
+            <div class="s">NLP 중심 AI 전문가 과정. 팀 프로젝트로 RAG 기반 질의응답 시스템을 연구·개발.</div>
+            <div class="p">2025.07</div>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="block">
+          <h2 class="sec">Experience</h2>
+
+          <div class="job cur">
+            <div class="head"><div class="co">스텔스 스타트업</div><div class="per">2025 – 현재</div></div>
+            <div class="ro">AEO · 풀스택 엔지니어</div>
+            <ul>
+              <li>여러 AI 답변엔진을 동시 분석하는 AEO 측정 플랫폼 설계·개발 (FastAPI, LangGraph)</li>
+              <li>국내 대형 건설사 대상 AEO 측정·리포팅으로 AI 가시성 지표 개선</li>
+              <li>호텔 운영 멀티테넌트 SaaS 및 AI 친화 콘텐츠 발행 인프라 구축</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="head"><div class="co">(주)한익스프레스</div><div class="per">2023.12 – 2025.08</div></div>
+            <div class="ro">백엔드 엔지니어</div>
+            <ul>
+              <li>물류 풀필먼트 솔루션 창고관리(WMS)·주문관리(FMS) 공통 모듈 개발 및 시스템 아키텍처 설계</li>
+              <li>AWS EKS 기반 MSA 플랫폼 구축</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="head"><div class="co">위메프</div><div class="per">2018.04 – 2023.05</div></div>
+            <div class="ro">백엔드 엔지니어</div>
+            <ul>
+              <li>카탈로그 기반 최저가 상품 자동 추출 및 상품 검색 서비스 개발 (위메프 AI셀렉트)</li>
+              <li>쇼핑몰·인플루언서 SNS 데이터 수집 크롤러와 AWS SQS 파이프라인 구축 (일 1,000여 건)</li>
+              <li>Django 레거시를 Node.js(Express)로 마이그레이션, 동시접속 1–5만 규모의 대규모 트래픽 이벤트 대응</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="head"><div class="co">주식회사 핀톡 (FinTalk)</div><div class="per">2016.02 – 2018.04</div></div>
+            <div class="ro">백엔드 엔지니어</div>
+            <ul>
+              <li>재무전문가–고객 매칭 서비스 개발 (Django, Google App Engine)</li>
+              <li>재무계산기 안드로이드 앱 개발</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="head"><div class="co">유비투스코리아</div><div class="per">2013.12 – 2014.02</div></div>
+            <div class="ro">QA 인턴</div>
+            <ul>
+              <li>서비스 QA 업무 수행</li>
+            </ul>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <footer>
+      <span>최범용 · Beomyong Choi — 백엔드 · AI 엔지니어</span>
+      <span>beomyongchoi.github.io</span>
+    </footer>
+  </div>
+</body>
+</html>
