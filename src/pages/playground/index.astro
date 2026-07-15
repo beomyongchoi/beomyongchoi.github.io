@@ -1,0 +1,245 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`실험실 — ${SITE.authorKo}`}
+  description="블로그 곁에서 굴려보는 소소한 사이드 프로젝트들. 첫 번째는 Canvas로 직접 물리를 구현한 로또 추첨기."
+  locale="ko"
+  path="/playground/"
+>
+  <header class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">실험실</h1>
+    <p class="mt-3 text-muted">블로그 곁에서 굴려보는 소소한 것들. Canvas·JS로 직접 만든 장난감.</p>
+  </header>
+
+  <section class="lab-card">
+    <div class="lab-head">
+      <h2>로또 추첨기 <span class="badge">6 / 45</span></h2>
+      <span class="lab-tag">Canvas 2D · 직접 물리</span>
+    </div>
+
+    <canvas id="lotto" aria-label="로또 추첨기"></canvas>
+
+    <div class="lab-controls">
+      <button id="lotto-draw" type="button" class="btn-primary">추첨</button>
+      <button id="lotto-reset" type="button" class="btn-ghost">리셋</button>
+    </div>
+    <p id="lotto-status" class="lab-status">버튼을 눌러 공을 뽑아보세요.</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .lab-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    padding: 18px 18px 22px;
+  }
+  .lab-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .lab-head h2 { font-size: 1.15rem; font-weight: 700; }
+  .badge {
+    font-size: 0.72rem; font-weight: 700; color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+    border-radius: 999px; padding: 1px 9px; margin-left: 6px; vertical-align: middle;
+  }
+  .lab-tag { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); }
+  #lotto {
+    display: block; width: 100%; max-width: 520px; height: auto; aspect-ratio: 520 / 640;
+    margin: 0 auto; border-radius: 12px; touch-action: none;
+  }
+  .lab-controls { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
+  .btn-primary {
+    font: inherit; font-weight: 600; padding: 9px 26px; border: 0; border-radius: 10px;
+    background: var(--accent); color: var(--accent-fg); cursor: pointer; transition: opacity .15s, transform .05s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-ghost {
+    font: inherit; font-weight: 600; padding: 9px 20px; border: 1px solid var(--border); border-radius: 10px;
+    background: transparent; color: var(--muted); cursor: pointer; transition: border-color .15s, color .15s;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .lab-status { margin-top: 12px; text-align: center; font-size: 0.9rem; color: var(--muted); min-height: 1.3em; }
+</style>
+
+<script>
+  const cv = document.getElementById("lotto");
+  if (cv && cv.getContext) {
+    const ctx = cv.getContext("2d");
+    const W = 520, H = 640;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = W * dpr;
+    cv.height = H * dpr;
+    ctx.scale(dpr, dpr);
+
+    // theme-aware neutrals (ball colors stay official lotto colors)
+    const css = getComputedStyle(document.documentElement);
+    const v = (name, fb) => (css.getPropertyValue(name).trim() || fb);
+    const C_BORDER = v("--border", "#e5e6e9");
+    const C_MUTED = v("--muted", "#888");
+    const C_SURFACE = v("--surface", "#f2f3f5");
+    const C_FG = v("--fg", "#1a1a1f");
+
+    const TANK = { x: 260, y: 240, r: 205 };
+    const R0 = 15;      // tank ball radius
+    const R1 = 23;      // placed ball radius
+    const SLOT_Y = 588, SLOT_R = 23;
+
+    const ballColor = (n) =>
+      n <= 10 ? "#fbc400" : n <= 20 ? "#69c8f2" : n <= 30 ? "#ff7272" : n <= 40 ? "#9aa0a6" : "#b0d840";
+
+    // result slots: 6 mains + gap + bonus
+    const SP = 56, mains = SP * 5, extra = 74;
+    const startX = (W - (mains + extra)) / 2;
+    const slots = [];
+    for (let i = 0; i < 6; i++) slots.push({ x: startX + SP * i, y: SLOT_Y });
+    slots.push({ x: startX + mains + extra, y: SLOT_Y, bonus: true });
+    const plusX = (slots[5].x + slots[6].x) / 2;
+
+    let balls = [];
+    let phase = "idle"; // idle | charging | revealing | done
+    let blow = 0.6;     // blower intensity
+    const status = document.getElementById("lotto-status");
+    const drawBtn = document.getElementById("lotto-draw");
+    const resetBtn = document.getElementById("lotto-reset");
+
+    function seedTank() {
+      balls = [];
+      for (let n = 1; n <= 45; n++) {
+        const a = Math.random() * Math.PI * 2, rr = Math.random() * (TANK.r - R0 - 8);
+        balls.push({
+          n, x: TANK.x + Math.cos(a) * rr, y: TANK.y + Math.sin(a) * rr,
+          vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+          r: R0, color: ballColor(n), state: "tank",
+        });
+      }
+    }
+
+    function physics() {
+      // integrate tank balls
+      for (const b of balls) {
+        if (b.state === "flying") {
+          b.f += 1;
+          const t = Math.min(b.f / b.dur, 1);
+          const e = 1 - Math.pow(1 - t, 3);
+          b.x = b.sx + (b.tx - b.sx) * e;
+          b.y = b.sy + (b.ty - b.sy) * e - Math.sin(t * Math.PI) * 46; // toss arc
+          b.r = R0 + (R1 - R0) * e;
+          if (t >= 1) { b.state = "placed"; b.x = b.tx; b.y = b.ty; b.r = R1; }
+          continue;
+        }
+        if (b.state !== "tank") continue;
+        b.vy += 0.2;                       // gravity
+        b.vy -= 0.34 * blow;               // updraft (blower)
+        b.vx += (Math.random() - 0.5) * 1.7 * blow;
+        b.vy += (Math.random() - 0.5) * 1.7 * blow;
+        b.vx *= 0.985; b.vy *= 0.985;
+        const sp = Math.hypot(b.vx, b.vy), MAX = 12;
+        if (sp > MAX) { b.vx *= MAX / sp; b.vy *= MAX / sp; }
+        b.x += b.vx; b.y += b.vy;
+        const dx = b.x - TANK.x, dy = b.y - TANK.y, d = Math.hypot(dx, dy) || 1, lim = TANK.r - b.r;
+        if (d > lim) {
+          const nx = dx / d, ny = dy / d;
+          b.x = TANK.x + nx * lim; b.y = TANK.y + ny * lim;
+          const vn = b.vx * nx + b.vy * ny;
+          b.vx -= 1.7 * vn * nx; b.vy -= 1.7 * vn * ny;
+        }
+      }
+      // ball-ball (tank only)
+      const t = balls.filter((b) => b.state === "tank");
+      for (let i = 0; i < t.length; i++) {
+        for (let j = i + 1; j < t.length; j++) {
+          const a = t[i], c = t[j];
+          const dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy) || 1, min = a.r + c.r;
+          if (d < min) {
+            const nx = dx / d, ny = dy / d, ov = (min - d) / 2;
+            a.x -= nx * ov; a.y -= ny * ov; c.x += nx * ov; c.y += ny * ov;
+            const va = a.vx * nx + a.vy * ny, vb = c.vx * nx + c.vy * ny, s = va - vb;
+            a.vx -= s * nx; a.vy -= s * ny; c.vx += s * nx; c.vy += s * ny;
+          }
+        }
+      }
+    }
+
+    function drawBall(b) {
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fillStyle = b.color; ctx.fill();
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.6, 0, 7); ctx.fillStyle = "#fff"; ctx.fill();
+      ctx.fillStyle = "#222"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "700 " + Math.round(b.r * 0.82) + "px ui-sans-serif, system-ui, sans-serif";
+      ctx.fillText(String(b.n), b.x, b.y + 1);
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+      // tank
+      ctx.beginPath(); ctx.arc(TANK.x, TANK.y, TANK.r, 0, 7);
+      ctx.fillStyle = C_SURFACE; ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = C_BORDER; ctx.stroke();
+      // slot placeholders
+      ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.strokeStyle = C_BORDER;
+      for (const s of slots) { ctx.beginPath(); ctx.arc(s.x, s.y, SLOT_R, 0, 7); ctx.stroke(); }
+      ctx.setLineDash([]);
+      ctx.fillStyle = C_MUTED; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "700 22px ui-sans-serif, system-ui, sans-serif";
+      ctx.fillText("+", plusX, SLOT_Y);
+      ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
+      ctx.fillText("보너스", slots[6].x, SLOT_Y + SLOT_R + 13);
+      // balls: tank first, then flying/placed on top
+      for (const b of balls) if (b.state === "tank") drawBall(b);
+      for (const b of balls) if (b.state === "flying" || b.state === "placed") drawBall(b);
+    }
+
+    function loop() { physics(); render(); requestAnimationFrame(loop); }
+
+    function resetTank() {
+      seedTank();
+      phase = "idle"; blow = 0.6;
+      status.textContent = "버튼을 눌러 공을 뽑아보세요.";
+      drawBtn.disabled = false;
+    }
+
+    function fly(n, slot, dur) {
+      const b = balls.find((x) => x.n === n && x.state === "tank");
+      if (!b) return;
+      b.state = "flying"; b.f = 0; b.dur = dur;
+      b.sx = b.x; b.sy = b.y; b.tx = slot.x; b.ty = slot.y;
+    }
+
+    function doDraw() {
+      if (phase === "charging" || phase === "revealing") return;
+      resetTank();                         // return all balls, fresh churn
+      phase = "charging"; blow = 1.5;
+      drawBtn.disabled = true;
+      status.textContent = "추첨 중…";
+      const pool = Array.from({ length: 45 }, (_, i) => i + 1);
+      for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
+      const six = pool.slice(0, 6).sort((a, b) => a - b);
+      const bonus = pool[6];
+      const seq = [...six.map((n) => ({ n, slot: slots[six.indexOf(n)] })), { n: bonus, slot: slots[6] }];
+
+      setTimeout(() => {
+        phase = "revealing"; blow = 1.1;
+        seq.forEach((item, i) => {
+          setTimeout(() => {
+            fly(item.n, item.slot, 34);
+            if (i === seq.length - 1) {
+              setTimeout(() => {
+                phase = "done"; blow = 0.6; drawBtn.disabled = false;
+                status.textContent = "당첨 번호  " + six.join(", ") + "  +  보너스 " + bonus;
+              }, 620);
+            }
+          }, i * 480);
+        });
+      }, 900);
+    }
+
+    drawBtn.addEventListener("click", doDraw);
+    resetBtn.addEventListener("click", resetTank);
+
+    seedTank();
+    loop();
+  }
+</script>
