@@ -5,7 +5,7 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`실험실 — ${SITE.authorKo}`}
-  description="블로그 곁에서 굴려보는 소소한 사이드 프로젝트들. 첫 번째는 Canvas로 직접 물리를 구현한 가챠 로또 추첨기."
+  description="블로그 곁에서 굴려보는 소소한 사이드 프로젝트들. 8비트 마리오 ? 블록 로또 추첨기."
   locale="ko"
   path="/playground/"
 >
@@ -16,26 +16,26 @@ import { SITE } from "../../consts";
 
   <section class="lab-card">
     <div class="lab-head">
-      <h2>가챠 로또 추첨기 <span class="badge">6 / 45</span></h2>
-      <span class="lab-tag">Canvas 2D · 직접 물리</span>
+      <h2>LUCKY BLOCK <span class="badge">로또 6 / 45</span></h2>
+      <span class="lab-tag">Canvas 2D · 8-bit</span>
     </div>
 
-    <canvas id="lotto" aria-label="가챠 로또 추첨기"></canvas>
+    <canvas id="lotto" aria-label="8비트 로또 블록"></canvas>
 
     <div class="lab-controls">
-      <button id="lotto-draw" type="button" class="btn-primary">추첨 (손잡이 돌리기)</button>
+      <button id="lotto-draw" type="button" class="btn-primary">블록 치기!</button>
       <button id="lotto-reset" type="button" class="btn-ghost">리셋</button>
       <button id="lotto-copy" type="button" class="btn-ghost" hidden>번호 복사</button>
       <button id="lotto-save" type="button" class="btn-ghost" hidden>이미지 저장</button>
     </div>
-    <p id="lotto-status" class="lab-status">공이 통 바닥에 가라앉아 있어요. 손잡이를 돌려(눌러) 뽑아보세요.</p>
+    <p id="lotto-status" class="lab-status">블록을 쳐서 번호를 뽑자!</p>
   </section>
 </BaseLayout>
 
 <style>
   .lab-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 18px 18px 22px; }
   .lab-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-  .lab-head h2 { font-size: 1.15rem; font-weight: 700; }
+  .lab-head h2 { font-size: 1.05rem; font-weight: 700; font-family: var(--font-mono); letter-spacing: 0.02em; }
   .badge {
     font-size: 0.72rem; font-weight: 700; color: var(--accent);
     border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
@@ -43,12 +43,13 @@ import { SITE } from "../../consts";
   }
   .lab-tag { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); }
   #lotto {
-    display: block; width: 100%; max-width: 440px; height: auto; aspect-ratio: 460 / 820;
-    margin: 0 auto; touch-action: none; cursor: pointer;
+    display: block; width: 100%; max-width: 512px; height: auto; aspect-ratio: 512 / 448;
+    margin: 0 auto; image-rendering: pixelated; border-radius: 8px; cursor: pointer; touch-action: none;
+    border: 3px solid #202020;
   }
   .lab-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
   .btn-primary {
-    font: inherit; font-weight: 600; padding: 9px 24px; border: 0; border-radius: 10px;
+    font: inherit; font-weight: 700; padding: 9px 24px; border: 0; border-radius: 10px;
     background: var(--accent); color: var(--accent-fg); cursor: pointer; transition: opacity .15s, transform .05s;
   }
   .btn-primary:hover { opacity: 0.9; }
@@ -66,232 +67,152 @@ import { SITE } from "../../consts";
   const cv = document.getElementById("lotto");
   if (cv && cv.getContext) {
     const ctx = cv.getContext("2d");
-    const W = 460, H = 820;
+    const W = 512, H = 448;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+    ctx.imageSmoothingEnabled = false;
 
-    const DR = { x: 230, y: 196, r: 150 };
-    const KNOB = { x: 150, y: 452, r: 42 };
-    const DOOR = { x: 230, y: 534 };
-    const R0 = 13, R1 = 20, TRAY_Y = 754, SLOT_R = 20;
-    const LAYERS = 4, LSCALE = [0.82, 0.92, 1.0, 1.1], LALPHA = [0.9, 0.95, 1.0, 1.0];
+    // palette (NES-ish)
+    const SKY = "#5c94fc", CLOUD = "#ffffff", CLOUDS = "#b8d8ff";
+    const HILL = "#3ca63c", HILL_D = "#2e8020";
+    const GND = "#e07414", GND_D = "#a83c08", GND_HI = "#f8a848", MORTAR = "#7c2c00";
+    const BLK = "#f8b800", BLK_HI = "#ffd85c", BLK_D = "#b06800", INK = "#201008";
+    const ballColor = (n) => n <= 10 ? "#fbc400" : n <= 20 ? "#5cb8f0" : n <= 30 ? "#ff6a6a" : n <= 40 ? "#b8bcc4" : "#8ed040";
 
-    const ballColor = (n) =>
-      n <= 10 ? "#fbc400" : n <= 20 ? "#69c8f2" : n <= 30 ? "#ff7272" : n <= 40 ? "#9aa0a6" : "#b0d840";
-
-    const SP = 52, mains = SP * 5, extra = 64, startX = (W - (mains + extra)) / 2;
+    const BLOCK = { x: 228, y: 150, s: 56 };     // ? block
+    const GROUND_Y = 356;
+    const R = 17;                                 // result ball radius
+    const SP = 62, mains = SP * 5, extra = 40, startX = (W - (mains + extra)) / 2;
     const slots = [];
-    for (let i = 0; i < 6; i++) slots.push({ x: startX + SP * i, y: TRAY_Y });
-    slots.push({ x: startX + mains + extra, y: TRAY_Y });
+    for (let i = 0; i < 6; i++) slots.push({ x: startX + SP * i, y: 400 });
+    slots.push({ x: startX + mains + extra + SP, y: 400 });
     const plusX = (slots[5].x + slots[6].x) / 2;
 
-    let balls = [], phase = "idle", blow = 0, lastResult = null, knobSpin = 0;
+    let balls = [], phase = "idle", bonk = 0, t = 0, blink = 0, lastResult = null;
     const status = document.getElementById("lotto-status");
     const drawBtn = document.getElementById("lotto-draw");
     const resetBtn = document.getElementById("lotto-reset");
     const copyBtn = document.getElementById("lotto-copy");
     const saveBtn = document.getElementById("lotto-save");
 
-    function seedTank() {
-      balls = [];
-      for (let n = 1; n <= 45; n++) {
-        const a = Math.random() * Math.PI * 2, rr = Math.random() * (DR.r - R0 - 8);
-        balls.push({
-          n, x: DR.x + Math.cos(a) * rr, y: DR.y + Math.sin(a) * rr * 0.5 + DR.r * 0.4,
-          vx: (Math.random() - 0.5) * 3, vy: Math.random() * 2,
-          layer: (Math.random() * LAYERS) | 0, color: ballColor(n), state: "tank",
-        });
+    // ---- pixel helpers ----
+    const px = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x | 0, y | 0, w | 0, h | 0); };
+    function pixText(s, x, y, size, c, align) {
+      ctx.font = "700 " + size + "px ui-monospace, 'SF Mono', Menlo, monospace";
+      ctx.textAlign = align || "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = INK; ctx.fillText(s, x + 2, y + 2);
+      ctx.fillStyle = c; ctx.fillText(s, x, y);
+    }
+    function cloud(x, y) {
+      px(x, y, 60, 16, CLOUD); px(x + 12, y - 10, 36, 14, CLOUD); px(x - 6, y + 6, 72, 12, CLOUD);
+      px(x + 6, y + 16, 48, 4, CLOUDS);
+    }
+    function hill(x, y, w) {
+      px(x, y, w, 40, HILL); px(x + 8, y - 12, w - 16, 14, HILL); px(x + w * 0.35, y - 22, w * 0.3, 12, HILL);
+      px(x, y + 30, w, 10, HILL_D);
+    }
+    function drawScene() {
+      px(0, 0, W, H, SKY);
+      cloud(70, 70); cloud(360, 48); cloud(250, 110);
+      hill(-20, GROUND_Y - 40, 150); hill(370, GROUND_Y - 30, 180);
+      // ground
+      px(0, GROUND_Y, W, H - GROUND_Y, GND);
+      px(0, GROUND_Y, W, 6, GND_HI);
+      px(0, GROUND_Y + 6, W, 4, GND_D);
+      for (let y = GROUND_Y + 12; y < H; y += 22) {
+        for (let x = 0; x < W; x += 32) { px(x, y, 32, 2, MORTAR); }
       }
+      for (let x = 0; x < W; x += 32) { px(x, GROUND_Y + 12, 2, H, MORTAR); }
     }
-
-    function physics() {
-      for (const b of balls) {
-        if (b.state === "flying") {
-          b.f += 1;
-          if (b.f <= 12) { const e = (b.f / 12) ** 2; b.x = b.sx + (DOOR.x - b.sx) * e; b.y = b.sy + (DOOR.y - b.sy) * e; }
-          else {
-            const e = Math.min((b.f - 12) / (b.dur - 12), 1), ee = 1 - Math.pow(1 - e, 3);
-            b.x = DOOR.x + (b.tx - DOOR.x) * ee; b.y = DOOR.y + (b.ty - DOOR.y) * ee + Math.sin(e * Math.PI) * 22;
-            b.r = R0 + (R1 - R0) * ee;
-            if (e >= 1) { b.state = "placed"; b.x = b.tx; b.y = b.ty; b.r = R1; }
-          }
-          continue;
-        }
-        if (b.state !== "tank") continue;
-        b.vy += 0.22; b.vy -= 0.4 * blow;
-        b.vx += (Math.random() - 0.5) * 1.9 * blow; b.vy += (Math.random() - 0.5) * 1.9 * blow;
-        b.vx *= 0.986; b.vy *= 0.986;
-        const sp = Math.hypot(b.vx, b.vy), MAX = 12; if (sp > MAX) { b.vx *= MAX / sp; b.vy *= MAX / sp; }
-        b.x += b.vx; b.y += b.vy;
-        const dx = b.x - DR.x, dy = b.y - DR.y, d = Math.hypot(dx, dy) || 1, lim = DR.r - R0 - 3;
-        if (d > lim) {
-          const nx = dx / d, ny = dy / d; b.x = DR.x + nx * lim; b.y = DR.y + ny * lim;
-          const vn = b.vx * nx + b.vy * ny; b.vx -= 1.7 * vn * nx; b.vy -= 1.7 * vn * ny;
-        }
-      }
-      for (let L = 0; L < LAYERS; L++) {
-        const t = balls.filter((b) => b.state === "tank" && b.layer === L);
-        for (let i = 0; i < t.length; i++) for (let j = i + 1; j < t.length; j++) {
-          const a = t[i], c = t[j], dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy) || 1, min = R0 * 2;
-          if (d < min) {
-            const nx = dx / d, ny = dy / d, ov = (min - d) / 2;
-            a.x -= nx * ov; a.y -= ny * ov; c.x += nx * ov; c.y += ny * ov;
-            const va = a.vx * nx + a.vy * ny, vb = c.vx * nx + c.vy * ny, s = va - vb;
-            a.vx -= s * nx; a.vy -= s * ny; c.vx += s * nx; c.vy += s * ny;
-          }
-        }
-      }
-      if (knobSpin > 0) knobSpin -= 0.15;
+    function drawBlock() {
+      const oy = -Math.abs(Math.sin(bonk * Math.PI)) * 16;   // bonk hop
+      const x = BLOCK.x, y = BLOCK.y + oy, s = BLOCK.s;
+      px(x - 3, y - 3, s + 6, s + 6, INK);                   // outline
+      px(x, y, s, s, phase === "idle" && blink % 60 < 30 ? BLK : BLK_HI);
+      px(x, y, s, s, BLK); px(x, y, s, 6, BLK_HI); px(x, y + s - 8, s, 8, BLK_D);
+      // rivets
+      px(x + 4, y + 4, 6, 6, INK); px(x + s - 10, y + 4, 6, 6, INK);
+      px(x + 4, y + s - 10, 6, 6, INK); px(x + s - 10, y + s - 10, 6, 6, INK);
+      pixText("?", x + s / 2, y + s / 2 + 2, 34, "#fff");
     }
-
-    // ---- machine (Bandai-ish: silver-gray body, red drum cap, brass knob) ----
-    function rr(x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    function drawBall(b, x, y, r) {
+      px(x - r, y - r, r * 2, r * 2, INK);                   // pixel square shadow (chunky)
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = b.color; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, r * 0.58, 0, 7); ctx.fillStyle = "#fff"; ctx.fill();
+      pixText(String(b.n), x, y + 1, Math.round(r * 0.9), INK);
     }
-    const BODY = "#dfe3e8", BODY_HI = "#f4f6f9", BODY_SH = "#c3c9d2";
-    const RED = "#d8483b", RED_HI = "#e35b4e", BRASS = "#d8b45c", BRASS_D = "#9c7a2e";
-
-    function glossPanel(x, y, w, h, r) {
-      rr(x, y, w, h, r); ctx.fillStyle = BODY; ctx.fill();
-      const g = ctx.createLinearGradient(0, y, 0, y + h);
-      g.addColorStop(0, "rgba(255,255,255,0.75)"); g.addColorStop(0.4, "rgba(255,255,255,0.05)");
-      g.addColorStop(1, "rgba(0,0,0,0.07)");
-      rr(x, y, w, h, r); ctx.fillStyle = g; ctx.fill();
-      rr(x + 1.5, y + 1.5, w - 3, h - 3, r - 1); ctx.lineWidth = 1.5; ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.stroke();
-    }
-
-    function drawMachine() {
-      ctx.fillStyle = "#33363c";
-      for (const wx of [95, 185, 275, 365]) { ctx.beginPath(); ctx.ellipse(wx, 702, 15, 11, 0, 0, 7); ctx.fill(); }
-      ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.16)"; ctx.shadowBlur = 20; ctx.shadowOffsetY = 9;
-      glossPanel(28, 600, 404, 96, 26); ctx.restore();
-      glossPanel(72, 300, 316, 308, 34);
-      // brass knob
-      ctx.beginPath(); ctx.arc(KNOB.x, KNOB.y, KNOB.r + 8, 0, 7);
-      const bg = ctx.createLinearGradient(0, KNOB.y - KNOB.r, 0, KNOB.y + KNOB.r);
-      bg.addColorStop(0, "#ecd68f"); bg.addColorStop(0.5, BRASS); bg.addColorStop(1, BRASS_D);
-      ctx.fillStyle = bg; ctx.fill();
-      ctx.save(); ctx.translate(KNOB.x, KNOB.y); ctx.rotate(knobSpin);
-      const kg = ctx.createRadialGradient(-12, -14, 4, 0, 0, KNOB.r);
-      kg.addColorStop(0, "#f6f7f9"); kg.addColorStop(0.55, "#cdd2da"); kg.addColorStop(1, "#9198a3");
-      ctx.beginPath(); ctx.arc(0, 0, KNOB.r, 0, 7); ctx.fillStyle = kg; ctx.fill();
-      ctx.fillStyle = "#7b818c"; rr(-5, -KNOB.r + 9, 10, KNOB.r * 2 - 18, 5); ctx.fill();
-      ctx.restore();
-      // coin slot + labels
-      ctx.fillStyle = "#8b909b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = "700 12px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("COIN", 312, 408);
-      rr(296, 420, 40, 60, 9); ctx.fillStyle = "#eef0f4"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#c9cdd6"; ctx.stroke();
-      ctx.fillStyle = "#3a3d44"; rr(312, 428, 8, 24, 3); ctx.fill();
-      // dispense door (frosted clear)
-      rr(200, 508, 60, 50, 9); ctx.fillStyle = "rgba(210,220,232,0.55)"; ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = "rgba(150,160,175,0.6)"; ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,0.5)"; rr(205, 512, 50, 16, 5); ctx.fill();
-      // neck + hood
-      glossPanel(150, 282, 160, 34, 12);
-      glossPanel(56, 50, 348, 258, 44);
-    }
-
-    function drawDrumBack() {
-      ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r, 0, 7);
-      ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fill();
-    }
-
-    function drawDrumFront() {
-      ctx.save();
-      ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r, 0, 7); ctx.clip();
-      // red top cap (front panel)
-      const capBottom = DR.y - 40;
-      const rg = ctx.createLinearGradient(0, DR.y - DR.r, 0, capBottom);
-      rg.addColorStop(0, RED_HI); rg.addColorStop(1, RED);
-      ctx.fillStyle = rg; ctx.fillRect(0, DR.y - DR.r, W, capBottom - (DR.y - DR.r));
-      // logo on cap
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = "800 30px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("LOTTO", DR.x, DR.y - 116);
-      ctx.font = "700 15px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("6 / 45  ✦", DR.x, DR.y - 90);
-      // subtle diagonal sheen (thin, not a blob)
-      ctx.globalAlpha = 0.16; ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.ellipse(DR.x - 52, DR.y + 8, 22, 126, -0.45, 0, 7); ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.restore();
-      // crisp rim
-      ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r, 0, 7); ctx.stroke();
-      ctx.lineWidth = 1.5; ctx.strokeStyle = "rgba(90,100,115,0.28)"; ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r - 2, 0, 7); ctx.stroke();
-    }
-
-    function drawBall(b) {
-      let r = b.r;
-      if (b.state === "tank") { r = R0 * LSCALE[b.layer]; ctx.globalAlpha = LALPHA[b.layer]; }
-      ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7); ctx.fillStyle = b.color; ctx.fill();
-      ctx.beginPath(); ctx.arc(b.x, b.y, r * 0.6, 0, 7); ctx.fillStyle = "#fff"; ctx.fill();
-      ctx.fillStyle = "#222"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = "700 " + Math.round(r * 0.85) + "px ui-sans-serif, system-ui, sans-serif";
-      ctx.fillText(String(b.n), b.x, b.y + 1); ctx.globalAlpha = 1;
-    }
-
     function render() {
-      ctx.clearRect(0, 0, W, H);
-      drawMachine();
-      drawDrumBack();
-      for (let L = 0; L < LAYERS; L++) for (const b of balls) if (b.state === "tank" && b.layer === L) drawBall(b);
-      drawDrumFront();
-      // tray
-      ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.strokeStyle = "#c7ccd4";
-      for (const s of slots) { ctx.beginPath(); ctx.arc(s.x, s.y, SLOT_R, 0, 7); ctx.stroke(); }
-      ctx.setLineDash([]);
-      ctx.fillStyle = "#9096a0"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = "700 20px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("+", plusX, TRAY_Y);
-      ctx.font = "10px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("보너스", slots[6].x, TRAY_Y + SLOT_R + 12);
-      for (const b of balls) if (b.state === "flying" || b.state === "placed") drawBall(b);
+      drawScene();
+      // pop balls (arcing)
+      for (const b of balls) {
+        if (b.state === "pop") {
+          const e = Math.min(b.t, 1), u = 1 - e;
+          const bx = u * u * b.p0x + 2 * u * e * b.p1x + e * e * b.p2x;
+          const by = u * u * b.p0y + 2 * u * e * b.p1y + e * e * b.p2y;
+          drawBall(b, bx, by, R);
+        }
+      }
+      drawBlock();
+      // result tray slots
+      for (const s of slots) { px(s.x - R - 3, s.y - R - 3, (R + 3) * 2, (R + 3) * 2, "#00000022"); px(s.x - R, s.y - R, R * 2, R * 2, "#ffffff33"); }
+      pixText("+", plusX, slots[6].y, 22, "#fff");
+      pixText("BONUS", slots[6].x, slots[6].y + R + 12, 10, "#fff");
+      for (const b of balls) if (b.state === "placed") drawBall(b, b.p2x, b.p2y, R);
+      // title
+      pixText("★ LUCKY BLOCK ★", W / 2, 26, 18, "#fff");
     }
 
-    function loop() { physics(); render(); requestAnimationFrame(loop); }
+    function tick() {
+      blink++;
+      if (bonk > 0) bonk = Math.max(0, bonk - 0.12);
+      for (const b of balls) if (b.state === "pop") { b.t += 0.05; if (b.t >= 1) b.state = "placed"; }
+      render(); requestAnimationFrame(tick);
+    }
 
     function showResultBtns(on) { copyBtn.hidden = !on; saveBtn.hidden = !on; }
-    function resetTank() {
-      seedTank(); phase = "idle"; blow = 0; lastResult = null;
+    function resetGame() {
+      balls = []; phase = "idle"; lastResult = null;
       showResultBtns(false); drawBtn.disabled = false;
-      status.textContent = "공이 통 바닥에 가라앉아 있어요. 손잡이를 돌려(눌러) 뽑아보세요.";
+      status.textContent = "블록을 쳐서 번호를 뽑자!";
     }
-    function fly(n, slot) {
-      const b = balls.find((x) => x.n === n && x.state === "tank"); if (!b) return;
-      b.state = "flying"; b.f = 0; b.dur = 46; b.sx = b.x; b.sy = b.y; b.tx = slot.x; b.ty = slot.y;
+    function popOut(n, slot, delay) {
+      setTimeout(() => {
+        bonk = 1;
+        const p0x = BLOCK.x + BLOCK.s / 2, p0y = BLOCK.y;
+        balls.push({
+          n, color: ballColor(n), state: "pop", t: 0,
+          p0x, p0y, p1x: (p0x + slot.x) / 2, p1y: Math.min(p0y, slot.y) - 96,
+          p2x: slot.x, p2y: slot.y,
+        });
+      }, delay);
     }
     function doDraw() {
-      if (phase === "charging" || phase === "revealing") return;
-      resetTank(); phase = "charging"; blow = 1.7; knobSpin = Math.PI * 2;
-      drawBtn.disabled = true; showResultBtns(false); status.textContent = "추첨 중…";
+      if (phase === "popping") return;
+      resetGame(); phase = "popping"; drawBtn.disabled = true;
+      status.textContent = "뽑는 중…";
       const pool = Array.from({ length: 45 }, (_, i) => i + 1);
       for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
       const six = pool.slice(0, 6).sort((a, b) => a - b), bonus = pool[6];
-      const seq = [...six.map((n, i) => ({ n, slot: slots[i] })), { n: bonus, slot: slots[6] }];
+      six.forEach((n, i) => popOut(n, slots[i], i * 360));
+      popOut(bonus, slots[6], 6 * 360);
       setTimeout(() => {
-        phase = "revealing"; blow = 1.15;
-        seq.forEach((item, i) => setTimeout(() => {
-          fly(item.n, item.slot);
-          if (i === seq.length - 1) setTimeout(() => {
-            phase = "done"; blow = 0; lastResult = { six, bonus };
-            drawBtn.disabled = false; showResultBtns(true);
-            status.textContent = "당첨 번호  " + six.join(", ") + "   +   보너스 " + bonus;
-          }, 780);
-        }, i * 520));
-      }, 1100);
+        phase = "done"; lastResult = { six, bonus };
+        drawBtn.disabled = false; showResultBtns(true);
+        status.textContent = "당첨 번호  " + six.join(", ") + "   +   보너스 " + bonus;
+      }, 6 * 360 + 900);
     }
 
     cv.addEventListener("click", (e) => {
       const rect = cv.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width * W, y = (e.clientY - rect.top) / rect.height * H;
-      if (Math.hypot(x - KNOB.x, y - KNOB.y) <= KNOB.r + 8) doDraw();
+      if (x > BLOCK.x - 10 && x < BLOCK.x + BLOCK.s + 10 && y > BLOCK.y - 26 && y < BLOCK.y + BLOCK.s + 10) doDraw();
     });
     drawBtn.addEventListener("click", doDraw);
-    resetBtn.addEventListener("click", resetTank);
+    resetBtn.addEventListener("click", resetGame);
     copyBtn.addEventListener("click", async () => {
       if (!lastResult) return;
-      try {
-        await navigator.clipboard.writeText(lastResult.six.join(", ") + "  +  보너스 " + lastResult.bonus);
-        copyBtn.textContent = "복사됨!"; setTimeout(() => (copyBtn.textContent = "번호 복사"), 1200);
-      } catch (e) {}
+      try { await navigator.clipboard.writeText(lastResult.six.join(", ") + "  +  보너스 " + lastResult.bonus);
+        copyBtn.textContent = "복사됨!"; setTimeout(() => (copyBtn.textContent = "번호 복사"), 1200); } catch (e) {}
     });
     saveBtn.addEventListener("click", () => {
       const a = document.createElement("a");
@@ -299,6 +220,6 @@ import { SITE } from "../../consts";
       a.href = cv.toDataURL("image/png"); a.click();
     });
 
-    seedTank(); loop();
+    tick();
   }
 </script>
