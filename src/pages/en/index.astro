@@ -30,7 +30,7 @@ const latest = (await getCollection("blog", (p) => p.data.lang === "en" && !p.da
         <ul class="mt-4 divide-y divide-border">
           {latest.map((p) => (
             <li class="py-4">
-              <a href={`/en/blog/${p.id}/`} class="group block">
+              <a href={`/en/blog/${p.data.translationKey ?? p.id}/`} class="group block">
                 <h3 class="font-medium group-hover:text-accent">{p.data.title}</h3>
                 <p class="mt-1 text-sm text-muted">{p.data.description}</p>
               </a>
