@@ -5,7 +5,7 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`실험실 — ${SITE.authorKo}`}
-  description="블로그 곁에서 굴려보는 소소한 사이드 프로젝트들. 8비트 마리오 ? 블록 로또 추첨기."
+  description="블로그 곁에서 굴려보는 소소한 사이드 프로젝트들. 8비트 마리오가 블록을 치며 뽑는 로또 추첨기."
   locale="ko"
   path="/playground/"
 >
@@ -20,15 +20,15 @@ import { SITE } from "../../consts";
       <span class="lab-tag">Canvas 2D · 8-bit</span>
     </div>
 
-    <canvas id="lotto" aria-label="8비트 로또 블록"></canvas>
+    <canvas id="lotto" aria-label="8비트 로또"></canvas>
 
     <div class="lab-controls">
-      <button id="lotto-draw" type="button" class="btn-primary">블록 치기!</button>
+      <button id="lotto-draw" type="button" class="btn-primary">추첨 (GO!)</button>
       <button id="lotto-reset" type="button" class="btn-ghost">리셋</button>
       <button id="lotto-copy" type="button" class="btn-ghost" hidden>번호 복사</button>
       <button id="lotto-save" type="button" class="btn-ghost" hidden>이미지 저장</button>
     </div>
-    <p id="lotto-status" class="lab-status">블록을 쳐서 번호를 뽑자!</p>
+    <p id="lotto-status" class="lab-status">GO! 를 누르면 마리오가 달리며 블록을 칩니다.</p>
   </section>
 </BaseLayout>
 
@@ -43,9 +43,8 @@ import { SITE } from "../../consts";
   }
   .lab-tag { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); }
   #lotto {
-    display: block; width: 100%; max-width: 512px; height: auto; aspect-ratio: 512 / 448;
-    margin: 0 auto; image-rendering: pixelated; border-radius: 8px; cursor: pointer; touch-action: none;
-    border: 3px solid #202020;
+    display: block; width: 100%; max-width: 520px; height: auto; aspect-ratio: 200 / 175;
+    margin: 0 auto; image-rendering: pixelated; border-radius: 4px; border: 3px solid #202020;
   }
   .lab-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
   .btn-primary {
@@ -67,146 +66,154 @@ import { SITE } from "../../consts";
   const cv = document.getElementById("lotto");
   if (cv && cv.getContext) {
     const ctx = cv.getContext("2d");
-    const W = 512, H = 448;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+    const W = 200, H = 175;            // LOW internal res → chunky pixels via CSS upscale
+    cv.width = W; cv.height = H;
     ctx.imageSmoothingEnabled = false;
 
-    // palette (NES-ish)
-    const SKY = "#5c94fc", CLOUD = "#ffffff", CLOUDS = "#b8d8ff";
-    const HILL = "#3ca63c", HILL_D = "#2e8020";
-    const GND = "#e07414", GND_D = "#a83c08", GND_HI = "#f8a848", MORTAR = "#7c2c00";
-    const BLK = "#f8b800", BLK_HI = "#ffd85c", BLK_D = "#b06800", INK = "#201008";
-    const ballColor = (n) => n <= 10 ? "#fbc400" : n <= 20 ? "#5cb8f0" : n <= 30 ? "#ff6a6a" : n <= 40 ? "#b8bcc4" : "#8ed040";
+    // palette
+    const SKY = "#5c94fc", CLOUD = "#fff", HILL = "#4ec84e", HILL_D = "#2e9020";
+    const GND = "#e08020", GND_D = "#a84808", GND_HI = "#f8b060", MORTAR = "#803008";
+    const BLK = "#f8b020", BLK_HI = "#ffd868", BLK_D = "#a86008", USED = "#b06818", INK = "#201008";
+    const ballColor = (n) => n <= 10 ? "#fbc400" : n <= 20 ? "#40a8f0" : n <= 30 ? "#f85858" : n <= 40 ? "#a8adb8" : "#78c828";
 
-    const BLOCK = { x: 228, y: 150, s: 56 };     // ? block
-    const GROUND_Y = 356;
-    const R = 17;                                 // result ball radius
-    const SP = 62, mains = SP * 5, extra = 40, startX = (W - (mains + extra)) / 2;
-    const slots = [];
-    for (let i = 0; i < 6; i++) slots.push({ x: startX + SP * i, y: 400 });
-    slots.push({ x: startX + mains + extra + SP, y: 400 });
-    const plusX = (slots[5].x + slots[6].x) / 2;
+    const GROUND_Y = 146, BS = 16, BY = 44, R = 8;
+    const bx = [12, 39, 66, 93, 120, 147, 176];
+    const bcx = bx.map((x) => x + BS / 2);
+    const slotY = 124, plusX = (bcx[5] + bcx[6]) / 2;
 
-    let balls = [], phase = "idle", bonk = 0, t = 0, blink = 0, lastResult = null;
+    const FONT = {
+      "0": ["111", "101", "101", "101", "111"], "1": ["010", "110", "010", "010", "111"],
+      "2": ["111", "001", "111", "100", "111"], "3": ["111", "001", "111", "001", "111"],
+      "4": ["101", "101", "111", "001", "001"], "5": ["111", "100", "111", "001", "111"],
+      "6": ["111", "100", "111", "101", "111"], "7": ["111", "001", "010", "010", "010"],
+      "8": ["111", "101", "111", "101", "111"], "9": ["111", "101", "111", "001", "111"],
+      "?": ["111", "001", "011", "000", "010"], "+": ["000", "010", "111", "010", "000"],
+    };
+
+    let blocks = [], balls = [], mario = null, phase = "idle", lastResult = null, tGlobal = 0;
     const status = document.getElementById("lotto-status");
     const drawBtn = document.getElementById("lotto-draw");
     const resetBtn = document.getElementById("lotto-reset");
     const copyBtn = document.getElementById("lotto-copy");
     const saveBtn = document.getElementById("lotto-save");
 
-    // ---- pixel helpers ----
-    const px = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x | 0, y | 0, w | 0, h | 0); };
-    function pixText(s, x, y, size, c, align) {
-      ctx.font = "700 " + size + "px ui-monospace, 'SF Mono', Menlo, monospace";
-      ctx.textAlign = align || "center"; ctx.textBaseline = "middle";
-      ctx.fillStyle = INK; ctx.fillText(s, x + 2, y + 2);
-      ctx.fillStyle = c; ctx.fillText(s, x, y);
+    const px = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x | 0, y | 0, Math.max(1, w) | 0, Math.max(1, h) | 0); };
+    function pxNum(s, cx, cy, sc, color) {
+      const cw = (3 + 1) * sc, total = s.length * cw - sc, x0 = Math.round(cx - total / 2), y0 = Math.round(cy - (5 * sc) / 2);
+      ctx.fillStyle = color; let x = x0;
+      for (const ch of s) { const g = FONT[ch]; if (g) for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) if (g[r][c] === "1") ctx.fillRect(x + c * sc, y0 + r * sc, sc, sc); x += cw; }
     }
-    function cloud(x, y) {
-      px(x, y, 60, 16, CLOUD); px(x + 12, y - 10, 36, 14, CLOUD); px(x - 6, y + 6, 72, 12, CLOUD);
-      px(x + 6, y + 16, 48, 4, CLOUDS);
+
+    function resetBlocks() {
+      blocks = bx.map((x, i) => ({ x, i, n: null, hit: false, hop: 0 }));
+      balls = []; mario = null; phase = "idle"; lastResult = null;
     }
-    function hill(x, y, w) {
-      px(x, y, w, 40, HILL); px(x + 8, y - 12, w - 16, 14, HILL); px(x + w * 0.35, y - 22, w * 0.3, 12, HILL);
-      px(x, y + 30, w, 10, HILL_D);
-    }
+
+    // ---- scene ----
+    function cloud(x, y) { px(x, y, 22, 6, CLOUD); px(x + 5, y - 4, 12, 5, CLOUD); px(x - 3, y + 3, 28, 4, CLOUD); }
+    function hill(x, y, w) { px(x, y, w, 18, HILL); px(x + 4, y - 6, w - 8, 7, HILL); px(x + w * 0.35, y - 11, w * 0.3, 6, HILL); px(x, y + 14, w, 5, HILL_D); }
     function drawScene() {
       px(0, 0, W, H, SKY);
-      cloud(70, 70); cloud(360, 48); cloud(250, 110);
-      hill(-20, GROUND_Y - 40, 150); hill(370, GROUND_Y - 30, 180);
-      // ground
-      px(0, GROUND_Y, W, H - GROUND_Y, GND);
-      px(0, GROUND_Y, W, 6, GND_HI);
-      px(0, GROUND_Y + 6, W, 4, GND_D);
-      for (let y = GROUND_Y + 12; y < H; y += 22) {
-        for (let x = 0; x < W; x += 32) { px(x, y, 32, 2, MORTAR); }
+      cloud(28, 26); cloud(150, 20); cloud(100, 30);
+      hill(-8, GROUND_Y - 18, 64); hill(150, GROUND_Y - 14, 74);
+      px(0, GROUND_Y, W, H - GROUND_Y, GND); px(0, GROUND_Y, W, 3, GND_HI); px(0, GROUND_Y + 3, W, 2, GND_D);
+      for (let y = GROUND_Y + 6; y < H; y += 10) px(0, y, W, 1, MORTAR);
+      for (let x = 0; x < W; x += 16) px(x, GROUND_Y + 6, 1, H, MORTAR);
+    }
+    function drawBlock(b) {
+      const y = BY - b.hop;
+      if (b.hit) { px(b.x, y, BS, BS, USED); px(b.x, y, BS, 2, "#c88838"); px(b.x, y, BS, BS, USED); }
+      else {
+        px(b.x, y, BS, BS, BLK); px(b.x, y, BS, 2, BLK_HI); px(b.x, y + BS - 3, BS, 3, BLK_D);
+        px(b.x, y, 1, BS, BLK_HI); px(b.x + BS - 1, y, 1, BS, BLK_D);
+        px(b.x + 1, y + 1, 2, 2, INK); px(b.x + BS - 3, y + 1, 2, 2, INK);
+        px(b.x + 1, y + BS - 3, 2, 2, INK); px(b.x + BS - 3, y + BS - 3, 2, 2, INK);
+        pxNum("?", b.x + BS / 2, y + BS / 2, 2, "#fff");
       }
-      for (let x = 0; x < W; x += 32) { px(x, GROUND_Y + 12, 2, H, MORTAR); }
+      px(b.x - 1, y - 1, BS + 2, 1, INK); px(b.x - 1, y + BS, BS + 2, 1, INK);
+      px(b.x - 1, y, 1, BS, INK); px(b.x + BS, y, 1, BS, INK);
     }
-    function drawBlock() {
-      const oy = -Math.abs(Math.sin(bonk * Math.PI)) * 16;   // bonk hop
-      const x = BLOCK.x, y = BLOCK.y + oy, s = BLOCK.s;
-      px(x - 3, y - 3, s + 6, s + 6, INK);                   // outline
-      px(x, y, s, s, phase === "idle" && blink % 60 < 30 ? BLK : BLK_HI);
-      px(x, y, s, s, BLK); px(x, y, s, 6, BLK_HI); px(x, y + s - 8, s, 8, BLK_D);
-      // rivets
-      px(x + 4, y + 4, 6, 6, INK); px(x + s - 10, y + 4, 6, 6, INK);
-      px(x + 4, y + s - 10, 6, 6, INK); px(x + s - 10, y + s - 10, 6, 6, INK);
-      pixText("?", x + s / 2, y + s / 2 + 2, 34, "#fff");
+    function drawSlot(cx) { px(cx - R - 1, slotY - R - 1, (R + 1) * 2, (R + 1) * 2, "rgba(0,0,0,0.18)"); }
+    function drawBall(b, x, y) {
+      ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fillStyle = b.color; ctx.fill();
+      px(x - 1, y - R, 2, 1, "rgba(255,255,255,0.6)");
+      pxNum(String(b.n), x, y, 1, INK);
     }
-    function drawBall(b, x, y, r) {
-      px(x - r, y - r, r * 2, r * 2, INK);                   // pixel square shadow (chunky)
-      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = b.color; ctx.fill();
-      ctx.beginPath(); ctx.arc(x, y, r * 0.58, 0, 7); ctx.fillStyle = "#fff"; ctx.fill();
-      pixText(String(b.n), x, y + 1, Math.round(r * 0.9), INK);
+    function drawMario(mx, my, jumping) {
+      const RD = "#e02820", S = "#f8b878", HR = "#5a2c10", B = "#2848c8", SH = "#5a2c10", top = my - 15;
+      px(mx - 4, top, 9, 3, RD); px(mx - 5, top + 3, 11, 2, RD);       // cap
+      px(mx - 3, top + 5, 7, 4, S); px(mx - 4, top + 5, 2, 4, HR); px(mx + 1, top + 7, 4, 1, HR); // face
+      px(mx - 4, top + 9, 8, 3, RD);                                   // shirt
+      px(mx - 3, top + 11, 6, 3, B); px(mx - 3, top + 9, 2, 3, B); px(mx + 1, top + 9, 2, 3, B); // overalls
+      px(mx - 6, top + 9, 2, 3, S); px(mx + 4, top + 9, 2, 3, S);      // arms
+      if (jumping) { px(mx - 4, my - 2, 4, 2, SH); px(mx + 1, my - 2, 4, 2, SH); }
+      else if (((mx | 0) >> 2) & 1) { px(mx - 4, my - 2, 4, 2, SH); px(mx + 2, my, 3, 2, SH); }
+      else { px(mx, my - 2, 4, 2, SH); px(mx - 5, my, 3, 2, SH); }
     }
+
     function render() {
       drawScene();
-      // pop balls (arcing)
-      for (const b of balls) {
-        if (b.state === "pop") {
-          const e = Math.min(b.t, 1), u = 1 - e;
-          const bx = u * u * b.p0x + 2 * u * e * b.p1x + e * e * b.p2x;
-          const by = u * u * b.p0y + 2 * u * e * b.p1y + e * e * b.p2y;
-          drawBall(b, bx, by, R);
-        }
+      for (const cx of bcx) drawSlot(cx);
+      for (const b of blocks) drawBlock(b);
+      for (const b of balls) if (b.state === "placed") drawBall(b, b.p2x, b.p2y);
+      for (const b of balls) if (b.state === "pop") {
+        const e = Math.min(b.t, 1), u = 1 - e;
+        drawBall(b, u * u * b.p0x + 2 * u * e * b.p1x + e * e * b.p2x, u * u * b.p0y + 2 * u * e * b.p1y + e * e * b.p2y);
       }
-      drawBlock();
-      // result tray slots
-      for (const s of slots) { px(s.x - R - 3, s.y - R - 3, (R + 3) * 2, (R + 3) * 2, "#00000022"); px(s.x - R, s.y - R, R * 2, R * 2, "#ffffff33"); }
-      pixText("+", plusX, slots[6].y, 22, "#fff");
-      pixText("BONUS", slots[6].x, slots[6].y + R + 12, 10, "#fff");
-      for (const b of balls) if (b.state === "placed") drawBall(b, b.p2x, b.p2y, R);
-      // title
-      pixText("★ LUCKY BLOCK ★", W / 2, 26, 18, "#fff");
+      if (mario && mario.on) drawMario(mario.x, GROUND_Y + mario.jy, mario.jump);
+      pxNum("+", plusX, slotY, 2, "#fff");
+      ctx.font = "700 8px ui-monospace, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = INK; ctx.fillText("★ LUCKY BLOCK ★", W / 2 + 1, 11);
+      ctx.fillStyle = "#fff"; ctx.fillText("★ LUCKY BLOCK ★", W / 2, 10);
+      ctx.font = "700 6px ui-monospace, monospace"; ctx.fillStyle = "#fff"; ctx.fillText("BONUS", bcx[6], slotY + R + 6);
+    }
+
+    function popBall(b) {
+      const p0x = b.x + BS / 2, p0y = BY;
+      balls.push({ n: b.n, color: ballColor(b.n), state: "pop", t: 0, p0x, p0y, p1x: p0x, p1y: BY - 22, p2x: bcx[b.i], p2y: slotY });
     }
 
     function tick() {
-      blink++;
-      if (bonk > 0) bonk = Math.max(0, bonk - 0.12);
-      for (const b of balls) if (b.state === "pop") { b.t += 0.05; if (b.t >= 1) b.state = "placed"; }
+      tGlobal++;
+      for (const b of balls) if (b.state === "pop") { b.t += 0.055; if (b.t >= 1) b.state = "placed"; }
+      for (const b of blocks) if (b.hop > 0) b.hop = Math.max(0, b.hop - 0.9);
+      if (mario && phase === "running") {
+        mario.x += 0.9;
+        if (!mario.jump) {
+          const nb = blocks.find((b) => !b.hit && mario.x >= bcx[b.i] - 11);
+          if (nb) { mario.jump = true; mario.jt = 0; mario.target = nb; }
+        }
+        if (mario.jump) {
+          mario.jt++;
+          mario.jy = -Math.sin((mario.jt / 24) * Math.PI) * 72;
+          if (mario.jt === 12 && mario.target) { mario.target.hit = true; mario.target.hop = 6; popBall(mario.target); }
+          if (mario.jt >= 24) { mario.jump = false; mario.jy = 0; mario.target = null; }
+        }
+        if (mario.x > W + 14 && blocks.every((b) => b.hit)) {
+          mario.on = false; phase = "done";
+          drawBtn.disabled = false; copyBtn.hidden = false; saveBtn.hidden = false;
+          status.textContent = "당첨 번호  " + lastResult.six.join(", ") + "   +   보너스 " + lastResult.bonus;
+        }
+      }
       render(); requestAnimationFrame(tick);
     }
 
-    function showResultBtns(on) { copyBtn.hidden = !on; saveBtn.hidden = !on; }
     function resetGame() {
-      balls = []; phase = "idle"; lastResult = null;
-      showResultBtns(false); drawBtn.disabled = false;
-      status.textContent = "블록을 쳐서 번호를 뽑자!";
-    }
-    function popOut(n, slot, delay) {
-      setTimeout(() => {
-        bonk = 1;
-        const p0x = BLOCK.x + BLOCK.s / 2, p0y = BLOCK.y;
-        balls.push({
-          n, color: ballColor(n), state: "pop", t: 0,
-          p0x, p0y, p1x: (p0x + slot.x) / 2, p1y: Math.min(p0y, slot.y) - 96,
-          p2x: slot.x, p2y: slot.y,
-        });
-      }, delay);
+      resetBlocks(); drawBtn.disabled = false; copyBtn.hidden = true; saveBtn.hidden = true;
+      status.textContent = "GO! 를 누르면 마리오가 달리며 블록을 칩니다.";
     }
     function doDraw() {
-      if (phase === "popping") return;
-      resetGame(); phase = "popping"; drawBtn.disabled = true;
-      status.textContent = "뽑는 중…";
+      if (phase === "running") return;
+      resetBlocks(); phase = "running"; drawBtn.disabled = true; copyBtn.hidden = true; saveBtn.hidden = true;
+      status.textContent = "마리오 출발!";
       const pool = Array.from({ length: 45 }, (_, i) => i + 1);
       for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
       const six = pool.slice(0, 6).sort((a, b) => a - b), bonus = pool[6];
-      six.forEach((n, i) => popOut(n, slots[i], i * 360));
-      popOut(bonus, slots[6], 6 * 360);
-      setTimeout(() => {
-        phase = "done"; lastResult = { six, bonus };
-        drawBtn.disabled = false; showResultBtns(true);
-        status.textContent = "당첨 번호  " + six.join(", ") + "   +   보너스 " + bonus;
-      }, 6 * 360 + 900);
+      blocks.forEach((b, i) => (b.n = i < 6 ? six[i] : bonus));
+      lastResult = { six, bonus };
+      mario = { x: -14, jy: 0, jump: false, jt: 0, target: null, on: true };
     }
 
-    cv.addEventListener("click", (e) => {
-      const rect = cv.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width * W, y = (e.clientY - rect.top) / rect.height * H;
-      if (x > BLOCK.x - 10 && x < BLOCK.x + BLOCK.s + 10 && y > BLOCK.y - 26 && y < BLOCK.y + BLOCK.s + 10) doDraw();
-    });
     drawBtn.addEventListener("click", doDraw);
     resetBtn.addEventListener("click", resetGame);
     copyBtn.addEventListener("click", async () => {
@@ -220,6 +227,6 @@ import { SITE } from "../../consts";
       a.href = cv.toDataURL("image/png"); a.click();
     });
 
-    tick();
+    resetBlocks(); tick();
   }
 </script>
