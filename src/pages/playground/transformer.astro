@@ -5,220 +5,201 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`Attention 시각화 — ${SITE.authorKo}`}
-  description="트랜스포머의 self-attention을 눈으로. 단어를 클릭하면 그 단어가 문장의 어디에 집중하는지, Q·Kᵀ→softmax→가중합까지 단계별로 보여줍니다."
+  description="트랜스포머 self-attention을 BertViz 스타일로. 두 컬럼 토큰을 잇는 선의 굵기가 attention. 단어에 마우스를 올리면 그 연결만 보이고, 헤드·softmax·가중합까지 뜯어봅니다."
   locale="ko"
   path="/playground/transformer/"
 >
-  <header class="mb-8">
+  <header class="mb-6">
     <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
     <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Attention, 눈으로 보기</h1>
     <p class="mt-3 text-muted">
-      트랜스포머의 self-attention. 단어를 클릭하면 그 단어가 문장 어디에 “집중”하는지 보여줍니다.
+      왼쪽 단어가 오른쪽 단어에 얼마나 “집중”하는지 = 선의 굵기. 단어에 마우스를 올려보세요.
     </p>
   </header>
 
   <section class="tf">
     <div class="tf-heads">
-      <span class="tf-label">어텐션 헤드</span>
-      <button type="button" data-head="0" class="on">1 · 의미</button>
-      <button type="button" data-head="1">2 · 이전 단어</button>
-      <button type="button" data-head="2">3 · 주어</button>
+      <span class="tf-label">헤드</span>
+      <button type="button" data-head="0" class="on" style="--hc:#3a82f6">1 · 의미</button>
+      <button type="button" data-head="1" style="--hc:#22a06b">2 · 이전 단어</button>
+      <button type="button" data-head="2" style="--hc:#e0842a">3 · 주어</button>
     </div>
 
-    <div class="tf-stage">
-      <svg id="tf-arrows" aria-hidden="true"></svg>
-      <div id="tf-tokens" class="tf-tokens"></div>
+    <div id="tf-bert" class="tf-bert">
+      <svg id="tf-lines" aria-hidden="true"></svg>
+      <div id="tf-left" class="tf-col left"></div>
+      <div id="tf-right" class="tf-col right"></div>
     </div>
-    <p class="tf-hint">💡 <b>it</b> 을 클릭해보세요 — 대명사가 무엇을 가리키는지 attention이 찾아냅니다.</p>
+    <p class="tf-hint">💡 왼쪽 <b>it</b> 에 올려보세요 — 대명사가 <b>cat</b> 을 가리키는 걸 attention이 찾아냅니다.</p>
 
-    <div class="tf-panel">
-      <div class="tf-step">
-        <h3>① 점수 <span>score = Q · Kᵀ</span></h3>
-        <p class="tf-note">쿼리 단어와 각 단어의 “관련도” 점수. 클수록 관련이 큼.</p>
-        <div id="tf-logits" class="tf-bars"></div>
+    <details class="tf-more" open>
+      <summary>선택한 단어 뜯어보기 <span id="tf-cur"></span></summary>
+      <div class="tf-panel">
+        <div class="tf-step">
+          <h3>① 점수 <span>Q · Kᵀ</span></h3>
+          <div id="tf-logits" class="tf-bars"></div>
+        </div>
+        <div class="tf-step">
+          <h3>② softmax <label class="tf-temp">τ <input id="tf-temp" type="range" min="0.3" max="3" step="0.1" value="1" /><b id="tf-tval">1.0</b></label></h3>
+          <div id="tf-weights" class="tf-bars"></div>
+        </div>
+        <div class="tf-step">
+          <h3>③ 가중합 <span>Σ wᵢ·Vᵢ</span></h3>
+          <p class="tf-note">새 표현 = 주목한 단어들의 혼합. 대명사가 가리키는 대상의 “색”을 흡수합니다.</p>
+          <div id="tf-blend"></div>
+        </div>
       </div>
-      <div class="tf-step">
-        <h3>② softmax <label class="tf-temp">τ <input id="tf-temp" type="range" min="0.3" max="3" step="0.1" value="1" /><b id="tf-tval">1.0</b></label></h3>
-        <p class="tf-note">점수를 확률로. 합은 1. τ가 작을수록 뾰족(한 곳에 몰림), 클수록 평평.</p>
-        <div id="tf-weights" class="tf-bars"></div>
-      </div>
-      <div class="tf-step">
-        <h3>③ 가중합 <span>Σ weightᵢ · Vᵢ</span></h3>
-        <p class="tf-note">단어의 새 표현 = 주목한 단어들의 혼합. 대명사가 가리키는 대상의 “색”을 흡수합니다.</p>
-        <div id="tf-blend"></div>
-      </div>
-    </div>
-
-    <details class="tf-matrix">
-      <summary>전체 attention 행렬 (행=쿼리, 열=키)</summary>
-      <div id="tf-heat"></div>
     </details>
   </section>
 </BaseLayout>
 
 <style>
-  .tf { font-size: 0.95rem; }
   .tf-label { font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); }
-  .tf-heads { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .tf-heads { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 18px; }
   .tf-heads button {
     font: inherit; font-size: 0.82rem; font-family: var(--font-mono); padding: 5px 12px;
     border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
   }
-  .tf-heads button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .tf-heads button::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--hc); opacity: 0.3; }
+  .tf-heads button.on { color: var(--fg); border-color: var(--hc); }
+  .tf-heads button.on::before { opacity: 1; }
 
-  .tf-stage { position: relative; padding: 30px 4px 8px; }
-  #tf-arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-  .tf-tokens { position: relative; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .tf-bert { position: relative; margin: 4px auto; max-width: 460px; }
+  #tf-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .tf-col { position: absolute; top: 0; width: 88px; display: flex; flex-direction: column; }
+  .tf-col.left { left: 0; align-items: flex-end; }
+  .tf-col.right { right: 0; align-items: flex-start; }
   .tf-tok {
-    position: relative; font: inherit; font-size: 1.05rem; padding: 7px 12px; border-radius: 9px; cursor: pointer;
-    border: 2px solid var(--border); background: var(--surface); color: var(--fg); transition: transform .1s, border-color .1s;
+    font: inherit; font-size: 1rem; padding: 0 8px; border: 0; background: transparent; color: var(--fg);
+    cursor: pointer; white-space: nowrap; border-radius: 5px; transition: color .1s, background .1s;
   }
-  .tf-tok:hover { transform: translateY(-2px); }
-  .tf-tok.q { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
-  .tf-tok .dot { position: absolute; top: -4px; right: -4px; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--bg); }
-  .tf-hint { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+  .tf-tok .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; vertical-align: middle; }
+  .tf-col.left .tf-tok .dot { margin-left: 5px; }
+  .tf-col.right .tf-tok .dot { margin-right: 5px; }
+  .tf-tok:hover, .tf-tok.act { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .tf-tok.dim { color: var(--muted); opacity: 0.4; }
+  .tf-hint { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 14px; }
   .tf-hint b { color: var(--accent); font-family: var(--font-mono); }
 
-  .tf-panel { display: grid; gap: 16px; margin-top: 26px; }
+  .tf-more { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .tf-more summary { cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+  .tf-more summary span { color: var(--accent); font-family: var(--font-mono); font-weight: 700; }
+  .tf-panel { display: grid; gap: 14px; margin-top: 16px; }
   @media (min-width: 720px) { .tf-panel { grid-template-columns: 1fr 1fr 1fr; } }
-  .tf-step { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: var(--surface); }
-  .tf-step h3 { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .tf-step h3 span { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); font-weight: 500; }
-  .tf-note { font-size: 0.78rem; color: var(--muted); margin: 6px 0 12px; line-height: 1.5; }
-  .tf-temp { font-size: 0.72rem; font-family: var(--font-mono); color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
-  .tf-temp input { width: 68px; accent-color: var(--accent); }
-
+  .tf-step { border: 1px solid var(--border); border-radius: 12px; padding: 13px; background: var(--surface); }
+  .tf-step h3 { font-size: 0.92rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .tf-step h3 span { font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono); font-weight: 500; }
+  .tf-note { font-size: 0.76rem; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .tf-temp { font-size: 0.7rem; font-family: var(--font-mono); color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+  .tf-temp input { width: 64px; accent-color: var(--accent); }
   .tf-bars { display: flex; flex-direction: column; gap: 5px; }
-  .tf-row { display: grid; grid-template-columns: 58px 1fr 40px; align-items: center; gap: 7px; font-size: 0.78rem; }
-  .tf-row .k { font-family: var(--font-mono); color: var(--muted); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tf-row .track { height: 12px; background: color-mix(in srgb, var(--muted) 14%, transparent); border-radius: 3px; overflow: hidden; }
-  .tf-row .fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .25s; }
+  .tf-row { display: grid; grid-template-columns: 52px 1fr 38px; align-items: center; gap: 7px; font-size: 0.76rem; }
+  .tf-row .k { font-family: var(--font-mono); color: var(--muted); text-align: right; }
+  .tf-row .track { height: 11px; background: color-mix(in srgb, var(--muted) 14%, transparent); border-radius: 3px; overflow: hidden; }
+  .tf-row .fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .2s; }
   .tf-row .fill.neg { background: color-mix(in srgb, var(--muted) 45%, transparent); }
-  .tf-row .v { font-family: var(--font-mono); color: var(--fg); text-align: right; font-size: 0.72rem; }
+  .tf-row .v { font-family: var(--font-mono); color: var(--fg); text-align: right; font-size: 0.7rem; }
   .tf-row.top .k, .tf-row.top .v { color: var(--accent); font-weight: 700; }
-
   #tf-blend { text-align: center; }
-  .tf-outpill { display: inline-block; padding: 10px 16px; border-radius: 10px; font-size: 1.1rem; font-weight: 700; color: #fff; border: 2px solid rgba(0,0,0,0.15); }
-  .tf-break { margin-top: 10px; font-size: 0.76rem; color: var(--muted); font-family: var(--font-mono); line-height: 1.6; }
-
-  .tf-matrix { margin-top: 26px; }
-  .tf-matrix summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; }
-  #tf-heat { margin-top: 14px; overflow-x: auto; }
-  .heat-grid { display: inline-grid; gap: 2px; }
-  .heat-cell { width: 26px; height: 26px; border-radius: 3px; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; color: rgba(0,0,0,0.5); }
-  .heat-lab { font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); display: flex; align-items: center; }
-  .heat-lab.col { justify-content: center; height: 20px; }
-  .heat-lab.row { justify-content: flex-end; padding-right: 5px; }
-  .heat-cell.qrow { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .tf-outpill { display: inline-block; padding: 9px 15px; border-radius: 10px; font-size: 1.05rem; font-weight: 700; color: #fff; border: 2px solid rgba(0,0,0,0.15); }
+  .tf-break { margin-top: 9px; font-size: 0.74rem; color: var(--muted); font-family: var(--font-mono); line-height: 1.6; }
 </style>
 
 <script>
   const tokens = ["The", "cat", "didn't", "eat", "because", "it", "was", "full"];
   const N = tokens.length;
-  // token hue (content words vivid, function words gray) — for the blend viz
-  const hue = { 1: [58, 130, 246], 3: [46, 160, 90], 5: [150, 90, 220], 7: [230, 140, 40] };
+  const HEADS = [{ n: "의미", c: "#3a82f6" }, { n: "이전 단어", c: "#22a06b" }, { n: "주어", c: "#e0842a" }];
+  const hue = { 1: [58, 130, 246], 3: [34, 160, 107], 5: [150, 90, 220], 7: [230, 132, 42] };
   const colorOf = (i) => hue[i] || [150, 150, 158];
 
   function headLogits(h) {
     const L = Array.from({ length: N }, () => Array(N).fill(0));
     for (let q = 0; q < N; q++) for (let k = 0; k < N; k++) {
-      if (h === 0) {                                   // semantic / coreference
-        if (k === q) L[q][k] = 1.2;
-        if (hue[k]) L[q][k] += 0.5;
-      } else if (h === 1) {                            // previous token
-        L[q][k] = k === q - 1 ? 4 : k === q ? 1 : -1;
-      } else {                                         // attend to subject/verb
-        if (k === 1) L[q][k] += 3;
-        if (k === 3) L[q][k] += 1.6;
-        if (k === q) L[q][k] += 1;
-      }
+      if (h === 0) { if (k === q) L[q][k] = 1.2; if (hue[k]) L[q][k] += 0.5; }
+      else if (h === 1) { L[q][k] = k === q - 1 ? 4 : k === q ? 1 : -1; }
+      else { if (k === 1) L[q][k] += 3; if (k === 3) L[q][k] += 1.6; if (k === q) L[q][k] += 1; }
     }
-    if (h === 0) {                                     // hand-tuned semantic links
-      L[5][1] = 3.6; L[3][1] = 2.2; L[3][2] = 1.6; L[7][5] = 1.6; L[7][1] = 1.0; L[4][3] = 1.5; L[1][0] = 1.2;
-    }
+    if (h === 0) { L[5][1] = 3.6; L[3][1] = 2.2; L[3][2] = 1.6; L[7][5] = 1.6; L[7][1] = 1.0; L[4][3] = 1.5; L[1][0] = 1.2; }
     if (h === 1) L[0][0] = 3;
     return L;
   }
+  const LOG = [0, 1, 2].map(headLogits);
+  const softmax = (row, tau) => { const m = Math.max(...row), ex = row.map((v) => Math.exp((v - m) / tau)), s = ex.reduce((a, b) => a + b, 0); return ex.map((e) => e / s); };
+  const att = (h, tau) => LOG[h].map((r) => softmax(r, tau));
 
-  const softmax = (row, tau) => {
-    const m = Math.max(...row), ex = row.map((v) => Math.exp((v - m) / tau)), s = ex.reduce((a, b) => a + b, 0);
-    return ex.map((e) => e / s);
-  };
-
-  let head = 0, q = 5, tau = 1, logits = headLogits(0);
+  const visible = new Set([0]);
+  let tau = 1, active = 5, hover = null;   // hover = {col:'L'|'R', i}
   const $ = (id) => document.getElementById(id);
-  const tokEl = $("tf-tokens"), svg = $("tf-arrows");
+  const bert = $("tf-bert"), leftEl = $("tf-left"), rightEl = $("tf-right"), svg = $("tf-lines");
+  const ROWH = 30, PAD = 8;
+
+  function buildCols() {
+    for (const [el, col] of [[leftEl, "L"], [rightEl, "R"]]) {
+      el.innerHTML = "";
+      tokens.forEach((t, i) => {
+        const b = document.createElement("button"); b.className = "tf-tok"; b.style.height = ROWH + "px"; b.style.lineHeight = ROWH + "px";
+        const dot = `<span class="dot" style="background:rgb(${colorOf(i).join(",")})"></span>`;
+        b.innerHTML = col === "L" ? t + dot : dot + t;
+        b.addEventListener("mouseenter", () => { hover = { col, i }; if (col === "L") active = i; render(); });
+        b.addEventListener("mouseleave", () => { hover = null; render(); });
+        b.addEventListener("click", () => { active = i; render(); });
+        el.appendChild(b);
+      });
+    }
+  }
 
   function render() {
-    const w = softmax(logits[q], tau);
-    renderTokens(w); renderLogits(); renderWeights(w); renderBlend(w); renderHeat(); requestAnimationFrame(renderArrows);
-  }
-
-  function renderTokens(w) {
-    tokEl.innerHTML = "";
-    tokens.forEach((t, i) => {
-      const b = document.createElement("button");
-      b.className = "tf-tok" + (i === q ? " q" : "");
-      b.style.borderColor = i === q ? "" : `rgba(${colorOf(i).join(",")},${0.25 + (i === q ? 0 : w[i]) * 0.7})`;
-      b.innerHTML = t + `<span class="dot" style="background:rgb(${colorOf(i).join(",")})"></span>`;
-      b.addEventListener("click", () => { q = i; render(); });
-      tokEl.appendChild(b);
+    const A = {}; visible.forEach((h) => (A[h] = att(h, tau)));
+    const w = bert.clientWidth, lx = 90, rx = w - 90;
+    bert.style.height = N * ROWH + PAD * 2 + "px";
+    const yOf = (i) => PAD + i * ROWH + ROWH / 2;
+    // lines
+    let p = "";
+    for (const h of visible) {
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+        const wt = A[h][i][j]; if (wt < 0.04) continue;
+        let op;
+        if (hover) { const on = hover.col === "L" ? i === hover.i : j === hover.i; op = on ? Math.min(1, 0.2 + wt) : 0.03; }
+        else { op = i === active ? Math.min(1, 0.18 + wt * 0.9) : 0.05; }
+        const y1 = yOf(i), y2 = yOf(j), mx = (lx + rx) / 2;
+        p += `<path d="M ${lx} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${rx} ${y2}" fill="none" stroke="${HEADS[h].c}" stroke-width="${(1 + wt * 6).toFixed(1)}" stroke-linecap="round" opacity="${op.toFixed(2)}"/>`;
+      }
+    }
+    svg.innerHTML = p;
+    // token emphasis
+    [...leftEl.children].forEach((b, i) => b.classList.toggle("act", i === active && !hover));
+    [...leftEl.children].forEach((b, i) => b.classList.toggle("dim", !!hover && hover.col === "L" && hover.i !== i));
+    [...rightEl.children].forEach((b, j) => {
+      let lit = false;
+      if (hover) { const q2 = hover.col === "L" ? hover.i : null; lit = q2 !== null && A[[...visible][0]][q2][j] > 0.12; }
+      b.classList.toggle("dim", !!hover && !lit && hover.col === "L");
     });
-  }
-  function renderArrows() {
-    const w = softmax(logits[q], tau);
-    const box = svg.getBoundingClientRect();
-    const pills = [...tokEl.children].map((el) => { const r = el.getBoundingClientRect(); return { cx: r.left + r.width / 2 - box.left, top: r.top - box.top, bot: r.bottom - box.top }; });
-    const qp = pills[q]; let paths = "";
-    pills.forEach((p, i) => {
-      if (i === q || w[i] < 0.02) return;
-      const dip = 24 + Math.abs(p.cx - qp.cx) * 0.28;
-      const my = Math.max(qp.top, p.top) - dip;
-      paths += `<path d="M ${qp.cx} ${qp.top} Q ${(qp.cx + p.cx) / 2} ${my} ${p.cx} ${p.top}" fill="none" stroke="var(--accent)" stroke-width="${1 + w[i] * 9}" stroke-linecap="round" opacity="${0.12 + w[i] * 0.8}"/>`;
-    });
-    svg.innerHTML = paths;
+    renderDetail();
   }
 
   function barRow(label, frac, valStr, top, neg) {
     return `<div class="tf-row${top ? " top" : ""}"><span class="k">${label}</span><span class="track"><span class="fill${neg ? " neg" : ""}" style="width:${Math.round(frac * 100)}%"></span></span><span class="v">${valStr}</span></div>`;
   }
-  function renderLogits() {
-    const row = logits[q], mx = Math.max(...row.map(Math.abs)) || 1, top = row.indexOf(Math.max(...row));
-    $("tf-logits").innerHTML = tokens.map((t, i) => barRow(t, Math.abs(row[i]) / mx, row[i].toFixed(1), i === top && i !== q, row[i] < 0)).join("");
-  }
-  function renderWeights(w) {
-    const top = w.indexOf(Math.max(...w));
-    $("tf-weights").innerHTML = tokens.map((t, i) => barRow(t, w[i], (w[i] * 100).toFixed(0) + "%", i === top)).join("");
-  }
-  function renderBlend(w) {
-    const rgb = [0, 0, 0];
-    w.forEach((wi, i) => { const c = colorOf(i); rgb[0] += wi * c[0]; rgb[1] += wi * c[1]; rgb[2] += wi * c[2]; });
-    const col = rgb.map((v) => Math.round(v)).join(",");
+  function renderDetail() {
+    const h = [...visible][0] ?? 0;                    // detail uses the first visible head
+    $("tf-cur").textContent = `· ${tokens[active]} (${HEADS[h].n} 헤드)`;
+    const row = LOG[h][active], w = softmax(row, tau);
+    const mx = Math.max(...row.map(Math.abs)) || 1, tl = row.indexOf(Math.max(...row)), tw = w.indexOf(Math.max(...w));
+    $("tf-logits").innerHTML = tokens.map((t, i) => barRow(t, Math.abs(row[i]) / mx, row[i].toFixed(1), i === tl && i !== active, row[i] < 0)).join("");
+    $("tf-weights").innerHTML = tokens.map((t, i) => barRow(t, w[i], (w[i] * 100).toFixed(0) + "%", i === tw)).join("");
+    const rgb = [0, 0, 0]; w.forEach((wi, i) => { const c = colorOf(i); rgb[0] += wi * c[0]; rgb[1] += wi * c[1]; rgb[2] += wi * c[2]; });
     const order = tokens.map((t, i) => ({ t, w: w[i] })).sort((a, b) => b.w - a.w).filter((o) => o.w > 0.04).slice(0, 3);
-    $("tf-blend").innerHTML =
-      `<div class="tf-outpill" style="background:rgb(${col})">${tokens[q]}′</div>` +
-      `<div class="tf-break">= ${order.map((o) => `<b style="color:var(--fg)">${(o.w * 100).toFixed(0)}%</b> ${o.t}`).join("  +  ")}</div>`;
-  }
-  function renderHeat() {
-    const cells = ["<div></div>", ...tokens.map((t) => `<div class="heat-lab col">${t}</div>`)];
-    for (let r = 0; r < N; r++) {
-      cells.push(`<div class="heat-lab row">${tokens[r]}</div>`);
-      const w = softmax(logits[r], tau);
-      for (let c = 0; c < N; c++) {
-        const a = w[c], bg = `color-mix(in srgb, var(--accent) ${Math.round(a * 100)}%, var(--surface))`;
-        cells.push(`<div class="heat-cell${r === q ? " qrow" : ""}" style="background:${bg}" title="${tokens[r]} → ${tokens[c]}: ${(a * 100).toFixed(0)}%">${a > 0.28 ? (a * 100).toFixed(0) : ""}</div>`);
-      }
-    }
-    $("tf-heat").innerHTML = `<div class="heat-grid" style="grid-template-columns:64px repeat(${N},26px)">${cells.join("")}</div>`;
+    $("tf-blend").innerHTML = `<div class="tf-outpill" style="background:rgb(${rgb.map((v) => Math.round(v)).join(",")})">${tokens[active]}′</div><div class="tf-break">= ${order.map((o) => `<b style="color:var(--fg)">${(o.w * 100).toFixed(0)}%</b> ${o.t}`).join("  +  ")}</div>`;
   }
 
   document.querySelectorAll(".tf-heads button").forEach((b) =>
     b.addEventListener("click", () => {
-      head = +b.dataset.head; logits = headLogits(head);
-      document.querySelectorAll(".tf-heads button").forEach((x) => x.classList.toggle("on", x === b));
-      render();
+      const h = +b.dataset.head;
+      if (visible.has(h)) { if (visible.size > 1) visible.delete(h); } else visible.add(h);
+      b.classList.toggle("on", visible.has(h)); render();
     }));
   $("tf-temp").addEventListener("input", (e) => { tau = +e.target.value; $("tf-tval").textContent = tau.toFixed(1); render(); });
-  window.addEventListener("resize", renderArrows);
-  render();
+  window.addEventListener("resize", render);
+  buildCols(); render();
 </script>
