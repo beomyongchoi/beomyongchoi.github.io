@@ -1,6 +1,6 @@
 # Beomyong Choi (최범용)
 
-> Backend & AI engineer. Nine years of backend across commerce and logistics —
+> Backend & AI engineer. Large-scale backend across commerce and logistics —
 > search and data pipelines, high-traffic systems, AWS EKS microservices. Now
 > building AI products and working on AEO (Answer Engine Optimization):
 > measuring and improving how AI answer engines talk about a brand.

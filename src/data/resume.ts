@@ -16,8 +16,8 @@ export interface SkillGroup {
 }
 
 export const summary: L = {
-  ko: "9년차 백엔드 엔지니어입니다. 커머스와 물류에서 검색·데이터 파이프라인, 대규모 트래픽, AWS EKS 기반 MSA를 다뤘습니다. 지금은 AI 서비스와 AEO를 만듭니다.",
-  en: "A backend engineer of nine years. I've worked on search and data pipelines, high-traffic systems, and AWS EKS microservices across commerce and logistics. Now I build AI products and work on AEO.",
+  ko: "커머스와 물류에서 검색·데이터 파이프라인, 대규모 트래픽, AWS EKS 기반 MSA를 다뤄온 백엔드 엔지니어입니다. 지금은 AI 서비스와 AEO를 만듭니다.",
+  en: "A backend engineer who's worked on search and data pipelines, high-traffic systems, and AWS EKS microservices across commerce and logistics. Now I build AI products and work on AEO.",
 };
 
 export const jobs: Job[] = [
