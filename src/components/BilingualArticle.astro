@@ -127,12 +127,13 @@ const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip
     const pop = document.createElement("div");
     pop.className = "bi-pop";
 
+    const clearPeek = () =>
+      article.querySelectorAll(".bi-peek").forEach((el) => el.classList.remove("bi-peek"));
+
     const hide = () => {
       if (pop.isConnected) pop.remove();
-      if (current) {
-        current.classList.remove("bi-peek");
-        current = null;
-      }
+      clearPeek();
+      current = null;
     };
 
     const setLang = (lang: "ko" | "en") => {
@@ -158,6 +159,7 @@ const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip
       const label = other === "en" ? "EN · 영어 원문" : "KO · 한글 원문";
       pop.innerHTML =
         '<span class="bi-pop-tag">' + label + '</span><div class="bi-pop-body">' + html + "</div>";
+      clearPeek();
       span.classList.add("bi-peek");
       current = span;
       document.body.appendChild(pop);
