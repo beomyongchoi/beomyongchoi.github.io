@@ -19,13 +19,13 @@ const items = posts.map((p) => ({
 
 <BaseLayout
   title={`Blog — ${SITE.author}`}
-  description="Notes on AI, AEO, and backend engineering — what I learn and figure out."
+  description="Mostly AI and backend — but I write up whatever I happen to be digging into."
   locale="en"
   path="/blog/"
 >
   <header class="mb-10">
     <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Blog</h1>
-    <p class="mt-3 text-muted">Notes on AI, AEO, and backend engineering — what I learn and figure out.</p>
+    <p class="mt-3 text-muted">Mostly AI and backend — but I write up whatever I happen to be digging into.</p>
   </header>
   <PostList posts={items} locale="en" emptyText="No posts yet. Korean posts are being translated." />
 </BaseLayout>

@@ -16,38 +16,86 @@ interface Props {
 const { posts, locale, emptyText } = Astro.props;
 const fmt = (d: Date) =>
   d.toLocaleDateString(LOCALE_TAG[locale], { year: "numeric", month: "long", day: "numeric" });
+
+// Unique tags across posts, most-used first, for the filter bar.
+const tagCount = new Map<string, number>();
+for (const p of posts) for (const t of p.tags) tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
+const allTags = [...tagCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([t]) => t);
+const allLabel = locale === "ko" ? "전체" : "All";
 ---
 
 {
   posts.length === 0 ? (
     <p class="text-muted">{emptyText}</p>
   ) : (
-    <ul class="divide-y divide-border">
-      {posts.map((post) => (
-        <li class="py-6 first:pt-0">
-          <a href={post.href} class="group block">
-            <div class="flex items-baseline justify-between gap-4">
-              <h2 class="text-lg font-semibold tracking-tight group-hover:text-accent">
-                {post.title}
-              </h2>
-              <time
-                datetime={post.pubDate.toISOString()}
-                class="shrink-0 text-sm text-muted"
-              >
-                {fmt(post.pubDate)}
-              </time>
-            </div>
-            <p class="mt-1 text-muted">{post.description}</p>
-            {post.tags.length > 0 && (
-              <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted">
-                {post.tags.map((tag) => (
-                  <span>#{tag}</span>
-                ))}
+    <>
+      {allTags.length > 1 && (
+        <div class="tagbar" data-tagbar>
+          <button type="button" class="tagchip on" data-tag="*">{allLabel}</button>
+          {allTags.map((tag) => (
+            <button type="button" class="tagchip" data-tag={tag}>#{tag}</button>
+          ))}
+        </div>
+      )}
+      <ul class="divide-y divide-border" data-postlist>
+        {posts.map((post) => (
+          <li class="py-6 first:pt-0" data-postitem data-tags={post.tags.join("|")}>
+            <a href={post.href} class="group block">
+              <div class="flex items-baseline justify-between gap-4">
+                <h2 class="text-lg font-semibold tracking-tight group-hover:text-accent">
+                  {post.title}
+                </h2>
+                <time datetime={post.pubDate.toISOString()} class="shrink-0 text-sm text-muted">
+                  {fmt(post.pubDate)}
+                </time>
               </div>
-            )}
-          </a>
-        </li>
-      ))}
-    </ul>
+              <p class="mt-1 text-muted">{post.description}</p>
+              {post.tags.length > 0 && (
+                <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted">
+                  {post.tags.map((tag) => (
+                    <span>#{tag}</span>
+                  ))}
+                </div>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p class="tag-empty text-muted" hidden>{locale === "ko" ? "이 태그의 글이 없습니다." : "No posts with this tag."}</p>
+    </>
   )
 }
+
+<style>
+  .tagbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 2rem; }
+  .tagchip {
+    font: inherit; font-size: 0.8rem; padding: 4px 12px; border-radius: 999px;
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+    cursor: pointer; transition: color .12s, border-color .12s, background .12s;
+  }
+  .tagchip:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+  .tagchip.on { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); }
+</style>
+
+<script>
+  const bar = document.querySelector<HTMLElement>("[data-tagbar]");
+  if (bar) {
+    const chips = [...bar.querySelectorAll<HTMLElement>(".tagchip")];
+    const items = [...document.querySelectorAll<HTMLElement>("[data-postitem]")];
+    const empty = document.querySelector<HTMLElement>(".tag-empty");
+    bar.addEventListener("click", (e) => {
+      const chip = (e.target as HTMLElement).closest<HTMLElement>(".tagchip");
+      if (!chip) return;
+      const tag = chip.dataset.tag;
+      chips.forEach((c) => c.classList.toggle("on", c === chip));
+      let shown = 0;
+      items.forEach((li) => {
+        const tags = (li.dataset.tags || "").split("|");
+        const match = tag === "*" || tags.includes(tag!);
+        li.hidden = !match;
+        if (match) shown++;
+      });
+      if (empty) empty.hidden = shown > 0;
+    });
+  }
+</script>
