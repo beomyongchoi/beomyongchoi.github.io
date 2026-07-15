@@ -1,0 +1,333 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`LUCKY BLOCK — ${SITE.authorKo}`}
+  description="블로그 곁에서 굴려보는 소소한 사이드 프로젝트들. 8비트 아케이드 오락기 로또 추첨기."
+  locale="ko"
+  path="/playground/lotto/"
+>
+  <header class="mb-8">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">LUCKY BLOCK</h1>
+    <p class="mt-2 text-muted">8비트 아케이드 로또 추첨기. Canvas·JS로 직접 만든 물리 + 픽셀아트.</p>
+  </header>
+
+  <section class="lab-card">
+    <div class="lab-head">
+      <h2>LUCKY BLOCK <span class="badge">로또 6 / 45</span></h2>
+      <span class="lab-tag">Canvas 2D · 8-bit</span>
+    </div>
+
+    <canvas id="lotto" aria-label="8비트 아케이드 로또"></canvas>
+
+    <div class="arc-btns">
+      <button id="lotto-draw" type="button" class="btn-go">GO!</button>
+      <button id="lotto-reset" type="button" class="btn-2">RESET</button>
+      <button id="lotto-copy" type="button" class="btn-2" hidden>COPY</button>
+      <button id="lotto-save" type="button" class="btn-2" hidden>SAVE</button>
+      <button id="lotto-mute" type="button" class="btn-mute" aria-label="sound">SFX</button>
+    </div>
+    <p id="lotto-status" class="lab-status">GO! 를 누르면 마리오가 달리며 블록을 칩니다.</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .lab-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 18px 18px 22px; }
+  .lab-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .lab-head h2 { font-size: 0.8rem; font-weight: 400; font-family: "Press Start 2P", ui-monospace, monospace; }
+  .badge {
+    font-size: 0.72rem; font-weight: 700; color: var(--accent); font-family: var(--font-mono);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+    border-radius: 999px; padding: 1px 9px; margin-left: 6px; vertical-align: middle;
+  }
+  .lab-tag { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); }
+  #lotto {
+    display: block; width: 100%; max-width: 460px; height: auto; aspect-ratio: 232 / 262;
+    margin: 0 auto; image-rendering: pixelated;
+  }
+  .arc-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
+  .arc-btns button {
+    font-family: "Press Start 2P", ui-monospace, monospace; font-size: 10px; line-height: 1.4;
+    padding: 11px 15px; border: 3px solid #1c1c24; border-radius: 3px; box-shadow: 3px 3px 0 #1c1c24;
+    cursor: pointer; transition: transform .04s, box-shadow .04s;
+  }
+  .arc-btns button:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #1c1c24; }
+  .arc-btns button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-go { background: #f8b020; color: #201008; }
+  .btn-2 { background: #e6e8ee; color: #2a2a33; }
+  .btn-mute { background: #c8402e; color: #fff; }
+  .btn-mute.off { background: #7a7f8a; }
+  .lab-status { margin-top: 14px; text-align: center; font-size: 0.9rem; color: var(--muted); min-height: 1.3em; }
+</style>
+
+<script>
+  const cv = document.getElementById("lotto");
+  if (cv && cv.getContext) {
+    const GW = 200, GH = 175;
+    const gc = document.createElement("canvas"); gc.width = GW; gc.height = GH;
+    const g = gc.getContext("2d"); g.imageSmoothingEnabled = false;
+    const CW = 232, CH = 262, SX = 16, SY = 40;
+    cv.width = CW; cv.height = CH;
+    const ctx = cv.getContext("2d"); ctx.imageSmoothingEnabled = false;
+
+    const SKY = "#5c94fc", CLOUD = "#fff", HILL = "#4ec84e", HILL_D = "#2e9020";
+    const GND = "#e08020", GND_D = "#a84808", GND_HI = "#f8b060", MORTAR = "#7a2c00";
+    const BLK = "#f8b020", BLK_HI = "#ffd868", BLK_D = "#a86008", USED = "#b06818", INK = "#201008";
+    const ballColor = (n) => n <= 10 ? "#fbc400" : n <= 20 ? "#40a8f0" : n <= 30 ? "#f85858" : n <= 40 ? "#a8adb8" : "#78c828";
+
+    const GROUND_Y = 146, BS = 16, BY = 44, R = 8;
+    const bx = [12, 39, 66, 93, 120, 147];
+    const bcx = bx.map((x) => x + BS / 2);
+    const FX = 188, slotY = 124;
+    const bonusSlot = { x: 184, y: slotY };
+    const slots = bcx.map((x) => ({ x, y: slotY }));
+    const plusX = (bcx[5] + bonusSlot.x) / 2;
+
+    // cabinet deck geometry (shared by draw + hit-test)
+    const DY = SY + GH + 8, DH = CH - DY - 8;
+    const GO_B = { x: CW - 66, y: DY + DH / 2, r: 13 };
+
+    const FONT = {
+      "0": ["111", "101", "101", "101", "111"], "1": ["010", "110", "010", "010", "111"],
+      "2": ["111", "001", "111", "100", "111"], "3": ["111", "001", "111", "001", "111"],
+      "4": ["101", "101", "111", "001", "001"], "5": ["111", "100", "111", "001", "111"],
+      "6": ["111", "100", "111", "101", "111"], "7": ["111", "001", "010", "010", "010"],
+      "8": ["111", "101", "111", "101", "111"], "9": ["111", "101", "111", "001", "111"],
+      "?": ["111", "001", "011", "000", "010"], "+": ["000", "010", "111", "010", "000"],
+    };
+
+    let blocks = [], balls = [], mario = null, phase = "idle", lastResult = null, blink = 0;
+    let flagT = 0, flagDrop = 0, bonusBall = null, actx = null, muted = false;
+    const clouds = [{ x: 28, y: 26, v: 0.10 }, { x: 150, y: 20, v: 0.06 }, { x: 100, y: 32, v: 0.14 }];
+
+    const status = document.getElementById("lotto-status");
+    const drawBtn = document.getElementById("lotto-draw");
+    const resetBtn = document.getElementById("lotto-reset");
+    const copyBtn = document.getElementById("lotto-copy");
+    const saveBtn = document.getElementById("lotto-save");
+    const muteBtn = document.getElementById("lotto-mute");
+
+    function tone(f, at, d, vol) {
+      const o = actx.createOscillator(), gn = actx.createGain();
+      o.type = "square"; o.frequency.setValueAtTime(f, at);
+      gn.gain.setValueAtTime(vol, at); gn.gain.exponentialRampToValueAtTime(0.001, at + d);
+      o.connect(gn).connect(actx.destination); o.start(at); o.stop(at + d + 0.02);
+    }
+    function sfx(kind) {
+      if (muted) return;
+      try {
+        if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+        const t = actx.currentTime;
+        if (kind === "jump") { const o = actx.createOscillator(), gn = actx.createGain(); o.type = "square"; o.frequency.setValueAtTime(240, t); o.frequency.exponentialRampToValueAtTime(560, t + 0.09); gn.gain.setValueAtTime(0.08, t); gn.gain.exponentialRampToValueAtTime(0.001, t + 0.12); o.connect(gn).connect(actx.destination); o.start(t); o.stop(t + 0.13); }
+        else if (kind === "coin") { tone(988, t, 0.06, 0.11); tone(1319, t + 0.05, 0.10, 0.11); }
+        else if (kind === "flag") { [392, 523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, t + i * 0.11, 0.11, 0.1)); }
+      } catch (e) {}
+    }
+
+    const gp = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x | 0, y | 0, Math.max(1, w) | 0, Math.max(1, h) | 0); };
+    function gNum(s, cx, cy, sc, color) {
+      const cw = 4 * sc, total = s.length * cw - sc, x0 = Math.round(cx - total / 2), y0 = Math.round(cy - 2.5 * sc);
+      g.fillStyle = color; let x = x0;
+      for (const ch of s) { const gl = FONT[ch]; if (gl) for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) if (gl[r][c] === "1") g.fillRect(x + c * sc, y0 + r * sc, sc, sc); x += cw; }
+    }
+    function cloud(x, y) { gp(x, y, 22, 6, CLOUD); gp(x + 5, y - 4, 12, 5, CLOUD); gp(x - 3, y + 3, 28, 4, CLOUD); }
+    function hill(x, y, w) { gp(x, y, w, 18, HILL); gp(x + 4, y - 6, w - 8, 7, HILL); gp(x + w * 0.35, y - 11, w * 0.3, 6, HILL); gp(x, y + 14, w, 5, HILL_D); }
+    function drawGround() {
+      gp(0, GROUND_Y, GW, GH - GROUND_Y, MORTAR);
+      gp(0, GROUND_Y, GW, 4, GND_HI);
+      const bw = 16, bh = 8, y0 = GROUND_Y + 5;
+      for (let ry = 0, row = 0; y0 + ry < GH; ry += bh + 1, row++) {
+        const off = row % 2 ? -8 : 0;
+        for (let x = off; x < GW; x += bw + 1) {
+          gp(x, y0 + ry, bw, bh, GND);
+          gp(x, y0 + ry, bw, 1, GND_HI); gp(x, y0 + ry, 1, bh, GND_HI);
+          gp(x + bw - 1, y0 + ry, 1, bh, GND_D); gp(x, y0 + ry + bh - 1, bw, 1, GND_D);
+        }
+      }
+    }
+    function drawFlag() {
+      gp(FX - 1, 38, 2, GROUND_Y - 38, "#8aa0a0"); gp(FX - 1, 38, 1, GROUND_Y - 38, "#c4d4d4");
+      g.beginPath(); g.arc(FX, 36, 3, 0, 7); g.fillStyle = "#f0d848"; g.fill();
+      const fy = 42 + flagDrop * 92;
+      gp(FX - 14, fy, 13, 9, "#38b038"); gp(FX - 14, fy, 13, 1, "#68e068"); gp(FX - 9, fy + 3, 3, 3, "#fff");
+    }
+    function drawScene() {
+      gp(0, 0, GW, GH, SKY);
+      for (const c of clouds) cloud(c.x, c.y);
+      hill(-8, GROUND_Y - 18, 64); hill(150, GROUND_Y - 14, 74);
+      if (phase === "running" || phase === "flag" || phase === "done") drawFlag();
+      drawGround();
+    }
+    function drawBlock(b) {
+      const y = BY - b.hop;
+      if (b.hit) { gp(b.x, y, BS, BS, USED); gp(b.x, y, BS, 2, "#c88838"); gp(b.x, y + BS - 2, BS, 2, "#8a4c10"); }
+      else {
+        gp(b.x, y, BS, BS, BLK); gp(b.x, y, BS, 2, BLK_HI); gp(b.x, y + BS - 3, BS, 3, BLK_D);
+        gp(b.x, y, 1, BS, BLK_HI); gp(b.x + BS - 1, y, 1, BS, BLK_D);
+        gp(b.x + 1, y + 1, 2, 2, INK); gp(b.x + BS - 3, y + 1, 2, 2, INK);
+        gp(b.x + 1, y + BS - 3, 2, 2, INK); gp(b.x + BS - 3, y + BS - 3, 2, 2, INK);
+        gNum("?", b.x + BS / 2, y + BS / 2, 2, "#fff");
+      }
+      gp(b.x - 1, y - 1, BS + 2, 1, INK); gp(b.x - 1, y + BS, BS + 2, 1, INK);
+      gp(b.x - 1, y, 1, BS, INK); gp(b.x + BS, y, 1, BS, INK);
+    }
+    function drawSlot(cx) { gp(cx - R - 1, slotY - R - 1, (R + 1) * 2, (R + 1) * 2, "rgba(0,0,0,0.18)"); }
+    function drawBall(b, x, y) {
+      g.beginPath(); g.arc(x, y, R, 0, 7); g.fillStyle = b.color; g.fill();
+      gp(x - 1, y - R, 2, 1, "rgba(255,255,255,0.6)");
+      gNum(String(b.n), x, y, 1, INK);
+    }
+    function drawMario(mx, my, jumping) {
+      const RD = "#e02820", S = "#f8b878", HR = "#5a2c10", B = "#2848c8", SH = "#5a2c10", top = my - 15;
+      gp(mx - 4, top, 9, 3, RD); gp(mx - 5, top + 3, 11, 2, RD);
+      gp(mx - 3, top + 5, 7, 4, S); gp(mx - 4, top + 5, 2, 4, HR); gp(mx + 1, top + 7, 4, 1, HR);
+      gp(mx - 4, top + 9, 8, 3, RD);
+      gp(mx - 3, top + 11, 6, 3, B); gp(mx - 3, top + 9, 2, 3, B); gp(mx + 1, top + 9, 2, 3, B);
+      gp(mx - 6, top + 9, 2, 3, S); gp(mx + 4, top + 9, 2, 3, S);
+      if (jumping) { gp(mx - 4, my - 2, 4, 2, SH); gp(mx + 1, my - 2, 4, 2, SH); }
+      else if (((mx | 0) >> 2) & 1) { gp(mx - 4, my - 2, 4, 2, SH); gp(mx + 2, my, 3, 2, SH); }
+      else { gp(mx, my - 2, 4, 2, SH); gp(mx - 5, my, 3, 2, SH); }
+    }
+    function gameRender() {
+      drawScene();
+      for (const s of slots) drawSlot(s.x); drawSlot(bonusSlot.x);
+      for (const b of blocks) drawBlock(b);
+      for (const b of balls) if (b.state === "placed") drawBall(b, b.p2x, b.p2y);
+      for (const b of balls) if (b.state === "pop") {
+        const e = Math.min(b.t, 1), u = 1 - e;
+        drawBall(b, u * u * b.p0x + 2 * u * e * b.p1x + e * e * b.p2x, u * u * b.p0y + 2 * u * e * b.p1y + e * e * b.p2y);
+      }
+      if (bonusBall && bonusBall.state === "slide") drawBall(bonusBall, bonusBall.x, bonusBall.y);
+      if (mario && mario.on) drawMario(mario.x, mario.y, mario.jump);
+      gNum("+", plusX, slotY, 2, "#fff");
+      g.font = "700 6px 'Press Start 2P', monospace"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillStyle = "#fff"; g.fillText("BONUS", bonusSlot.x, slotY + R + 6);
+    }
+
+    const cp = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x | 0, y | 0, w | 0, h | 0); };
+    function star(x, y, c) { cp(x - 1, y - 3, 2, 6, c); cp(x - 3, y - 1, 6, 2, c); cp(x - 2, y - 2, 4, 4, c); }
+    let goPressed = 0;
+    function drawCabinet() {
+      cp(0, 0, CW, CH, "#2b2b36");
+      cp(0, 0, CW, 3, "#3d3d4c"); cp(0, CH - 5, CW, 5, "#191921"); cp(0, 0, 3, CH, "#3d3d4c"); cp(CW - 3, 0, 3, CH, "#191921");
+      cp(8, 6, CW - 16, 26, "#ffcf3f"); cp(8, 6, CW - 16, 3, "#fff0b0"); cp(8, 29, CW - 16, 3, "#d89818");
+      star(20, 19, "#e0392e"); star(CW - 20, 19, "#e0392e");
+      ctx.font = "10px 'Press Start 2P', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = "#7a1500"; ctx.fillText("LUCKY BLOCK", CW / 2 + 1, 20);
+      ctx.fillStyle = "#c8202a"; ctx.fillText("LUCKY BLOCK", CW / 2, 19);
+      cp(SX - 5, SY - 5, GW + 10, GH + 10, "#0a0a10");
+      cp(SX - 5, SY - 5, GW + 10, 2, "#33333f"); cp(SX - 5, SY + GH + 3, GW + 10, 2, "#000");
+      cp(8, DY, CW - 16, DH, "#c8402e"); cp(8, DY, CW - 16, 3, "#e0604a"); cp(8, DY + DH - 3, CW - 16, 3, "#96281c");
+      // joystick (shaft leans WITH the ball)
+      const jx = 58, baseY = DY + DH / 2 + 8, lean = phase === "running" ? 8 : 0;
+      const ballx = jx + lean, bally = DY + DH / 2 - 8;
+      ctx.beginPath(); ctx.ellipse(jx, baseY, 13, 4, 0, 0, 7); ctx.fillStyle = "#201820"; ctx.fill();
+      ctx.strokeStyle = "#3a3a44"; ctx.lineWidth = 4; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(jx, baseY - 1); ctx.lineTo(ballx, bally); ctx.stroke();
+      ctx.beginPath(); ctx.arc(ballx, bally, 7, 0, 7); ctx.fillStyle = "#e02820"; ctx.fill();
+      cp(ballx - 3, bally - 4, 3, 3, "#ff8a7a");
+      // GO button (clickable, flashes)
+      const lit = (phase !== "running") && blink % 60 < 34, pr = goPressed > 0 ? 1 : 0;
+      ctx.beginPath(); ctx.arc(GO_B.x, GO_B.y + pr, GO_B.r, 0, 7); ctx.fillStyle = lit ? "#ffe04a" : "#c89010"; ctx.fill();
+      ctx.beginPath(); ctx.arc(GO_B.x, GO_B.y - 2 + pr, GO_B.r - 4, 0, 7); ctx.fillStyle = lit ? "#fff7c0" : "#e0b030"; ctx.fill();
+      ctx.font = "6px 'Press Start 2P', monospace"; ctx.fillStyle = "#5a2000"; ctx.fillText("GO", GO_B.x, GO_B.y + 1 + pr);
+      ctx.fillStyle = "#ffe"; ctx.fillText("1 CREDIT", CW / 2, DY + 10);
+    }
+
+    function popBall(b) {
+      const p0x = b.x + BS / 2;
+      balls.push({ n: b.n, color: ballColor(b.n), state: "pop", t: 0, p0x, p0y: BY, p1x: p0x, p1y: BY - 22, p2x: bcx[b.i], p2y: slotY });
+    }
+    function frame() {
+      blink++; if (goPressed > 0) goPressed--;
+      for (const c of clouds) { c.x += c.v; if (c.x > GW + 30) c.x = -30; }
+      for (const b of balls) if (b.state === "pop") { b.t += 0.055; if (b.t >= 1) b.state = "placed"; }
+      for (const b of blocks) if (b.hop > 0) b.hop = Math.max(0, b.hop - 0.9);
+      if (mario && phase === "running") {
+        mario.x += 0.9;
+        if (mario.jump) {
+          mario.jt++;
+          if (mario.leaping) {
+            mario.jy = -Math.sin(Math.min(mario.jt / 34, 1) * Math.PI) * 82;  // arc toward the pole
+            if (mario.x >= FX - 6) {                                          // grab it mid-air
+              phase = "flag"; flagT = 0; mario.x = FX - 6; mario.startY = GROUND_Y + mario.jy;
+              mario.jump = false; mario.leaping = false; sfx("flag");
+              bonusBall = { n: lastResult.bonus, color: ballColor(lastResult.bonus), state: "slide", x: FX, y: 44 };
+            }
+          } else {
+            mario.jy = -Math.sin((mario.jt / 24) * Math.PI) * 72;
+            if (mario.jt === 12 && mario.target) { mario.target.hit = true; mario.target.hop = 6; popBall(mario.target); sfx("coin"); }
+            if (mario.jt >= 24) { mario.jump = false; mario.jy = 0; mario.target = null; }
+          }
+        } else {
+          const nb = blocks.find((b) => !b.hit && mario.x >= bcx[b.i] - 11);
+          if (nb) { mario.jump = true; mario.jt = 0; mario.target = nb; sfx("jump"); }
+          else if (blocks.every((b) => b.hit) && mario.x >= FX - 30) { mario.jump = true; mario.jt = 0; mario.leaping = true; sfx("jump"); }
+        }
+        mario.y = GROUND_Y + mario.jy;
+      } else if (phase === "flag") {
+        flagT++;
+        const e = 1 - Math.pow(1 - Math.min(flagT / 42, 1), 2);
+        flagDrop = e;
+        mario.y = mario.startY + e * (GROUND_Y - mario.startY);
+        if (bonusBall) bonusBall.y = 44 + e * (bonusSlot.y - 44);
+        if (flagT === 42) { balls.push({ n: bonusBall.n, color: bonusBall.color, state: "placed", p2x: bonusSlot.x, p2y: bonusSlot.y }); bonusBall = null; }
+        if (flagT >= 58) {
+          phase = "exit";
+          drawBtn.disabled = false; copyBtn.hidden = false; saveBtn.hidden = false;
+          status.textContent = "당첨 번호  " + lastResult.six.join(", ") + "   +   보너스 " + lastResult.bonus;
+        }
+      } else if (phase === "exit" && mario) {
+        mario.x += 1.6; mario.y = GROUND_Y; mario.jump = false;
+        if (mario.x > GW + 16) { mario.on = false; phase = "done"; }
+      }
+      gameRender();
+      ctx.clearRect(0, 0, CW, CH);
+      drawCabinet();
+      ctx.drawImage(gc, SX, SY);
+      requestAnimationFrame(frame);
+    }
+
+    function resetBlocks() { blocks = bx.map((x, i) => ({ x, i, n: null, hit: false, hop: 0 })); balls = []; mario = null; bonusBall = null; flagDrop = 0; phase = "idle"; }
+    function resetGame() {
+      resetBlocks(); lastResult = null; drawBtn.disabled = false; copyBtn.hidden = true; saveBtn.hidden = true;
+      status.textContent = "GO! 를 누르면 마리오가 달리며 블록을 칩니다.";
+    }
+    function doDraw() {
+      if (phase === "running" || phase === "flag" || phase === "exit") return;
+      resetBlocks(); phase = "running"; drawBtn.disabled = true; copyBtn.hidden = true; saveBtn.hidden = true;
+      status.textContent = "마리오 출발!";
+      const pool = Array.from({ length: 45 }, (_, i) => i + 1);
+      for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
+      const six = pool.slice(0, 6).sort((a, b) => a - b), bonus = pool[6];
+      blocks.forEach((b, i) => (b.n = six[i]));
+      lastResult = { six, bonus };
+      mario = { x: -14, y: GROUND_Y, jy: 0, jump: false, jt: 0, target: null, leaping: false, on: true };
+    }
+
+    cv.addEventListener("click", (e) => {
+      const rect = cv.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width * CW, y = (e.clientY - rect.top) / rect.height * CH;
+      if (Math.hypot(x - GO_B.x, y - GO_B.y) <= GO_B.r + 3) { goPressed = 6; doDraw(); }
+    });
+    drawBtn.addEventListener("click", doDraw);
+    resetBtn.addEventListener("click", resetGame);
+    muteBtn.addEventListener("click", () => { muted = !muted; muteBtn.classList.toggle("off", muted); muteBtn.textContent = muted ? "MUTE" : "SFX"; });
+    copyBtn.addEventListener("click", async () => {
+      if (!lastResult) return;
+      try { await navigator.clipboard.writeText(lastResult.six.join(", ") + "  +  보너스 " + lastResult.bonus);
+        copyBtn.textContent = "OK!"; setTimeout(() => (copyBtn.textContent = "COPY"), 1200); } catch (e) {}
+    });
+    saveBtn.addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.download = "lotto-" + (lastResult ? lastResult.six.join("-") : "draw") + ".png";
+      a.href = cv.toDataURL("image/png"); a.click();
+    });
+
+    resetBlocks(); frame();
+  }
+
+</script>
