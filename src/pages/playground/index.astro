@@ -246,20 +246,27 @@ import { SITE } from "../../consts";
       for (const b of balls) if (b.state === "pop") { b.t += 0.055; if (b.t >= 1) b.state = "placed"; }
       for (const b of blocks) if (b.hop > 0) b.hop = Math.max(0, b.hop - 0.9);
       if (mario && phase === "running") {
-        mario.x += 0.9; mario.y = GROUND_Y + mario.jy;
-        if (!mario.jump) {
+        mario.x += 0.9;
+        if (mario.jump) {
+          mario.jt++;
+          if (mario.leaping) {
+            mario.jy = -Math.sin(Math.min(mario.jt / 34, 1) * Math.PI) * 82;  // arc toward the pole
+            if (mario.x >= FX - 6) {                                          // grab it mid-air
+              phase = "flag"; flagT = 0; mario.x = FX - 6; mario.startY = GROUND_Y + mario.jy;
+              mario.jump = false; mario.leaping = false; sfx("flag");
+              bonusBall = { n: lastResult.bonus, color: ballColor(lastResult.bonus), state: "slide", x: FX, y: 44 };
+            }
+          } else {
+            mario.jy = -Math.sin((mario.jt / 24) * Math.PI) * 72;
+            if (mario.jt === 12 && mario.target) { mario.target.hit = true; mario.target.hop = 6; popBall(mario.target); sfx("coin"); }
+            if (mario.jt >= 24) { mario.jump = false; mario.jy = 0; mario.target = null; }
+          }
+        } else {
           const nb = blocks.find((b) => !b.hit && mario.x >= bcx[b.i] - 11);
           if (nb) { mario.jump = true; mario.jt = 0; mario.target = nb; sfx("jump"); }
+          else if (blocks.every((b) => b.hit) && mario.x >= FX - 30) { mario.jump = true; mario.jt = 0; mario.leaping = true; sfx("jump"); }
         }
-        if (mario.jump) {
-          mario.jt++; mario.jy = -Math.sin((mario.jt / 24) * Math.PI) * 72;
-          if (mario.jt === 12 && mario.target) { mario.target.hit = true; mario.target.hop = 6; popBall(mario.target); sfx("coin"); }
-          if (mario.jt >= 24) { mario.jump = false; mario.jy = 0; mario.target = null; }
-        }
-        if (blocks.every((b) => b.hit) && !mario.jump && mario.x >= FX - 8) {
-          phase = "flag"; flagT = 0; mario.x = FX - 6; mario.jy = 0; mario.startY = 62; sfx("flag");
-          bonusBall = { n: lastResult.bonus, color: ballColor(lastResult.bonus), state: "slide", x: FX, y: 44 };
-        }
+        mario.y = GROUND_Y + mario.jy;
       } else if (phase === "flag") {
         flagT++;
         const e = 1 - Math.pow(1 - Math.min(flagT / 42, 1), 2);
@@ -297,7 +304,7 @@ import { SITE } from "../../consts";
       const six = pool.slice(0, 6).sort((a, b) => a - b), bonus = pool[6];
       blocks.forEach((b, i) => (b.n = six[i]));
       lastResult = { six, bonus };
-      mario = { x: -14, y: GROUND_Y, jy: 0, jump: false, jt: 0, target: null, on: true };
+      mario = { x: -14, y: GROUND_Y, jy: 0, jump: false, jt: 0, target: null, leaping: false, on: true };
     }
 
     cv.addEventListener("click", (e) => {
