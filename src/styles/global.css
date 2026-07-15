@@ -2,9 +2,7 @@
 @plugin "@tailwindcss/typography";
 
 /* ----------------------------------------------------------------------------
-   Webfonts — self-character typography.
-   KO: 마루부리(본문) · 을유1945(제목) · 강원교육모두(포인트) via jsDelivr.
-   EN (Fraunces/Newsreader) loaded from Google Fonts in BaseHead.
+   Type — one warm serif voice. 마루부리(KO) + Newsreader(Latin).
 ---------------------------------------------------------------------------- */
 @font-face {
   font-family: "MaruBuri"; font-weight: 400; font-display: swap;
@@ -18,21 +16,9 @@
   font-family: "MaruBuri"; font-weight: 700; font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/fonts-archive/MaruBuri/MaruBuri-Bold.woff2") format("woff2");
 }
-@font-face {
-  font-family: "Eulyoo1945"; font-weight: 400; font-display: swap;
-  src: url("https://cdn.jsdelivr.net/gh/0xd669/eulyoo1945/Eulyoo1945-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Eulyoo1945"; font-weight: 600; font-display: swap;
-  src: url("https://cdn.jsdelivr.net/gh/0xd669/eulyoo1945/Eulyoo1945-SemiBold.woff2") format("woff2");
-}
-@font-face {
-  font-family: "GangwonEduModu"; font-weight: 700; font-display: swap;
-  src: url("https://cdn.jsdelivr.net/gh/fonts-archive/GangwonEduModu/GangwonEduModu-Bold.woff2") format("woff2");
-}
 
 /* ----------------------------------------------------------------------------
-   Design tokens — warm "종이/가정식" palette, light/dark via CSS variables.
+   Design tokens — clean paper, cool ink, restrained navy accent.
 ---------------------------------------------------------------------------- */
 @theme inline {
   --color-bg: var(--bg);
@@ -48,51 +34,48 @@
 }
 
 :root {
-  --bg: #f7f1e1;        /* warm rice-paper cream */
-  --surface: #f1e8d3;   /* deeper cream for cards */
-  --fg: #2e2a22;        /* warm dark ink */
-  --muted: #8a8069;     /* warm taupe */
-  --accent: #a9761a;    /* natural mustard / turmeric */
-  --accent-fg: #f7f1e1;
-  --border: #e2d7ba;
+  --bg: #fbfbfc;
+  --surface: #f2f3f5;
+  --fg: #1a1a1f;
+  --muted: #6b6f76;
+  --accent: #2b4a7e;
+  --accent-fg: #ffffff;
+  --border: #e5e6e9;
 
-  --font-body: "Newsreader", "MaruBuri", ui-serif, Georgia, "Apple SD Gothic Neo", serif;
-  --font-display: "Fraunces", "Eulyoo1945", ui-serif, Georgia, serif;
-  --font-point: "GangwonEduModu", "Fraunces", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-body);
+  --font-serif: "Newsreader", "MaruBuri", ui-serif, Georgia, "Apple SD Gothic Neo", serif;
+  --font-sans: var(--font-serif);
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1c1813;
-    --surface: #262019;
-    --fg: #ece2cd;
-    --muted: #a89b82;
-    --accent: #e2b64f;
-    --accent-fg: #1c1813;
-    --border: #3a3122;
+    --bg: #101216;
+    --surface: #181b21;
+    --fg: #e9e9ec;
+    --muted: #9a9ea7;
+    --accent: #8fa9d8;
+    --accent-fg: #101216;
+    --border: #262a31;
   }
 }
 
-/* Manual override hook (for a future theme toggle) */
 :root[data-theme="dark"] {
-  --bg: #1c1813;
-  --surface: #262019;
-  --fg: #ece2cd;
-  --muted: #a89b82;
-  --accent: #e2b64f;
-  --accent-fg: #1c1813;
-  --border: #3a3122;
+  --bg: #101216;
+  --surface: #181b21;
+  --fg: #e9e9ec;
+  --muted: #9a9ea7;
+  --accent: #8fa9d8;
+  --accent-fg: #101216;
+  --border: #262a31;
 }
 :root[data-theme="light"] {
-  --bg: #f7f1e1;
-  --surface: #f1e8d3;
-  --fg: #2e2a22;
-  --muted: #8a8069;
-  --accent: #a9761a;
-  --accent-fg: #f7f1e1;
-  --border: #e2d7ba;
+  --bg: #fbfbfc;
+  --surface: #f2f3f5;
+  --fg: #1a1a1f;
+  --muted: #6b6f76;
+  --accent: #2b4a7e;
+  --accent-fg: #ffffff;
+  --border: #e5e6e9;
 }
 
 html {
@@ -103,35 +86,15 @@ html {
 body {
   background-color: var(--bg);
   color: var(--fg);
-  font-family: var(--font-body);
+  font-family: var(--font-serif);
   line-height: 1.75;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Natural paper grain — not a flat fill. Sits behind content, blends with bg. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.55;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-@media (prefers-color-scheme: dark) {
-  body::before { mix-blend-mode: soft-light; opacity: 0.4; }
-}
-
-/* Display serif for headings + the site mark. */
-h1, h2, h3, h4, h5, h6,
-.prose :is(h1, h2, h3, h4) {
-  font-family: var(--font-display);
+h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.01em;
 }
-.prose { font-family: var(--font-body); }
-.font-point { font-family: var(--font-point); }
 
 ::selection {
   background-color: var(--accent);
