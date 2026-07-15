@@ -39,8 +39,8 @@ export const T: Record<Locale, Strings> = {
     siteName: "최범용",
     title: "최범용 — 백엔드·AI 엔지니어",
     description:
-      "커머스와 물류에서 대규모 백엔드 시스템을 만들었습니다. 지금은 AI 서비스와 AEO를 만듭니다.",
-    tagline: "대규모 백엔드를 만들었고, 지금은 AI를 만듭니다.",
+      "커머스와 물류에서 검색·데이터 파이프라인과 AWS EKS 기반 MSA를 만들었습니다. 지금은 AI 서비스와 AEO를 만듭니다.",
+    tagline: "커머스·물류 백엔드를 만들었고, 지금은 AI를 만듭니다.",
     role: "백엔드 · AI 엔지니어",
     nav: { home: "홈", work: "작업", blog: "블로그", about: "소개", resume: "이력서" },
     langSwitch: "EN",
@@ -51,8 +51,8 @@ export const T: Record<Locale, Strings> = {
     siteName: "Beomyong Choi",
     title: "Beomyong Choi — Backend & AI Engineer",
     description:
-      "I built large-scale backend systems in commerce and logistics. Now I build AI products and work on AEO.",
-    tagline: "Large-scale backend, now building AI.",
+      "I built search and data pipelines and AWS EKS microservices in commerce and logistics. Now I build AI products and work on AEO.",
+    tagline: "Backend in commerce and logistics, now building AI.",
     role: "Backend & AI Engineer",
     nav: { home: "Home", work: "Work", blog: "Blog", about: "About", resume: "Resume" },
     langSwitch: "KO",

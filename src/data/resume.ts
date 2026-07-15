@@ -16,7 +16,7 @@ export interface SkillGroup {
 }
 
 export const summary: L = {
-  ko: "커머스와 물류에서 검색·데이터 파이프라인, 대규모 트래픽, AWS EKS 기반 MSA를 다뤄온 백엔드 엔지니어입니다. 지금은 AI 서비스와 AEO를 만듭니다.",
+  ko: "커머스와 물류에서 검색·데이터 파이프라인, 수만 동접 트래픽, AWS EKS 기반 MSA를 다뤄온 백엔드 엔지니어입니다. 지금은 AI 서비스와 AEO를 만듭니다.",
   en: "A backend engineer who's worked on search and data pipelines, high-traffic systems, and AWS EKS microservices across commerce and logistics. Now I build AI products and work on AEO.",
 };
 
@@ -70,8 +70,8 @@ export const jobs: Job[] = [
         en: "Built a crawler and AWS SQS pipeline collecting ~1,000 records/day from shopping sites and influencer feeds",
       },
       {
-        ko: "Django 레거시를 Node.js(Express)로 마이그레이션, 동시접속 1–5만 규모의 대규모 트래픽 이벤트 대응",
-        en: "Migrated a Django legacy system to Node.js (Express); handled high-traffic events with 10k–50k concurrent users",
+        ko: "Django 레거시를 Node.js(Express)로 마이그레이션, 동시접속 1–5만 규모의 트래픽 이벤트 대응",
+        en: "Migrated a Django legacy system to Node.js (Express); handled events with 10k–50k concurrent users",
       },
     ],
   },
