@@ -69,13 +69,11 @@ import { SITE } from "../../consts";
     const W = 460, H = 820;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
-    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
 
-    // ---- geometry ----
-    const DR = { x: 230, y: 190, r: 146 };          // clear drum
-    const KNOB = { x: 150, y: 452, r: 44 };
-    const DOOR = { x: 230, y: 528 };                // dispense chute
-    const R0 = 13, R1 = 20, TRAY_Y = 752, SLOT_R = 20;
+    const DR = { x: 230, y: 196, r: 150 };
+    const KNOB = { x: 150, y: 452, r: 42 };
+    const DOOR = { x: 230, y: 534 };
+    const R0 = 13, R1 = 20, TRAY_Y = 754, SLOT_R = 20;
     const LAYERS = 4, LSCALE = [0.82, 0.92, 1.0, 1.1], LALPHA = [0.9, 0.95, 1.0, 1.0];
 
     const ballColor = (n) =>
@@ -99,7 +97,7 @@ import { SITE } from "../../consts";
       for (let n = 1; n <= 45; n++) {
         const a = Math.random() * Math.PI * 2, rr = Math.random() * (DR.r - R0 - 8);
         balls.push({
-          n, x: DR.x + Math.cos(a) * rr, y: DR.y + Math.sin(a) * rr * 0.5 + DR.r * 0.35,
+          n, x: DR.x + Math.cos(a) * rr, y: DR.y + Math.sin(a) * rr * 0.5 + DR.r * 0.4,
           vx: (Math.random() - 0.5) * 3, vy: Math.random() * 2,
           layer: (Math.random() * LAYERS) | 0, color: ballColor(n), state: "tank",
         });
@@ -146,72 +144,82 @@ import { SITE } from "../../consts";
       if (knobSpin > 0) knobSpin -= 0.15;
     }
 
-    // ---- drawing helpers ----
+    // ---- machine (Bandai-ish: silver-gray body, red drum cap, brass knob) ----
     function rr(x, y, w, h, r) {
       ctx.beginPath();
       ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
       ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
     }
-    const PL = "#f3f4f7", PL_HI = "#ffffff", PL_SH = "#d6d9e0", CHR0 = "#f2f4f8", CHR1 = "#c3c8d2", CHR2 = "#8f96a3";
+    const BODY = "#dfe3e8", BODY_HI = "#f4f6f9", BODY_SH = "#c3c9d2";
+    const RED = "#d8483b", RED_HI = "#e35b4e", BRASS = "#d8b45c", BRASS_D = "#9c7a2e";
+
+    function glossPanel(x, y, w, h, r) {
+      rr(x, y, w, h, r); ctx.fillStyle = BODY; ctx.fill();
+      const g = ctx.createLinearGradient(0, y, 0, y + h);
+      g.addColorStop(0, "rgba(255,255,255,0.75)"); g.addColorStop(0.4, "rgba(255,255,255,0.05)");
+      g.addColorStop(1, "rgba(0,0,0,0.07)");
+      rr(x, y, w, h, r); ctx.fillStyle = g; ctx.fill();
+      rr(x + 1.5, y + 1.5, w - 3, h - 3, r - 1); ctx.lineWidth = 1.5; ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.stroke();
+    }
 
     function drawMachine() {
-      // wheels
-      ctx.fillStyle = "#3a3d44";
-      for (const wx of [95, 185, 275, 365]) { ctx.beginPath(); ctx.ellipse(wx, 700, 15, 11, 0, 0, 7); ctx.fill(); }
-      // base
-      ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.18)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
-      rr(28, 598, 404, 96, 26); ctx.fillStyle = PL; ctx.fill(); ctx.restore();
-      // body tower
-      rr(72, 300, 316, 306, 34); ctx.fillStyle = PL; ctx.fill();
-      const bg = ctx.createLinearGradient(72, 300, 388, 300);
-      bg.addColorStop(0, "rgba(255,255,255,0.6)"); bg.addColorStop(0.5, "rgba(255,255,255,0)"); bg.addColorStop(1, "rgba(0,0,0,0.06)");
-      rr(72, 300, 316, 306, 34); ctx.fillStyle = bg; ctx.fill();
-      // knob (chrome, turnable)
+      ctx.fillStyle = "#33363c";
+      for (const wx of [95, 185, 275, 365]) { ctx.beginPath(); ctx.ellipse(wx, 702, 15, 11, 0, 0, 7); ctx.fill(); }
+      ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.16)"; ctx.shadowBlur = 20; ctx.shadowOffsetY = 9;
+      glossPanel(28, 600, 404, 96, 26); ctx.restore();
+      glossPanel(72, 300, 316, 308, 34);
+      // brass knob
+      ctx.beginPath(); ctx.arc(KNOB.x, KNOB.y, KNOB.r + 8, 0, 7);
+      const bg = ctx.createLinearGradient(0, KNOB.y - KNOB.r, 0, KNOB.y + KNOB.r);
+      bg.addColorStop(0, "#ecd68f"); bg.addColorStop(0.5, BRASS); bg.addColorStop(1, BRASS_D);
+      ctx.fillStyle = bg; ctx.fill();
       ctx.save(); ctx.translate(KNOB.x, KNOB.y); ctx.rotate(knobSpin);
-      const kg = ctx.createRadialGradient(-14, -16, 4, 0, 0, KNOB.r);
-      kg.addColorStop(0, CHR0); kg.addColorStop(0.55, CHR1); kg.addColorStop(1, CHR2);
+      const kg = ctx.createRadialGradient(-12, -14, 4, 0, 0, KNOB.r);
+      kg.addColorStop(0, "#f6f7f9"); kg.addColorStop(0.55, "#cdd2da"); kg.addColorStop(1, "#9198a3");
       ctx.beginPath(); ctx.arc(0, 0, KNOB.r, 0, 7); ctx.fillStyle = kg; ctx.fill();
-      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,0.15)"; ctx.stroke();
-      ctx.fillStyle = "#6b7280"; // turn slot
-      rr(-6, -KNOB.r + 8, 12, KNOB.r * 2 - 16, 6); ctx.fill();
+      ctx.fillStyle = "#7b818c"; rr(-5, -KNOB.r + 9, 10, KNOB.r * 2 - 18, 5); ctx.fill();
       ctx.restore();
-      ctx.fillStyle = "#9aa0aa"; ctx.font = "600 11px ui-sans-serif, system-ui, sans-serif";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("돌려서 뽑기", KNOB.x, KNOB.y + KNOB.r + 14);
-      // coin slot + label
-      rr(292, 430, 44, 66, 10); ctx.fillStyle = "#e7e9ee"; ctx.fill(); ctx.strokeStyle = "#c9cdd6"; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = "#3a3d44"; rr(310, 438, 8, 26, 3); ctx.fill();
-      ctx.fillStyle = "#8b909b"; ctx.font = "700 12px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("500", 314, 480);
-      // dispense door
-      rr(202, 506, 56, 46, 8); ctx.fillStyle = "#2a2d33"; ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.10)"; rr(206, 510, 48, 18, 5); ctx.fill();
-      ctx.fillStyle = "#9aa0aa"; ctx.font = "10px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("PUSH", 230, 544);
-      // neck
-      rr(150, 280, 160, 34, 12); ctx.fillStyle = PL; ctx.fill();
-      // hood (behind drum)
-      rr(58, 52, 344, 252, 42); ctx.fillStyle = PL; ctx.fill();
-      const hg = ctx.createLinearGradient(0, 52, 0, 304);
-      hg.addColorStop(0, "rgba(255,255,255,0.7)"); hg.addColorStop(1, "rgba(0,0,0,0.05)");
-      rr(58, 52, 344, 252, 42); ctx.fillStyle = hg; ctx.fill();
+      // coin slot + labels
+      ctx.fillStyle = "#8b909b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "700 12px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("COIN", 312, 408);
+      rr(296, 420, 40, 60, 9); ctx.fillStyle = "#eef0f4"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#c9cdd6"; ctx.stroke();
+      ctx.fillStyle = "#3a3d44"; rr(312, 428, 8, 24, 3); ctx.fill();
+      // dispense door (frosted clear)
+      rr(200, 508, 60, 50, 9); ctx.fillStyle = "rgba(210,220,232,0.55)"; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = "rgba(150,160,175,0.6)"; ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.5)"; rr(205, 512, 50, 16, 5); ctx.fill();
+      // neck + hood
+      glossPanel(150, 282, 160, 34, 12);
+      glossPanel(56, 50, 348, 258, 44);
     }
 
-    function drawDrum() {
+    function drawDrumBack() {
       ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r, 0, 7);
-      ctx.fillStyle = dark ? "rgba(230,236,245,0.14)" : "rgba(255,255,255,0.5)"; ctx.fill();
-      const vol = ctx.createRadialGradient(DR.x - 30, DR.y - 50, DR.r * 0.15, DR.x, DR.y + 20, DR.r * 1.15);
-      vol.addColorStop(0, "rgba(255,255,255,0.5)"); vol.addColorStop(0.55, "rgba(0,0,0,0)"); vol.addColorStop(1, "rgba(0,0,0,0.14)");
-      ctx.fillStyle = vol; ctx.fill();
-      ctx.lineWidth = 6; ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.stroke();
-      ctx.lineWidth = 2; ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r - 3, 0, 7); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fill();
     }
-    function drawGlare() {
-      ctx.save(); ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r, 0, 7); ctx.clip();
-      const g = ctx.createRadialGradient(DR.x - 58, DR.y - 68, 6, DR.x - 58, DR.y - 68, 120);
-      g.addColorStop(0, "rgba(255,255,255,0.4)"); g.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      ctx.globalAlpha = 0.5; ctx.lineWidth = 5; ctx.strokeStyle = "rgba(255,255,255,0.6)";
-      ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r - 4, Math.PI * 1.05, Math.PI * 1.42); ctx.stroke(); ctx.globalAlpha = 1;
+
+    function drawDrumFront() {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r, 0, 7); ctx.clip();
+      // red top cap (front panel)
+      const capBottom = DR.y - 40;
+      const rg = ctx.createLinearGradient(0, DR.y - DR.r, 0, capBottom);
+      rg.addColorStop(0, RED_HI); rg.addColorStop(1, RED);
+      ctx.fillStyle = rg; ctx.fillRect(0, DR.y - DR.r, W, capBottom - (DR.y - DR.r));
+      // logo on cap
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "800 30px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("LOTTO", DR.x, DR.y - 116);
+      ctx.font = "700 15px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("6 / 45  ✦", DR.x, DR.y - 90);
+      // subtle diagonal sheen (thin, not a blob)
+      ctx.globalAlpha = 0.16; ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.ellipse(DR.x - 52, DR.y + 8, 22, 126, -0.45, 0, 7); ctx.fill();
+      ctx.globalAlpha = 1;
       ctx.restore();
+      // crisp rim
+      ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r, 0, 7); ctx.stroke();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = "rgba(90,100,115,0.28)"; ctx.beginPath(); ctx.arc(DR.x, DR.y, DR.r - 2, 0, 7); ctx.stroke();
     }
+
     function drawBall(b) {
       let r = b.r;
       if (b.state === "tank") { r = R0 * LSCALE[b.layer]; ctx.globalAlpha = LALPHA[b.layer]; }
@@ -225,14 +233,14 @@ import { SITE } from "../../consts";
     function render() {
       ctx.clearRect(0, 0, W, H);
       drawMachine();
-      drawDrum();
+      drawDrumBack();
       for (let L = 0; L < LAYERS; L++) for (const b of balls) if (b.state === "tank" && b.layer === L) drawBall(b);
-      drawGlare();
-      // result tray
-      ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.strokeStyle = dark ? "#3a3f48" : "#d3d7de";
+      drawDrumFront();
+      // tray
+      ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.strokeStyle = "#c7ccd4";
       for (const s of slots) { ctx.beginPath(); ctx.arc(s.x, s.y, SLOT_R, 0, 7); ctx.stroke(); }
       ctx.setLineDash([]);
-      ctx.fillStyle = dark ? "#9aa0aa" : "#9096a0"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = "#9096a0"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.font = "700 20px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("+", plusX, TRAY_Y);
       ctx.font = "10px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("보너스", slots[6].x, TRAY_Y + SLOT_R + 12);
       for (const b of balls) if (b.state === "flying" || b.state === "placed") drawBall(b);
@@ -271,11 +279,10 @@ import { SITE } from "../../consts";
       }, 1100);
     }
 
-    // turn the knob to draw
     cv.addEventListener("click", (e) => {
       const rect = cv.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width * W, y = (e.clientY - rect.top) / rect.height * H;
-      if (Math.hypot(x - KNOB.x, y - KNOB.y) <= KNOB.r) doDraw();
+      if (Math.hypot(x - KNOB.x, y - KNOB.y) <= KNOB.r + 8) doDraw();
     });
     drawBtn.addEventListener("click", doDraw);
     resetBtn.addEventListener("click", resetTank);
