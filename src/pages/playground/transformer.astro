@@ -5,11 +5,11 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`Attention 시각화 — ${SITE.authorKo}`}
-  description="트랜스포머 self-attention을 BertViz 스타일로. 두 컬럼 토큰을 잇는 선의 굵기가 attention. 단어에 마우스를 올리면 그 연결만 보이고, 헤드·softmax·가중합까지 뜯어봅니다."
+  description="트랜스포머 self-attention을 BertViz 스타일로. 두 컬럼 토큰을 잇는 선의 굵기가 attention. 왜 그 점수가 나오는지 Q·K 내적까지 단계별로 뜯어봅니다."
   locale="ko"
   path="/playground/transformer/"
 >
-  <header class="mb-6">
+  <header class="mb-5">
     <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
     <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Attention, 눈으로 보기</h1>
     <p class="mt-3 text-muted">
@@ -17,12 +17,33 @@ import { SITE } from "../../consts";
     </p>
   </header>
 
-  <section class="tf">
+  <section class="tf" data-story="off" data-scene="1">
+    <div class="tf-topbar">
+      <label class="tf-storytoggle"><input id="tf-story" type="checkbox" /> 가이드 모드</label>
+      <a class="tf-crosslink" href="/blog/attention-why/">개념 더 읽기 → 어텐션은 왜 Q·K인가</a>
+    </div>
+
+    <div class="tf-rail" role="tablist" aria-label="가이드 스텝">
+      <button role="tab" data-goto="1"><b>1</b> Q·K·V</button>
+      <button role="tab" data-goto="2"><b>2</b> 왜 Q·K</button>
+      <button role="tab" data-goto="3"><b>3</b> softmax</button>
+      <button role="tab" data-goto="4"><b>4</b> 가중합</button>
+      <button role="tab" data-goto="5"><b>5</b> 멀티헤드</button>
+    </div>
+    <p class="tf-caption" id="tf-cap"></p>
+
     <div class="tf-heads">
       <span class="tf-label">헤드</span>
       <button type="button" data-head="0" class="on" style="--hc:#3a82f6">1 · 의미</button>
       <button type="button" data-head="1" style="--hc:#22a06b">2 · 이전 단어</button>
       <button type="button" data-head="2" style="--hc:#e0842a">3 · 주어</button>
+    </div>
+
+    <div id="tf-qkv" class="tf-qkv" aria-hidden="true">
+      <span>각 단어 →</span>
+      <span class="qkv-chip q">Q <em>찾는 것</em></span>
+      <span class="qkv-chip k">K <em>내놓는 것</em></span>
+      <span class="qkv-chip v">V <em>넘길 의미</em></span>
     </div>
 
     <div id="tf-bert" class="tf-bert">
@@ -32,28 +53,58 @@ import { SITE } from "../../consts";
     </div>
     <p class="tf-hint">💡 왼쪽 <b>it</b> 에 올려보세요 — 대명사가 <b>cat</b> 을 가리키는 걸 attention이 찾아냅니다.</p>
 
+    <div class="qk" id="tf-qk">
+      <div class="qk-cap"><span class="mono">▸ score = dot( Q<sub>it</sub>, <span id="qk-kw">K<sub>cat</sub></span> )</span> — <span class="qk-lead">it 이 찾는 것 vs 상대가 내놓는 것</span></div>
+      <div class="qk-tabs">
+        <button data-k="cat" class="on">cat</button><button data-k="it">it</button><button data-k="full">full</button><button data-k="eat">eat</button>
+      </div>
+      <div class="qk-head"><span>축</span><span>Q<sub>it</sub></span><span>곱</span><span>K<sub>후보</sub></span></div>
+      <div class="qk-grid" id="qk-grid"></div>
+      <div class="qk-sum">Q·K = <b id="qk-score" class="mono">0</b> <span id="qk-verdict"></span></div>
+    </div>
+
     <details class="tf-more" open>
       <summary>선택한 단어 뜯어보기 <span id="tf-cur"></span></summary>
       <div class="tf-panel">
-        <div class="tf-step">
+        <div class="tf-step" data-step="logits">
           <h3>① 점수 <span>Q · Kᵀ</span></h3>
           <div id="tf-logits" class="tf-bars"></div>
         </div>
-        <div class="tf-step">
+        <div class="tf-step" data-step="softmax">
           <h3>② softmax <label class="tf-temp">τ <input id="tf-temp" type="range" min="0.3" max="3" step="0.1" value="1" /><b id="tf-tval">1.0</b></label></h3>
           <div id="tf-weights" class="tf-bars"></div>
         </div>
-        <div class="tf-step">
+        <div class="tf-step" data-step="blend">
           <h3>③ 가중합 <span>Σ wᵢ·Vᵢ</span></h3>
           <p class="tf-note">새 표현 = 주목한 단어들의 혼합. 대명사가 가리키는 대상의 “색”을 흡수합니다.</p>
           <div id="tf-blend"></div>
+          <a class="tf-readmore" href="/blog/attention-why/">가중합·멀티헤드 더 읽기 →</a>
         </div>
       </div>
     </details>
+
+    <div class="tf-ctl">
+      <button id="tf-prev" class="tf-arrow">← 이전</button>
+      <span class="tf-progress mono" id="tf-progress">1 / 5</span>
+      <button id="tf-next" class="tf-arrow tf-primary">다음 →</button>
+    </div>
   </section>
 </BaseLayout>
 
-<style>
+<style is:global>
+  .tf-topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .tf-storytoggle { font-size: 0.82rem; font-family: var(--font-mono); color: var(--muted); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .tf-storytoggle input { accent-color: var(--accent); width: 15px; height: 15px; }
+  .tf-crosslink { font-size: 0.8rem; color: var(--accent); text-decoration: none; }
+  .tf-crosslink:hover { text-decoration: underline; }
+
+  .tf-rail { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .tf-rail button { font: inherit; font-size: 0.78rem; font-family: var(--font-mono); padding: 5px 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .tf-rail button b { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: color-mix(in srgb, var(--muted) 20%, transparent); font-size: 0.66rem; }
+  .tf-rail button[aria-current="true"] { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); }
+  .tf-rail button[aria-current="true"] b { background: rgba(255,255,255,0.25); }
+  .tf-caption { min-height: 2.4em; font-size: 0.92rem; line-height: 1.55; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 9px 13px; margin-bottom: 16px; }
+
   .tf-label { font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); }
   .tf-heads { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 18px; }
   .tf-heads button {
@@ -64,6 +115,13 @@ import { SITE } from "../../consts";
   .tf-heads button::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--hc); opacity: 0.3; }
   .tf-heads button.on { color: var(--fg); border-color: var(--hc); }
   .tf-heads button.on::before { opacity: 1; }
+
+  .tf-qkv { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 0.8rem; color: var(--muted); }
+  .qkv-chip { font-family: var(--font-mono); font-weight: 700; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); display: inline-flex; align-items: baseline; gap: 6px; }
+  .qkv-chip em { font-style: normal; font-weight: 400; font-size: 0.72rem; color: var(--muted); }
+  .qkv-chip.q { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+  .qkv-chip.k { color: #22a06b; border-color: color-mix(in srgb, #22a06b 40%, var(--border)); }
+  .qkv-chip.v { color: #9a5adc; border-color: color-mix(in srgb, #9a5adc 40%, var(--border)); }
 
   .tf-bert { position: relative; margin: 4px auto; max-width: 460px; }
   #tf-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
@@ -82,28 +140,79 @@ import { SITE } from "../../consts";
   .tf-hint { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 14px; }
   .tf-hint b { color: var(--accent); font-family: var(--font-mono); }
 
+  /* ── Q·K scene ── */
+  .qk { max-width: 540px; margin: 8px auto 0; }
+  .qk-cap { font-size: 0.85rem; color: var(--muted); text-align: center; margin-bottom: 12px; }
+  .qk-cap .mono { color: var(--fg); }
+  .qk-lead { color: var(--muted); }
+  .qk-tabs { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
+  .qk-tabs button { font: inherit; font-size: 0.85rem; font-family: var(--font-mono); padding: 4px 13px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+  .qk-tabs button.on { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); }
+  .qk-head, .qk-row { display: grid; grid-template-columns: 60px 1fr 54px 1fr; align-items: center; gap: 6px 8px; }
+  .qk-head { font-size: 0.66rem; font-family: var(--font-mono); color: var(--muted); margin-bottom: 6px; text-align: center; }
+  .qk-head span:nth-child(2) { text-align: right; }
+  .qk-head span:nth-child(4) { text-align: left; }
+  .qk-grid { display: grid; grid-template-columns: 1fr; gap: 5px; }
+  .qk-row { font-size: 0.75rem; padding: 3px 4px; border-radius: 5px; border-left: 2px solid transparent; }
+  .qk-row.lit { background: color-mix(in srgb, var(--accent) calc(var(--m, 0) * 14%), transparent); border-left-color: var(--accent); }
+  .qk-ax { font-family: var(--font-mono); color: var(--muted); }
+  .qk-track { height: 11px; background: color-mix(in srgb, var(--muted) 14%, transparent); border-radius: 3px; overflow: hidden; }
+  .qk-track i { display: block; height: 100%; border-radius: 3px; }
+  .qk-track.q i { background: var(--accent); margin-left: auto; }
+  .qk-track.k i { background: var(--tokc, #22a06b); }
+  .qk-prod { font-family: var(--font-mono); text-align: center; color: var(--muted); }
+  .qk-row.lit .qk-prod { color: var(--accent); font-weight: 700; }
+  .qk-sum { text-align: center; margin-top: 14px; font-size: 0.9rem; }
+  .qk-sum b { font-size: 1.15rem; color: var(--accent); }
+  #qk-verdict { font-size: 0.8rem; color: var(--muted); margin-left: 6px; }
+
   .tf-more { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 14px; }
   .tf-more summary { cursor: pointer; font-size: 0.9rem; font-weight: 600; }
   .tf-more summary span { color: var(--accent); font-family: var(--font-mono); font-weight: 700; }
   .tf-panel { display: grid; gap: 14px; margin-top: 16px; }
   @media (min-width: 720px) { .tf-panel { grid-template-columns: 1fr 1fr 1fr; } }
-  .tf-step { border: 1px solid var(--border); border-radius: 12px; padding: 13px; background: var(--surface); }
+  .tf-step { border: 1px solid var(--border); border-radius: 12px; padding: 13px; background: var(--surface); transition: box-shadow .15s, border-color .15s; }
   .tf-step h3 { font-size: 0.92rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
   .tf-step h3 span { font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono); font-weight: 500; }
   .tf-note { font-size: 0.76rem; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .tf-readmore { display: inline-block; margin-top: 10px; font-size: 0.75rem; color: var(--accent); text-decoration: none; }
+  .tf-readmore:hover { text-decoration: underline; }
   .tf-temp { font-size: 0.7rem; font-family: var(--font-mono); color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
   .tf-temp input { width: 64px; accent-color: var(--accent); }
-  .tf-bars { display: flex; flex-direction: column; gap: 5px; }
-  .tf-row { display: grid; grid-template-columns: 52px 1fr 38px; align-items: center; gap: 7px; font-size: 0.76rem; }
-  .tf-row .k { font-family: var(--font-mono); color: var(--muted); text-align: right; }
-  .tf-row .track { height: 11px; background: color-mix(in srgb, var(--muted) 14%, transparent); border-radius: 3px; overflow: hidden; }
-  .tf-row .fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .2s; }
-  .tf-row .fill.neg { background: color-mix(in srgb, var(--muted) 45%, transparent); }
-  .tf-row .v { font-family: var(--font-mono); color: var(--fg); text-align: right; font-size: 0.7rem; }
-  .tf-row.top .k, .tf-row.top .v { color: var(--accent); font-weight: 700; }
+  .tf-bars { display: grid; grid-template-columns: 1fr; gap: 5px; }
+  .tf-row2 { display: grid; grid-template-columns: 52px 1fr 38px; align-items: center; gap: 7px; font-size: 0.76rem; }
+  .tf-row2 .k { font-family: var(--font-mono); color: var(--muted); text-align: right; }
+  .tf-row2 .track { height: 11px; background: color-mix(in srgb, var(--muted) 14%, transparent); border-radius: 3px; overflow: hidden; }
+  .tf-row2 .fill { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .2s; }
+  .tf-row2 .fill.neg { background: color-mix(in srgb, var(--muted) 45%, transparent); }
+  .tf-row2 .v { font-family: var(--font-mono); color: var(--fg); text-align: right; font-size: 0.7rem; }
+  .tf-row2.top .k, .tf-row2.top .v { color: var(--accent); font-weight: 700; }
   #tf-blend { text-align: center; }
   .tf-outpill { display: inline-block; padding: 9px 15px; border-radius: 10px; font-size: 1.05rem; font-weight: 700; color: #fff; border: 2px solid rgba(0,0,0,0.15); }
   .tf-break { margin-top: 9px; font-size: 0.74rem; color: var(--muted); font-family: var(--font-mono); line-height: 1.6; }
+
+  .tf-ctl { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 22px; }
+  .tf-arrow { font: inherit; font-size: 0.85rem; padding: 8px 16px; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--fg); cursor: pointer; }
+  .tf-arrow:disabled { opacity: 0.35; cursor: default; }
+  .tf-arrow.tf-primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+  .tf-progress { font-size: 0.78rem; color: var(--muted); }
+
+  /* ── scene gating (guide mode only) ── */
+  #tf-qkv, .tf-rail, .tf-caption, .tf-ctl { display: none; }
+  .tf[data-story="on"] .tf-rail, .tf[data-story="on"] .tf-caption, .tf[data-story="on"] .tf-ctl { display: flex; }
+  .tf[data-story="off"] #tf-qk { display: none; }
+  .tf[data-story="on"] #tf-qk { display: none; }
+  .tf[data-story="on"][data-scene="2"] #tf-qk { display: block; }
+  .tf[data-story="on"][data-scene="1"] #tf-qkv { display: flex; }
+  .tf[data-story="on"][data-scene="2"] #tf-bert,
+  .tf[data-story="on"][data-scene="2"] .tf-hint { opacity: 0.1; pointer-events: none; }
+  .tf[data-story="on"][data-scene="1"] .tf-more,
+  .tf[data-story="on"][data-scene="2"] .tf-more { display: none; }
+  .tf[data-story="on"]:not([data-scene="3"]) .tf-temp { display: none; }
+  .tf[data-story="on"]:not([data-scene="5"]) .tf-heads { opacity: 0.4; pointer-events: none; }
+  .tf[data-story="on"][data-scene="3"] .tf-step[data-step="softmax"],
+  .tf[data-story="on"][data-scene="4"] .tf-step[data-step="blend"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .qk-track i, .tf-row2 .fill { transition: none; } }
 </style>
 
 <script>
@@ -113,14 +222,28 @@ import { SITE } from "../../consts";
   const hue = { 1: [58, 130, 246], 3: [34, 160, 107], 5: [150, 90, 220], 7: [230, 132, 42] };
   const colorOf = (i) => hue[i] || [150, 150, 158];
 
+  // ── head-0 attention DERIVED from Query·Key vectors over 6 readable axes ──
+  const AXES = ["animate", "subject", "object", "negation", "state", "ref"];
+  const QKSCALE = 1 / 1.6;
+  const K0 = {
+    The: [0, 0, 0, 0, 0, 0.4], cat: [2, 1.6, 0.3, 0, 0, 0.9], "didn't": [0, 0, 0, 1.8, 0, 0],
+    eat: [0, 0, 1.4, 0, 0.3, 0], because: [0, 0, 0, 0, 0, 0.6], it: [1.2, 1.4, 0.2, 0, 0, 0.5],
+    was: [0, 0, 0, 0, 1.6, 0], full: [0, 0, 0.4, 0, 2, 0],
+  };
+  const Q0 = {
+    The: [0.1, 0.2, 0, 0, 0, 0.1], cat: [0.8, 0.7, 0.2, 0, 0, 0.3], "didn't": [0, 0, 0, 0.9, 0, 0],
+    eat: [0.6, 0, 1.4, 0, 0.3, 0], because: [0, 0, 0, 0, 0, 0.3], it: [1.5, 1.3, 0, 0, 0, 0.9],
+    was: [0, 0, 0, 0, 1.5, 0], full: [0.5, 0, 0.6, 0, 1.4, 0],
+  };
+  const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+
   function headLogits(h) {
     const L = Array.from({ length: N }, () => Array(N).fill(0));
+    if (h === 0) return tokens.map((qw) => tokens.map((kw) => dot(Q0[qw], K0[kw]) * QKSCALE));
     for (let q = 0; q < N; q++) for (let k = 0; k < N; k++) {
-      if (h === 0) { if (k === q) L[q][k] = 1.2; if (hue[k]) L[q][k] += 0.5; }
-      else if (h === 1) { L[q][k] = k === q - 1 ? 4 : k === q ? 1 : -1; }
+      if (h === 1) { L[q][k] = k === q - 1 ? 4 : k === q ? 1 : -1; }
       else { if (k === 1) L[q][k] += 3; if (k === 3) L[q][k] += 1.6; if (k === q) L[q][k] += 1; }
     }
-    if (h === 0) { L[5][1] = 3.6; L[3][1] = 2.2; L[3][2] = 1.6; L[7][5] = 1.6; L[7][1] = 1.0; L[4][3] = 1.5; L[1][0] = 1.2; }
     if (h === 1) L[0][0] = 3;
     return L;
   }
@@ -130,7 +253,9 @@ import { SITE } from "../../consts";
 
   const visible = new Set([0]);
   let tau = 1, active = 5, hover = null;   // hover = {col:'L'|'R', i}
+  let scene = 1; const LAST = 5;
   const $ = (id) => document.getElementById(id);
+  const root = document.querySelector(".tf");
   const bert = $("tf-bert"), leftEl = $("tf-left"), rightEl = $("tf-right"), svg = $("tf-lines");
   const ROWH = 30, PAD = 8;
 
@@ -139,8 +264,8 @@ import { SITE } from "../../consts";
       el.innerHTML = "";
       tokens.forEach((t, i) => {
         const b = document.createElement("button"); b.className = "tf-tok"; b.style.height = ROWH + "px"; b.style.lineHeight = ROWH + "px";
-        const dot = `<span class="dot" style="background:rgb(${colorOf(i).join(",")})"></span>`;
-        b.innerHTML = col === "L" ? t + dot : dot + t;
+        const dotHtml = `<span class="dot" style="background:rgb(${colorOf(i).join(",")})"></span>`;
+        b.innerHTML = col === "L" ? t + dotHtml : dotHtml + t;
         b.addEventListener("mouseenter", () => { hover = { col, i }; if (col === "L") active = i; render(); });
         b.addEventListener("mouseleave", () => { hover = null; render(); });
         b.addEventListener("click", () => { active = i; render(); });
@@ -154,7 +279,6 @@ import { SITE } from "../../consts";
     const w = bert.clientWidth, lx = 90, rx = w - 90;
     bert.style.height = N * ROWH + PAD * 2 + "px";
     const yOf = (i) => PAD + i * ROWH + ROWH / 2;
-    // lines
     let p = "";
     for (const h of visible) {
       for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
@@ -167,7 +291,6 @@ import { SITE } from "../../consts";
       }
     }
     svg.innerHTML = p;
-    // token emphasis
     [...leftEl.children].forEach((b, i) => b.classList.toggle("act", i === active && !hover));
     [...leftEl.children].forEach((b, i) => b.classList.toggle("dim", !!hover && hover.col === "L" && hover.i !== i));
     [...rightEl.children].forEach((b, j) => {
@@ -179,10 +302,10 @@ import { SITE } from "../../consts";
   }
 
   function barRow(label, frac, valStr, top, neg) {
-    return `<div class="tf-row${top ? " top" : ""}"><span class="k">${label}</span><span class="track"><span class="fill${neg ? " neg" : ""}" style="width:${Math.round(frac * 100)}%"></span></span><span class="v">${valStr}</span></div>`;
+    return `<div class="tf-row2${top ? " top" : ""}"><span class="k">${label}</span><span class="track"><span class="fill${neg ? " neg" : ""}" style="width:${Math.round(frac * 100)}%"></span></span><span class="v">${valStr}</span></div>`;
   }
   function renderDetail() {
-    const h = [...visible][0] ?? 0;                    // detail uses the first visible head
+    const h = [...visible][0] ?? 0;
     $("tf-cur").textContent = `· ${tokens[active]} (${HEADS[h].n} 헤드)`;
     const row = LOG[h][active], w = softmax(row, tau);
     const mx = Math.max(...row.map(Math.abs)) || 1, tl = row.indexOf(Math.max(...row)), tw = w.indexOf(Math.max(...w));
@@ -193,13 +316,79 @@ import { SITE } from "../../consts";
     $("tf-blend").innerHTML = `<div class="tf-outpill" style="background:rgb(${rgb.map((v) => Math.round(v)).join(",")})">${tokens[active]}′</div><div class="tf-break">= ${order.map((o) => `<b style="color:var(--fg)">${(o.w * 100).toFixed(0)}%</b> ${o.t}`).join("  +  ")}</div>`;
   }
 
+  // ── Q·K "why" scene: fixed query = it, pick the KEY word ──
+  function renderQK(kWord) {
+    const q = Q0.it, k = K0[kWord], prods = q.map((qi, a) => qi * k[a]);
+    const maxV = 2, maxP = Math.max(...prods, 0.01);
+    const tokc = `rgb(${colorOf(tokens.indexOf(kWord)).join(",")})`;
+    $("qk-grid").innerHTML = AXES.map((lbl, a) => {
+      const pr = prods[a], lit = pr > 0.15;
+      const qBar = `<span class="qk-track q"><i style="width:${Math.min(100, q[a] / maxV * 100)}%"></i></span>`;
+      const kBar = `<span class="qk-track k" style="--tokc:${tokc}"><i style="width:${Math.min(100, k[a] / maxV * 100)}%"></i></span>`;
+      return `<div class="qk-row${lit ? " lit" : ""}" style="--m:${(pr / maxP).toFixed(2)}"><span class="qk-ax">${lbl}</span>${qBar}<span class="qk-prod">${lit ? "×" : "·"}${pr.toFixed(1)}</span>${kBar}</div>`;
+    }).join("");
+    const score = prods.reduce((s, pr) => s + pr, 0);
+    $("qk-score").textContent = score.toFixed(1);
+    $("qk-kw").innerHTML = `K<sub>${kWord}</sub>`;
+    $("qk-verdict").textContent = score > 2 ? "→ 방향이 정렬됨, 점수 큼" : "→ 거의 직교, 점수 작음";
+  }
+
+  // ── guide-mode state machine ──
+  const CAPS = {
+    1: "attention은 각 단어가 어디를 볼지 정하는 것. 단어마다 Query(찾는 것)·Key(내놓는 것)·Value(넘길 의미)가 학습된 투영으로 생깁니다.",
+    2: "score = Query·Key 내적. cat의 key가 it의 query와 방향이 같아 점수가 큽니다. full은 state 축만 커서 안 맞아요. 탭을 바꿔 비교해 보세요.",
+    3: "점수를 합이 1인 확률로 바꾸는 게 softmax. τ를 낮추면 한 곳으로 뾰족, 높이면 여러 곳으로 평평해집니다.",
+    4: "새 표현 = Σ weight·Value. it이 cat의 의미(색)를 흡수해 it′가 됩니다.",
+    5: "이 궁합 계산을 여러 벌 돌린 게 멀티헤드. 헤드마다 다른 관계(공참조·이전 단어·주어)를 학습합니다. 헤드 버튼을 켜고 꺼보세요.",
+  };
+  function syncHeadBtns() { document.querySelectorAll(".tf-heads button").forEach((b) => b.classList.toggle("on", visible.has(+b.dataset.head))); }
+  function goto(n) {
+    scene = Math.max(1, Math.min(LAST, n));
+    root.dataset.scene = scene;
+    $("tf-cap").textContent = CAPS[scene];
+    $("tf-progress").textContent = `${scene} / ${LAST}`;
+    $("tf-prev").disabled = scene === 1;
+    $("tf-next").textContent = scene === LAST ? "처음으로 ↺" : "다음 →";
+    document.querySelectorAll(".tf-rail [role=tab]").forEach((t) => t.setAttribute("aria-current", +t.dataset.goto === scene));
+    if (scene <= 4) { visible.clear(); visible.add(0); syncHeadBtns(); active = 5; hover = null; }
+    if (scene === 2) renderQK(document.querySelector(".qk-tabs .on")?.dataset.k || "cat");
+    history.replaceState(null, "", "#scene-" + scene);
+    render();
+    root.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
   document.querySelectorAll(".tf-heads button").forEach((b) =>
     b.addEventListener("click", () => {
       const h = +b.dataset.head;
       if (visible.has(h)) { if (visible.size > 1) visible.delete(h); } else visible.add(h);
       b.classList.toggle("on", visible.has(h)); render();
     }));
+  document.querySelectorAll(".qk-tabs button").forEach((b) =>
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".qk-tabs button").forEach((x) => x.classList.remove("on"));
+      b.classList.add("on"); renderQK(b.dataset.k);
+    }));
   $("tf-temp").addEventListener("input", (e) => { tau = +e.target.value; $("tf-tval").textContent = tau.toFixed(1); render(); });
+  $("tf-next").addEventListener("click", () => goto(scene === LAST ? 1 : scene + 1));
+  $("tf-prev").addEventListener("click", () => goto(scene - 1));
+  document.querySelectorAll(".tf-rail [role=tab]").forEach((t) => t.addEventListener("click", () => goto(+t.dataset.goto)));
+  document.addEventListener("keydown", (e) => {
+    if (root.dataset.story !== "on") return;
+    if (e.key === "ArrowRight") goto(scene + 1);
+    if (e.key === "ArrowLeft") goto(scene - 1);
+  });
+  $("tf-story").addEventListener("change", (e) => {
+    root.dataset.story = e.target.checked ? "on" : "off";
+    if (e.target.checked) goto(scene);
+    else { history.replaceState(null, "", location.pathname); render(); }
+  });
   window.addEventListener("resize", render);
-  buildCols(); render();
+
+  // init — deep link #scene-N auto-opens guide mode
+  root.dataset.story = "off";
+  buildCols();
+  renderQK("cat");
+  const m = location.hash.match(/scene-(\d)/);
+  if (m) { root.dataset.story = "on"; $("tf-story").checked = true; goto(+m[1]); }
+  else render();
 </script>
