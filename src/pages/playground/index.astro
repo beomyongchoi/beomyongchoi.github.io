@@ -23,20 +23,17 @@ import { SITE } from "../../consts";
     <canvas id="lotto" aria-label="로또 추첨기"></canvas>
 
     <div class="lab-controls">
-      <button id="lotto-draw" type="button" class="btn-primary">추첨</button>
+      <button id="lotto-draw" type="button" class="btn-primary">추첨 시작</button>
       <button id="lotto-reset" type="button" class="btn-ghost">리셋</button>
+      <button id="lotto-copy" type="button" class="btn-ghost" hidden>번호 복사</button>
+      <button id="lotto-save" type="button" class="btn-ghost" hidden>이미지 저장</button>
     </div>
-    <p id="lotto-status" class="lab-status">버튼을 눌러 공을 뽑아보세요.</p>
+    <p id="lotto-status" class="lab-status">공이 통 바닥에 가라앉아 있어요. “추첨 시작”을 눌러보세요.</p>
   </section>
 </BaseLayout>
 
 <style>
-  .lab-card {
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    background: var(--surface);
-    padding: 18px 18px 22px;
-  }
+  .lab-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 18px 18px 22px; }
   .lab-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
   .lab-head h2 { font-size: 1.15rem; font-weight: 700; }
   .badge {
@@ -49,7 +46,7 @@ import { SITE } from "../../consts";
     display: block; width: 100%; max-width: 520px; height: auto; aspect-ratio: 520 / 640;
     margin: 0 auto; border-radius: 12px; touch-action: none;
   }
-  .lab-controls { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
+  .lab-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
   .btn-primary {
     font: inherit; font-weight: 600; padding: 9px 26px; border: 0; border-radius: 10px;
     background: var(--accent); color: var(--accent-fg); cursor: pointer; transition: opacity .15s, transform .05s;
@@ -58,7 +55,7 @@ import { SITE } from "../../consts";
   .btn-primary:active { transform: translateY(1px); }
   .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
   .btn-ghost {
-    font: inherit; font-weight: 600; padding: 9px 20px; border: 1px solid var(--border); border-radius: 10px;
+    font: inherit; font-weight: 600; padding: 9px 18px; border: 1px solid var(--border); border-radius: 10px;
     background: transparent; color: var(--muted); cursor: pointer; transition: border-color .15s, color .15s;
   }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
@@ -75,23 +72,23 @@ import { SITE } from "../../consts";
     cv.height = H * dpr;
     ctx.scale(dpr, dpr);
 
-    // theme-aware neutrals (ball colors stay official lotto colors)
     const css = getComputedStyle(document.documentElement);
-    const v = (name, fb) => (css.getPropertyValue(name).trim() || fb);
-    const C_BORDER = v("--border", "#e5e6e9");
-    const C_MUTED = v("--muted", "#888");
-    const C_SURFACE = v("--surface", "#f2f3f5");
-    const C_FG = v("--fg", "#1a1a1f");
+    const rd = (name, fb) => (css.getPropertyValue(name).trim() || fb);
+    const C_BORDER = rd("--border", "#e5e6e9");
+    const C_MUTED = rd("--muted", "#888");
+    const C_SURFACE = rd("--surface", "#f2f3f5");
+    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
 
     const TANK = { x: 260, y: 240, r: 205 };
-    const R0 = 15;      // tank ball radius
-    const R1 = 23;      // placed ball radius
-    const SLOT_Y = 588, SLOT_R = 23;
+    const R0 = 15, R1 = 23, SLOT_Y = 588, SLOT_R = 23;
+    const CHUTE = { x: TANK.x, y: TANK.y + TANK.r * 0.66 };
+    const LAYERS = 4;
+    const LSCALE = [0.8, 0.92, 1.0, 1.12];   // back → front
+    const LALPHA = [0.9, 0.95, 1.0, 1.0];
 
     const ballColor = (n) =>
       n <= 10 ? "#fbc400" : n <= 20 ? "#69c8f2" : n <= 30 ? "#ff7272" : n <= 40 ? "#9aa0a6" : "#b0d840";
 
-    // result slots: 6 mains + gap + bonus
     const SP = 56, mains = SP * 5, extra = 74;
     const startX = (W - (mains + extra)) / 2;
     const slots = [];
@@ -100,47 +97,55 @@ import { SITE } from "../../consts";
     const plusX = (slots[5].x + slots[6].x) / 2;
 
     let balls = [];
-    let phase = "idle"; // idle | charging | revealing | done
-    let blow = 0.6;     // blower intensity
+    let phase = "idle";  // idle | charging | revealing | done
+    let blow = 0;        // 0 = settled at bottom; >0 = blower on
+    let lastResult = null;
+
     const status = document.getElementById("lotto-status");
     const drawBtn = document.getElementById("lotto-draw");
     const resetBtn = document.getElementById("lotto-reset");
+    const copyBtn = document.getElementById("lotto-copy");
+    const saveBtn = document.getElementById("lotto-save");
 
     function seedTank() {
       balls = [];
       for (let n = 1; n <= 45; n++) {
         const a = Math.random() * Math.PI * 2, rr = Math.random() * (TANK.r - R0 - 8);
         balls.push({
-          n, x: TANK.x + Math.cos(a) * rr, y: TANK.y + Math.sin(a) * rr,
-          vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
-          r: R0, color: ballColor(n), state: "tank",
+          n, x: TANK.x + Math.cos(a) * rr, y: TANK.y + Math.sin(a) * rr * 0.5 + 40,
+          vx: (Math.random() - 0.5) * 3, vy: Math.random() * 2,
+          layer: (Math.random() * LAYERS) | 0, color: ballColor(n), state: "tank",
         });
       }
     }
 
     function physics() {
-      // integrate tank balls
       for (const b of balls) {
         if (b.state === "flying") {
           b.f += 1;
-          const t = Math.min(b.f / b.dur, 1);
-          const e = 1 - Math.pow(1 - t, 3);
-          b.x = b.sx + (b.tx - b.sx) * e;
-          b.y = b.sy + (b.ty - b.sy) * e - Math.sin(t * Math.PI) * 46; // toss arc
-          b.r = R0 + (R1 - R0) * e;
-          if (t >= 1) { b.state = "placed"; b.x = b.tx; b.y = b.ty; b.r = R1; }
+          if (b.f <= 12) {                        // suck to the chute
+            const e = b.f / 12, ee = e * e;
+            b.x = b.sx + (CHUTE.x - b.sx) * ee;
+            b.y = b.sy + (CHUTE.y - b.sy) * ee;
+          } else {                                // dispense chute → slot
+            const e = Math.min((b.f - 12) / (b.dur - 12), 1), ee = 1 - Math.pow(1 - e, 3);
+            b.x = CHUTE.x + (b.tx - CHUTE.x) * ee;
+            b.y = CHUTE.y + (b.ty - CHUTE.y) * ee + Math.sin(e * Math.PI) * 26;
+            b.r = R0 + (R1 - R0) * ee;
+            if (e >= 1) { b.state = "placed"; b.x = b.tx; b.y = b.ty; b.r = R1; }
+          }
           continue;
         }
         if (b.state !== "tank") continue;
-        b.vy += 0.2;                       // gravity
-        b.vy -= 0.34 * blow;               // updraft (blower)
-        b.vx += (Math.random() - 0.5) * 1.7 * blow;
-        b.vy += (Math.random() - 0.5) * 1.7 * blow;
-        b.vx *= 0.985; b.vy *= 0.985;
-        const sp = Math.hypot(b.vx, b.vy), MAX = 12;
+        b.vy += 0.22;                              // gravity (settles when blow = 0)
+        b.vy -= 0.4 * blow;                        // updraft
+        b.vx += (Math.random() - 0.5) * 1.9 * blow;
+        b.vy += (Math.random() - 0.5) * 1.9 * blow;
+        b.vx *= 0.986; b.vy *= 0.986;
+        const sp = Math.hypot(b.vx, b.vy), MAX = 13;
         if (sp > MAX) { b.vx *= MAX / sp; b.vy *= MAX / sp; }
         b.x += b.vx; b.y += b.vy;
-        const dx = b.x - TANK.x, dy = b.y - TANK.y, d = Math.hypot(dx, dy) || 1, lim = TANK.r - b.r;
+        const dx = b.x - TANK.x, dy = b.y - TANK.y, d = Math.hypot(dx, dy) || 1, lim = TANK.r - R0;
         if (d > lim) {
           const nx = dx / d, ny = dy / d;
           b.x = TANK.x + nx * lim; b.y = TANK.y + ny * lim;
@@ -148,96 +153,146 @@ import { SITE } from "../../consts";
           b.vx -= 1.7 * vn * nx; b.vy -= 1.7 * vn * ny;
         }
       }
-      // ball-ball (tank only)
-      const t = balls.filter((b) => b.state === "tank");
-      for (let i = 0; i < t.length; i++) {
-        for (let j = i + 1; j < t.length; j++) {
-          const a = t[i], c = t[j];
-          const dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy) || 1, min = a.r + c.r;
-          if (d < min) {
-            const nx = dx / d, ny = dy / d, ov = (min - d) / 2;
-            a.x -= nx * ov; a.y -= ny * ov; c.x += nx * ov; c.y += ny * ov;
-            const va = a.vx * nx + a.vy * ny, vb = c.vx * nx + c.vy * ny, s = va - vb;
-            a.vx -= s * nx; a.vy -= s * ny; c.vx += s * nx; c.vy += s * ny;
+      // collide only within the same depth layer (different layers overlap → pseudo-3D)
+      for (let L = 0; L < LAYERS; L++) {
+        const t = balls.filter((b) => b.state === "tank" && b.layer === L);
+        for (let i = 0; i < t.length; i++) {
+          for (let j = i + 1; j < t.length; j++) {
+            const a = t[i], c = t[j];
+            const dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy) || 1, min = R0 * 2;
+            if (d < min) {
+              const nx = dx / d, ny = dy / d, ov = (min - d) / 2;
+              a.x -= nx * ov; a.y -= ny * ov; c.x += nx * ov; c.y += ny * ov;
+              const va = a.vx * nx + a.vy * ny, vb = c.vx * nx + c.vy * ny, s = va - vb;
+              a.vx -= s * nx; a.vy -= s * ny; c.vx += s * nx; c.vy += s * ny;
+            }
           }
         }
       }
     }
 
     function drawBall(b) {
-      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fillStyle = b.color; ctx.fill();
-      ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.6, 0, 7); ctx.fillStyle = "#fff"; ctx.fill();
+      let r = b.r;
+      if (b.state === "tank") { r = R0 * LSCALE[b.layer]; ctx.globalAlpha = LALPHA[b.layer]; }
+      ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7); ctx.fillStyle = b.color; ctx.fill();
+      ctx.beginPath(); ctx.arc(b.x, b.y, r * 0.6, 0, 7); ctx.fillStyle = "#fff"; ctx.fill();
       ctx.fillStyle = "#222"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = "700 " + Math.round(b.r * 0.82) + "px ui-sans-serif, system-ui, sans-serif";
+      ctx.font = "700 " + Math.round(r * 0.82) + "px ui-sans-serif, system-ui, sans-serif";
       ctx.fillText(String(b.n), b.x, b.y + 1);
+      ctx.globalAlpha = 1;
+    }
+
+    function drawGlass() {
+      // body
+      ctx.beginPath(); ctx.arc(TANK.x, TANK.y, TANK.r, 0, 7);
+      ctx.fillStyle = C_SURFACE; ctx.fill();
+      // volume shading (sphere)
+      const vol = ctx.createRadialGradient(TANK.x - 40, TANK.y - 70, TANK.r * 0.15, TANK.x, TANK.y + 30, TANK.r * 1.15);
+      vol.addColorStop(0, dark ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.55)");
+      vol.addColorStop(0.55, "rgba(0,0,0,0)");
+      vol.addColorStop(1, dark ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.12)");
+      ctx.fillStyle = vol; ctx.fill();
+      // glass rim
+      const rim = ctx.createLinearGradient(0, TANK.y - TANK.r, 0, TANK.y + TANK.r);
+      rim.addColorStop(0, "rgba(255,255,255,0.85)");
+      rim.addColorStop(0.5, C_BORDER);
+      rim.addColorStop(1, "rgba(0,0,0,0.18)");
+      ctx.lineWidth = 4; ctx.strokeStyle = rim; ctx.stroke();
+    }
+
+    function drawGlassGlare() {
+      // specular reflection on the front of the glass (over the balls)
+      ctx.save();
+      ctx.beginPath(); ctx.arc(TANK.x, TANK.y, TANK.r, 0, 7); ctx.clip();
+      const g = ctx.createRadialGradient(TANK.x - 78, TANK.y - 96, 8, TANK.x - 78, TANK.y - 96, 150);
+      g.addColorStop(0, "rgba(255,255,255,0.42)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // thin crescent highlight along top-left rim
+      ctx.globalAlpha = 0.5; ctx.lineWidth = 6; ctx.strokeStyle = "rgba(255,255,255,0.6)";
+      ctx.beginPath(); ctx.arc(TANK.x, TANK.y, TANK.r - 4, Math.PI * 1.05, Math.PI * 1.45); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.restore();
     }
 
     function render() {
       ctx.clearRect(0, 0, W, H);
-      // tank
-      ctx.beginPath(); ctx.arc(TANK.x, TANK.y, TANK.r, 0, 7);
-      ctx.fillStyle = C_SURFACE; ctx.fill();
-      ctx.lineWidth = 3; ctx.strokeStyle = C_BORDER; ctx.stroke();
-      // slot placeholders
+      drawGlass();
+      for (let L = 0; L < LAYERS; L++) for (const b of balls) if (b.state === "tank" && b.layer === L) drawBall(b);
+      drawGlassGlare();
+      // result slots
       ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.strokeStyle = C_BORDER;
       for (const s of slots) { ctx.beginPath(); ctx.arc(s.x, s.y, SLOT_R, 0, 7); ctx.stroke(); }
       ctx.setLineDash([]);
       ctx.fillStyle = C_MUTED; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = "700 22px ui-sans-serif, system-ui, sans-serif";
-      ctx.fillText("+", plusX, SLOT_Y);
-      ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
-      ctx.fillText("보너스", slots[6].x, SLOT_Y + SLOT_R + 13);
-      // balls: tank first, then flying/placed on top
-      for (const b of balls) if (b.state === "tank") drawBall(b);
+      ctx.font = "700 22px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("+", plusX, SLOT_Y);
+      ctx.font = "11px ui-sans-serif, system-ui, sans-serif"; ctx.fillText("보너스", slots[6].x, SLOT_Y + SLOT_R + 13);
       for (const b of balls) if (b.state === "flying" || b.state === "placed") drawBall(b);
     }
 
     function loop() { physics(); render(); requestAnimationFrame(loop); }
 
+    function showResultBtns(on) { copyBtn.hidden = !on; saveBtn.hidden = !on; }
+
     function resetTank() {
-      seedTank();
-      phase = "idle"; blow = 0.6;
-      status.textContent = "버튼을 눌러 공을 뽑아보세요.";
-      drawBtn.disabled = false;
+      seedTank(); phase = "idle"; blow = 0; lastResult = null;
+      showResultBtns(false); drawBtn.disabled = false;
+      status.textContent = "공이 통 바닥에 가라앉아 있어요. “추첨 시작”을 눌러보세요.";
     }
 
-    function fly(n, slot, dur) {
+    function fly(n, slot) {
       const b = balls.find((x) => x.n === n && x.state === "tank");
       if (!b) return;
-      b.state = "flying"; b.f = 0; b.dur = dur;
+      b.state = "flying"; b.f = 0; b.dur = 46;
       b.sx = b.x; b.sy = b.y; b.tx = slot.x; b.ty = slot.y;
     }
 
     function doDraw() {
       if (phase === "charging" || phase === "revealing") return;
-      resetTank();                         // return all balls, fresh churn
-      phase = "charging"; blow = 1.5;
-      drawBtn.disabled = true;
+      resetTank();
+      phase = "charging"; blow = 1.7;             // whoosh — balls erupt from the bottom
+      drawBtn.disabled = true; showResultBtns(false);
       status.textContent = "추첨 중…";
       const pool = Array.from({ length: 45 }, (_, i) => i + 1);
       for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
       const six = pool.slice(0, 6).sort((a, b) => a - b);
       const bonus = pool[6];
-      const seq = [...six.map((n) => ({ n, slot: slots[six.indexOf(n)] })), { n: bonus, slot: slots[6] }];
+      const seq = [...six.map((n, i) => ({ n, slot: slots[i] })), { n: bonus, slot: slots[6] }];
 
       setTimeout(() => {
-        phase = "revealing"; blow = 1.1;
+        phase = "revealing"; blow = 1.15;
         seq.forEach((item, i) => {
           setTimeout(() => {
-            fly(item.n, item.slot, 34);
+            fly(item.n, item.slot);
             if (i === seq.length - 1) {
               setTimeout(() => {
-                phase = "done"; blow = 0.6; drawBtn.disabled = false;
-                status.textContent = "당첨 번호  " + six.join(", ") + "  +  보너스 " + bonus;
-              }, 620);
+                phase = "done"; blow = 0; lastResult = { six, bonus };
+                drawBtn.disabled = false; showResultBtns(true);
+                status.textContent = "당첨 번호  " + six.join(", ") + "   +   보너스 " + bonus;
+              }, 780);
             }
-          }, i * 480);
+          }, i * 520);
         });
-      }, 900);
+      }, 1100);
     }
 
     drawBtn.addEventListener("click", doDraw);
     resetBtn.addEventListener("click", resetTank);
+    copyBtn.addEventListener("click", async () => {
+      if (!lastResult) return;
+      const txt = lastResult.six.join(", ") + "  +  보너스 " + lastResult.bonus;
+      try {
+        await navigator.clipboard.writeText(txt);
+        copyBtn.textContent = "복사됨!";
+        setTimeout(() => (copyBtn.textContent = "번호 복사"), 1200);
+      } catch (e) { /* clipboard blocked */ }
+    });
+    saveBtn.addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.download = "lotto-" + (lastResult ? lastResult.six.join("-") : "draw") + ".png";
+      a.href = cv.toDataURL("image/png");
+      a.click();
+    });
 
     seedTank();
     loop();
