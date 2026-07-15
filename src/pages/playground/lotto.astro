@@ -26,6 +26,7 @@ import { SITE } from "../../consts";
     <div class="arc-btns">
       <button id="lotto-draw" type="button" class="btn-go">GO!</button>
       <button id="lotto-reset" type="button" class="btn-2">RESET</button>
+      <button id="lotto-mode" type="button" class="btn-2">MODE:AUTO</button>
       <button id="lotto-copy" type="button" class="btn-2" hidden>COPY</button>
       <button id="lotto-save" type="button" class="btn-2" hidden>SAVE</button>
       <button id="lotto-mute" type="button" class="btn-mute" aria-label="sound">SFX</button>
@@ -60,6 +61,7 @@ import { SITE } from "../../consts";
   .btn-2 { background: #e6e8ee; color: #2a2a33; }
   .btn-mute { background: #c8402e; color: #fff; }
   .btn-mute.off { background: #7a7f8a; }
+  .btn-2.btn-on { background: #f8b020; color: #201008; }
   .lab-status { margin-top: 14px; text-align: center; font-size: 0.9rem; color: var(--muted); min-height: 1.3em; }
 </style>
 
@@ -100,7 +102,7 @@ import { SITE } from "../../consts";
     };
 
     let blocks = [], balls = [], mario = null, phase = "idle", lastResult = null, blink = 0;
-    let flagT = 0, flagDrop = 0, bonusBall = null, actx = null, muted = false;
+    let flagT = 0, flagDrop = 0, bonusBall = null, actx = null, muted = false, mode = "auto";
     const clouds = [{ x: 28, y: 26, v: 0.10 }, { x: 150, y: 20, v: 0.06 }, { x: 100, y: 32, v: 0.14 }];
 
     const status = document.getElementById("lotto-status");
@@ -109,6 +111,7 @@ import { SITE } from "../../consts";
     const copyBtn = document.getElementById("lotto-copy");
     const saveBtn = document.getElementById("lotto-save");
     const muteBtn = document.getElementById("lotto-mute");
+    const modeBtn = document.getElementById("lotto-mode");
 
     function tone(f, at, d, vol) {
       const o = actx.createOscillator(), gn = actx.createGain();
@@ -158,7 +161,7 @@ import { SITE } from "../../consts";
       gp(0, 0, GW, GH, SKY);
       for (const c of clouds) cloud(c.x, c.y);
       hill(-8, GROUND_Y - 18, 64); hill(150, GROUND_Y - 14, 74);
-      if (phase === "running" || phase === "flag" || phase === "done") drawFlag();
+      if (["running", "flag", "done", "manualflag", "bonus"].includes(phase)) drawFlag();
       drawGround();
     }
     function drawBlock(b) {
@@ -230,7 +233,7 @@ import { SITE } from "../../consts";
       ctx.beginPath(); ctx.arc(ballx, bally, 7, 0, 7); ctx.fillStyle = "#e02820"; ctx.fill();
       cp(ballx - 3, bally - 4, 3, 3, "#ff8a7a");
       // GO button (clickable, flashes)
-      const lit = (phase !== "running") && blink % 60 < 34, pr = goPressed > 0 ? 1 : 0;
+      const lit = !["running", "manualpick", "manualflag", "bonus"].includes(phase) && blink % 60 < 34, pr = goPressed > 0 ? 1 : 0;
       ctx.beginPath(); ctx.arc(GO_B.x, GO_B.y + pr, GO_B.r, 0, 7); ctx.fillStyle = lit ? "#ffe04a" : "#c89010"; ctx.fill();
       ctx.beginPath(); ctx.arc(GO_B.x, GO_B.y - 2 + pr, GO_B.r - 4, 0, 7); ctx.fillStyle = lit ? "#fff7c0" : "#e0b030"; ctx.fill();
       ctx.font = "6px 'Press Start 2P', monospace"; ctx.fillStyle = "#5a2000"; ctx.fillText("GO", GO_B.x, GO_B.y + 1 + pr);
@@ -278,11 +281,22 @@ import { SITE } from "../../consts";
         if (flagT >= 58) {
           phase = "exit";
           drawBtn.disabled = false; copyBtn.hidden = false; saveBtn.hidden = false;
-          status.textContent = "당첨 번호  " + lastResult.six.join(", ") + "   +   보너스 " + lastResult.bonus;
+          status.textContent = "당첨 번호  " + [...lastResult.six].sort((a, b) => a - b).join(", ") + "   +   보너스 " + lastResult.bonus;
         }
       } else if (phase === "exit" && mario) {
         mario.x += 1.6; mario.y = GROUND_Y; mario.jump = false;
         if (mario.x > GW + 16) { mario.on = false; phase = "done"; }
+      } else if (phase === "bonus") {
+        flagT++;
+        const e = 1 - Math.pow(1 - Math.min(flagT / 42, 1), 2);
+        flagDrop = e;
+        if (bonusBall) bonusBall.y = 44 + e * (bonusSlot.y - 44);
+        if (flagT === 42) { balls.push({ n: bonusBall.n, color: bonusBall.color, state: "placed", p2x: bonusSlot.x, p2y: bonusSlot.y }); bonusBall = null; }
+        if (flagT >= 58) {
+          phase = "done";
+          drawBtn.disabled = false; copyBtn.hidden = false; saveBtn.hidden = false;
+          status.textContent = "당첨 번호  " + [...lastResult.six].sort((a, b) => a - b).join(", ") + "   +   보너스 " + lastResult.bonus;
+        }
       }
       gameRender();
       ctx.clearRect(0, 0, CW, CH);
@@ -294,27 +308,67 @@ import { SITE } from "../../consts";
     function resetBlocks() { blocks = bx.map((x, i) => ({ x, i, n: null, hit: false, hop: 0 })); balls = []; mario = null; bonusBall = null; flagDrop = 0; phase = "idle"; }
     function resetGame() {
       resetBlocks(); lastResult = null; drawBtn.disabled = false; copyBtn.hidden = true; saveBtn.hidden = true;
-      status.textContent = "GO! 를 누르면 마리오가 달리며 블록을 칩니다.";
+      status.textContent = mode === "manual"
+        ? "MANUAL — GO! 를 누른 뒤 상자를 하나씩 직접 까보세요."
+        : "GO! 를 누르면 마리오가 달리며 블록을 칩니다.";
     }
     function doDraw() {
-      if (phase === "running" || phase === "flag" || phase === "exit") return;
-      resetBlocks(); phase = "running"; drawBtn.disabled = true; copyBtn.hidden = true; saveBtn.hidden = true;
-      status.textContent = "마리오 출발!";
+      if (["running", "flag", "exit", "bonus", "manualpick", "manualflag"].includes(phase)) return;
+      resetBlocks(); drawBtn.disabled = true; copyBtn.hidden = true; saveBtn.hidden = true;
       const pool = Array.from({ length: 45 }, (_, i) => i + 1);
       for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
       const six = pool.slice(0, 6), bonus = pool[6];   // draw order = random (뽑히는 맛), copy sorts later
       blocks.forEach((b, i) => (b.n = six[i]));
       lastResult = { six, bonus };
-      mario = { x: -14, y: GROUND_Y, jy: 0, jump: false, jt: 0, target: null, leaping: false, on: true };
+      if (mode === "manual") {
+        phase = "manualpick";
+        status.textContent = "상자를 하나씩 클릭해서 까보세요!  (0 / 6)";
+      } else {
+        phase = "running";
+        status.textContent = "마리오 출발!";
+        mario = { x: -14, y: GROUND_Y, jy: 0, jump: false, jt: 0, target: null, leaping: false, on: true };
+      }
     }
 
     cv.addEventListener("click", (e) => {
       const rect = cv.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width * CW, y = (e.clientY - rect.top) / rect.height * CH;
-      if (Math.hypot(x - GO_B.x, y - GO_B.y) <= GO_B.r + 3) { goPressed = 6; doDraw(); }
+      if (Math.hypot(x - GO_B.x, y - GO_B.y) <= GO_B.r + 3) { goPressed = 6; doDraw(); return; }
+      if (mode !== "manual") return;
+      const gx = x - SX, gy = y - SY;   // cabinet → game-canvas coords
+      if (phase === "manualpick") {
+        const b = blocks.find((b) => !b.hit && gx >= b.x - 1 && gx <= b.x + BS + 1 && gy >= BY - 3 && gy <= BY + BS + 3);
+        if (b) {
+          b.hit = true; b.hop = 6; popBall(b); sfx("coin");
+          const got = blocks.filter((x) => x.hit).length;
+          if (got === 6) { phase = "manualflag"; status.textContent = "6개 다 뽑았다! 오른쪽 깃발을 눌러 보너스 번호를 뽑으세요."; }
+          else status.textContent = "상자를 하나씩 클릭해서 까보세요!  (" + got + " / 6)";
+        }
+      } else if (phase === "manualflag") {
+        if (gx >= FX - 18 && gx <= FX + 10 && gy >= 28 && gy <= GROUND_Y) {
+          phase = "bonus"; flagT = 0; sfx("flag");
+          bonusBall = { n: lastResult.bonus, color: ballColor(lastResult.bonus), state: "slide", x: FX, y: 44 };
+          status.textContent = "보너스 번호 추첨 중...";
+        }
+      }
+    });
+    cv.addEventListener("mousemove", (e) => {
+      if (mode !== "manual" || (phase !== "manualpick" && phase !== "manualflag")) { cv.style.cursor = ""; return; }
+      const rect = cv.getBoundingClientRect();
+      const gx = (e.clientX - rect.left) / rect.width * CW - SX, gy = (e.clientY - rect.top) / rect.height * CH - SY;
+      const over = phase === "manualpick"
+        ? blocks.some((b) => !b.hit && gx >= b.x - 1 && gx <= b.x + BS + 1 && gy >= BY - 3 && gy <= BY + BS + 3)
+        : (gx >= FX - 18 && gx <= FX + 10 && gy >= 28 && gy <= GROUND_Y);
+      cv.style.cursor = over ? "pointer" : "";
     });
     drawBtn.addEventListener("click", doDraw);
     resetBtn.addEventListener("click", resetGame);
+    modeBtn.addEventListener("click", () => {
+      mode = mode === "auto" ? "manual" : "auto";
+      modeBtn.textContent = "MODE:" + mode.toUpperCase();
+      modeBtn.classList.toggle("btn-on", mode === "manual");
+      resetGame();
+    });
     muteBtn.addEventListener("click", () => { muted = !muted; muteBtn.classList.toggle("off", muted); muteBtn.textContent = muted ? "MUTE" : "SFX"; });
     copyBtn.addEventListener("click", async () => {
       if (!lastResult) return;
