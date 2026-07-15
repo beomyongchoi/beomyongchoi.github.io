@@ -1,0 +1,13 @@
+---
+title: "Attention Is a Compatibility Calculation — How Q·K Finds Context"
+description: "The core of transformer self-attention in one line: attention is the compatibility score between Query and Key. Walk through Q·K dot product → softmax(τ) → weighted sum with the it→cat example and an interactive. Click any sentence to flip between English and Korean."
+pubDate: 2026-07-16
+lang: en
+translationKey: attention-why
+tags: ["Transformer", "Attention", "self-attention", "Query-Key-Value", "Deep Learning"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import { blocks } from "../../data/attentionWhy";
+
+<BilingualArticle blocks={blocks} lang="en" />

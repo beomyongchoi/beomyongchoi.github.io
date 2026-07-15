@@ -10,6 +10,7 @@ export type BiBlock =
   | { type: "quote"; ko: string; en: string }
   | { type: "callout"; tone: "tldr" | "warn" | "tip"; ko: string; en: string }
   | { type: "list"; items: S[] }
+  | { type: "code"; code: string }
   | { type: "figure"; src: string; alt: string }
   | { type: "hr" }
   | { type: "sources"; html: string };

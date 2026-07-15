@@ -53,6 +53,10 @@ const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip
             <img src={b.src} alt={b.alt} />
           </figure>
         );
+      if (b.type === "code")
+        return (
+          <pre class="bi-code"><code set:html={b.code} /></pre>
+        );
       if (b.type === "hr") return <hr />;
       if (b.type === "sources") return <div class="bi-sources" set:html={b.html} />;
       return null;
@@ -102,6 +106,13 @@ const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip
 
   .bi-sources h3 { font-size: 1.05rem; }
   .bi-fig img { width: 100%; }
+
+  .bi-code {
+    margin: 1.5em 0; padding: 13px 16px; overflow-x: auto;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    font-family: var(--font-mono); font-size: 0.9em; line-height: 1.6; color: var(--fg);
+  }
+  .bi-code code { font-family: inherit; }
 
   /* reveal popover (appended to <body>) */
   .bi-pop {
