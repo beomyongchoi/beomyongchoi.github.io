@@ -5,7 +5,7 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`About — ${SITE.author}`}
-  description="Backend engineer turned AI builder. I worked on search and data in commerce and logistics; these days I build AI products and work on AEO."
+  description="Backend to AI. I'd rather prove things by building them — solve the problem first, then write the code, and work end to end."
   locale="en"
   path="/about/"
   ogType="profile"
@@ -13,37 +13,49 @@ import { SITE } from "../../consts";
   <div class="prose prose-zinc max-w-none dark:prose-invert prose-headings:tracking-tight prose-a:text-accent">
     <h1>About</h1>
 
-    <p>I built backend systems in commerce and logistics. Now I build AI.</p>
+    <blockquote class="lead-quote">
+      “Talk is cheap. Show me the code.”
+      <cite>— Linus Torvalds</cite>
+    </blockquote>
 
-    <h2>Backend</h2>
+    <p>I'm a backend engineer. Now I build AI.</p>
+
     <p>
-      I started at FinTalk, a fintech startup. Then I spent five-plus years at WeMakePrice on its
-      commerce platform — building search that pulled the lowest-price product from catalogs, and
-      running crawler pipelines that collected thousands of records a day. During real-time
-      search-keyword events, I handled tens of thousands of concurrent users.
-    </p>
-    <p>
-      At Hanexpress I designed the shared modules and architecture for logistics solutions
-      (WMS/FMS) and built an AWS EKS microservices platform — from code to infra.
+      I'd rather prove things by building them. Solve the problem first, then write the code. I work
+      end to end — from design to running it in production.
     </p>
 
-    <h2>AI</h2>
-    <p>
-      Watching LLMs change search pulled me in. I finished AIFFEL's AI research track, studied NLP,
-      and built a RAG-based Q&amp;A system.
-    </p>
-    <p>
-      These days I work on AEO (Answer Engine Optimization) — measuring and improving how AIs like
-      ChatGPT and Perplexity talk about a brand. I build pipelines that query several models at once
-      and apply them to real clients in hospitality and construction.
-    </p>
-    <p>The search-and-data work from commerce led straight here.</p>
+    <p>When something new shows up, I take it apart to see how it works. Watching LLMs change search pulled me into AI.</p>
 
-    <h2>What's next</h2>
-    <p>I want to design AI systems from the ground up.</p>
-    <p>
-      <a href="/en/resume/">Resume</a> · <a href="/en/work/">Work</a> ·
+    <p class="links">
+      Want the details? — <a href="/en/resume/">Resume</a> · <a href="/en/work/">Work</a> ·
       <a href={`mailto:${SITE.email}`}>Email</a> · <a href={SITE.linkedin}>LinkedIn</a>
     </p>
   </div>
 </BaseLayout>
+
+<style>
+  .lead-quote {
+    margin: 1.6rem 0 2.2rem;
+    padding-left: 1.1rem;
+    border-left: 3px solid var(--accent);
+    font-size: 1.5rem;
+    line-height: 1.45;
+    font-weight: 600;
+    font-style: normal;
+    color: var(--fg);
+    quotes: none;
+  }
+  .lead-quote cite {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-style: normal;
+    color: var(--muted);
+  }
+  .links {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+</style>
