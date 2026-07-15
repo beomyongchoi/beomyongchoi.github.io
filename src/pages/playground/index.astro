@@ -65,7 +65,8 @@ const toys = [
 
 <script>
   const thumbs = [...document.querySelectorAll(".pg-thumb")].map((cv) => {
-    const toy = cv.dataset.toy, W = toy === "lotto" ? 128 : 288, H = 64;
+    const toy = cv.dataset.toy;
+    const W = toy === "lotto" ? 128 : 240, H = toy === "lotto" ? 64 : 120;  // both 2:1, no stretch
     cv.width = W; cv.height = H;
     const ctx = cv.getContext("2d"); ctx.imageSmoothingEnabled = toy !== "lotto";
     return { cv, ctx, toy, W, H };
@@ -88,25 +89,28 @@ const toys = [
       ctx.fillStyle = "#a86008"; ctx.font = "700 8px monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("7", cx, cy);
     }
   }
+  // BertViz-style: two columns of tokens, curved lines between them, one bold
+  // connection (query→key) pulsing and cycling — mirrors the real toy.
   function transformer(ctx, W, H, f) {
     const cs = getComputedStyle(document.documentElement);
     ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
     const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e";
-    const n = 5, y = H - 16, xs = Array.from({ length: n }, (_, i) => 30 + i * (W - 60) / (n - 1));
-    const q = Math.floor(f / 80) % n, phase = (f % 80) / 80;
-    xs.forEach((x, i) => {
-      if (i === q) return;
-      const w = i === (q + 1) % n ? 0.9 : 0.25 + 0.2 * Math.abs(Math.sin(i + f * 0.02));
-      ctx.strokeStyle = acc; ctx.globalAlpha = (0.12 + w * 0.7) * (0.5 + 0.5 * Math.sin(phase * Math.PI));
-      ctx.lineWidth = 1 + w * 4; ctx.beginPath(); ctx.moveTo(xs[q], y);
-      ctx.quadraticCurveTo((xs[q] + x) / 2, y - 34 - Math.abs(xs[q] - x) * 0.2, x, y); ctx.stroke();
-    });
+    const n = 5, lx = 32, rx = W - 32, mx = W / 2;
+    const ys = Array.from({ length: n }, (_, i) => 18 + i * (H - 36) / (n - 1));
+    const cols = ["#9696a0", "#3a82f6", "#22a06b", "#9696a0", "#9a5adc"];
+    const q = Math.floor(f / 70) % n, tgt = (q + 2) % n, phase = (f % 70) / 70;
+    const curve = (y1, y2, a, w) => {
+      ctx.strokeStyle = acc; ctx.globalAlpha = a; ctx.lineWidth = w;
+      ctx.beginPath(); ctx.moveTo(lx, y1); ctx.bezierCurveTo(mx, y1, mx, y2, rx, y2); ctx.stroke();
+    };
+    for (let i = 0; i < n; i++) curve(ys[i], ys[i], 0.06, 1);           // faint backdrop
+    for (let j = 0; j < n; j++) if (j !== tgt) curve(ys[q], ys[j], 0.1, 1.2); // active token's spread
+    curve(ys[q], ys[tgt], 0.3 + 0.35 * Math.sin(phase * Math.PI), 3.2);  // bold, pulsing
     ctx.globalAlpha = 1;
-    const cols = ["#9696a0", "#3a82f6", "#9696a0", "#2ea05a", "#9a5adc"];
-    xs.forEach((x, i) => {
-      ctx.fillStyle = i === q ? acc : cols[i]; ctx.beginPath(); ctx.arc(x, y, i === q ? 9 : 7, 0, 7); ctx.fill();
-      if (i === q) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke(); }
-    });
+    for (let i = 0; i < n; i++) for (const [x, on] of [[lx, i === q], [rx, i === tgt]]) {
+      ctx.fillStyle = on ? acc : cols[i]; ctx.beginPath(); ctx.arc(x, ys[i], on ? 5 : 3.5, 0, 7); ctx.fill();
+      if (on) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke(); }
+    }
   }
 
   let f = 0;

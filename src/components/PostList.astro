@@ -1,5 +1,5 @@
 ---
-import { LOCALE_TAG, type Locale } from "../consts";
+import { LOCALE_TAG, CORE_TAGS, type Locale } from "../consts";
 
 interface PostItem {
   href: string;
@@ -17,10 +17,10 @@ const { posts, locale, emptyText } = Astro.props;
 const fmt = (d: Date) =>
   d.toLocaleDateString(LOCALE_TAG[locale], { year: "numeric", month: "long", day: "numeric" });
 
-// Unique tags across posts, most-used first, for the filter bar.
-const tagCount = new Map<string, number>();
-for (const p of posts) for (const t of p.tags) tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
-const allTags = [...tagCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([t]) => t);
+// Filter bar shows only CORE categories that actually appear on a post,
+// in the curated order — not every granular tag.
+const present = new Set(posts.flatMap((p) => p.tags));
+const filterTags = CORE_TAGS[locale].filter((t) => present.has(t));
 const allLabel = locale === "ko" ? "전체" : "All";
 ---
 
@@ -29,10 +29,10 @@ const allLabel = locale === "ko" ? "전체" : "All";
     <p class="text-muted">{emptyText}</p>
   ) : (
     <>
-      {allTags.length > 1 && (
+      {filterTags.length > 1 && (
         <div class="tagbar" data-tagbar>
           <button type="button" class="tagchip on" data-tag="*">{allLabel}</button>
-          {allTags.map((tag) => (
+          {filterTags.map((tag) => (
             <button type="button" class="tagchip" data-tag={tag}>#{tag}</button>
           ))}
         </div>

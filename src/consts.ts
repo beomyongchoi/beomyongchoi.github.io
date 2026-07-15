@@ -34,6 +34,14 @@ interface Strings {
   wipBody: string;
 }
 
+// Core blog categories surfaced as filter chips (in this order). Only those
+// that actually appear on a post are shown — keeps the filter to a few big
+// buckets instead of every granular tag. Add here as new topics come up.
+export const CORE_TAGS: Record<Locale, string[]> = {
+  ko: ["AI", "백엔드", "LLM", "딥러닝", "트랜스포머", "인프라"],
+  en: ["AI", "Backend", "LLM", "Deep Learning", "Transformer", "Infra"],
+};
+
 export const T: Record<Locale, Strings> = {
   ko: {
     siteName: "최범용",
