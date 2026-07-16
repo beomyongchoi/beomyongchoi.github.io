@@ -103,10 +103,11 @@ import { SITE } from "../../consts";
 
     let blocks = [], balls = [], mario = null, phase = "idle", lastResult = null, blink = 0;
     let flagT = 0, flagDrop = 0, bonusBall = null, actx = null, muted = false, mode = "auto";
-    let fireballs = [], platforms = []; const keys = {};
+    let fireballs = [], platforms = [], pipes = []; const keys = {};
     const GRAV = 0.5, JUMPV = -8.8, WALK = 1.7;
-    // manual-mode hill: low-long run (1단) → wide peak at block height (2단) → low step down (1단). widths ~2:3:1.
-    const STEPS = [{ x: 6, y: 114, w: 80 }, { x: 80, y: 62, w: 88 }, { x: 164, y: 114, w: 32 }];
+    // manual-mode terrain: a small low hill (~20% width) on the left, + a pipe by the flag you climb onto the bricks.
+    const TERRAIN = [{ x: 12, y: 130, w: 40 }, { x: 24, y: 114, w: 16 }];   // 1단 run + a tiny 2단 bump (2 stacked)
+    const PIPE = { x: 164, y: 88, w: 20 };
     const clouds = [{ x: 28, y: 26, v: 0.10 }, { x: 150, y: 20, v: 0.06 }, { x: 100, y: 32, v: 0.14 }];
 
     const status = document.getElementById("lotto-status");
@@ -189,6 +190,15 @@ import { SITE } from "../../consts";
       gp(p.x, p.y, p.w, 3, HILL); gp(p.x, p.y + 3, p.w, 1, HILL_D);   // grass cap
       gp(p.x, p.y, p.w, 1, "#7ee87e");
     }
+    function drawPipe(p) {
+      const bot = GROUND_Y, lipX = p.x - 3, lipW = p.w + 6, Gr = "#3aa028", GrHi = "#84e05a", GrDk = "#1c6810";
+      gp(p.x, p.y + 8, p.w, bot - p.y - 8, Gr);
+      gp(p.x, p.y + 8, 4, bot - p.y - 8, GrHi); gp(p.x + p.w - 5, p.y + 8, 5, bot - p.y - 8, GrDk);
+      gp(p.x - 1, p.y + 8, 1, bot - p.y - 8, INK); gp(p.x + p.w, p.y + 8, 1, bot - p.y - 8, INK);
+      gp(lipX, p.y, lipW, 9, Gr); gp(lipX, p.y, lipW, 3, GrHi); gp(lipX, p.y + 7, lipW, 2, GrDk);
+      gp(lipX - 1, p.y - 1, lipW + 2, 1, INK); gp(lipX - 1, p.y + 9, lipW + 2, 1, INK);
+      gp(lipX - 1, p.y, 1, 10, INK); gp(lipX + lipW, p.y, 1, 10, INK);
+    }
     function drawSlot(cx) { gp(cx - R - 1, slotY - R - 1, (R + 1) * 2, (R + 1) * 2, "rgba(0,0,0,0.18)"); }
     function drawBall(b, x, y) {
       g.beginPath(); g.arc(x, y, R, 0, 7); g.fillStyle = b.color; g.fill();
@@ -211,6 +221,7 @@ import { SITE } from "../../consts";
     function gameRender() {
       drawScene();
       for (const p of platforms) drawPlatform(p);
+      for (const pp of pipes) drawPipe(pp);
       for (const s of slots) drawSlot(s.x); drawSlot(bonusSlot.x);
       for (const b of blocks) drawBlock(b);
       for (const b of balls) if (b.state === "placed") drawBall(b, b.p2x, b.p2y);
@@ -338,11 +349,13 @@ import { SITE } from "../../consts";
         if (tdir !== 0) { mario.vx += tdir * 0.32; mario.vx = Math.max(-WALK, Math.min(WALK, mario.vx)); mario.dir = tdir; }
         else { mario.vx *= 0.8; if (Math.abs(mario.vx) < 0.05) mario.vx = 0; }
         mario.x = Math.max(6, Math.min(GW - 6, mario.x + mario.vx));
+        for (const pp of pipes) if (mario.y > pp.y + 3 && mario.x > pp.x - 4 && mario.x < pp.x + pp.w) mario.x = pp.x - 4;   // pipe blocks you from the side; jump on top
         mario.vy += GRAV; const prevFeet = mario.y; mario.y += mario.vy; mario.onGround = false;
         if (mario.y >= GROUND_Y) { mario.y = GROUND_Y; mario.vy = 0; mario.onGround = true; }
-        else if (mario.vy > 0) {   // land on a platform / block top (one-way: only from above)
+        else if (mario.vy > 0) {   // land on a platform / block / pipe top (one-way: only from above)
           for (const p of platforms) if (mario.x > p.x - 2 && mario.x < p.x + p.w + 2 && prevFeet <= p.y + 1 && mario.y >= p.y) { mario.y = p.y; mario.vy = 0; mario.onGround = true; break; }
           if (!mario.onGround) for (const b of blocks) if (mario.x > b.x - 2 && mario.x < b.x + BS + 2 && prevFeet <= BY + 1 && mario.y >= BY) { mario.y = BY; mario.vy = 0; mario.onGround = true; break; }
+          if (!mario.onGround) for (const pp of pipes) if (mario.x > pp.x - 5 && mario.x < pp.x + pp.w + 5 && prevFeet <= pp.y + 1 && mario.y >= pp.y) { mario.y = pp.y; mario.vy = 0; mario.onGround = true; break; }
         }
         mario.jump = !mario.onGround;
         if (mario.vy < 0) {   // head-bonk a block from below
@@ -366,11 +379,11 @@ import { SITE } from "../../consts";
       requestAnimationFrame(frame);
     }
 
-    function resetBlocks() { blocks = bx.map((x, i) => ({ x, i, n: null, hit: false, hop: 0 })); balls = []; mario = null; bonusBall = null; flagDrop = 0; phase = "idle"; fireballs = []; platforms = []; }
+    function resetBlocks() { blocks = bx.map((x, i) => ({ x, i, n: null, hit: false, hop: 0 })); balls = []; mario = null; bonusBall = null; flagDrop = 0; phase = "idle"; fireballs = []; platforms = []; pipes = []; }
     function resetGame() {
       resetBlocks(); lastResult = null; drawBtn.disabled = false; copyBtn.hidden = true; saveBtn.hidden = true;
       status.textContent = mode === "manual"
-        ? "MANUAL — GO! 누르고 파이어 마리오 조작: ← → 이동 · ↑ 점프 · 발판 올라 Space 파이어볼."
+        ? "MANUAL — GO! 누르고 파이어 마리오 조작: ← → · ↑ 점프 · 깃발 옆 파이프 타고 벽돌 위로 · Space 불."
         : "GO! 를 누르면 마리오가 달리며 블록을 칩니다.";
     }
     function doDraw() {
@@ -383,9 +396,9 @@ import { SITE } from "../../consts";
       lastResult = { six, bonus };
       if (mode === "manual") {
         phase = "play"; fireballs = []; keys.left = keys.right = false;
-        platforms = STEPS.map((s) => ({ ...s }));
+        platforms = TERRAIN.map((s) => ({ ...s })); pipes = [{ ...PIPE }];
         mario = { x: 16, y: GROUND_Y, vx: 0, vy: 0, dir: 1, jump: false, onGround: true, fire: true, on: true };
-        status.textContent = "← → 이동 · ↑ 점프(블록 헤딩) · 발판 딛고 올라가 Space 파이어볼로 쏘기!";
+        status.textContent = "← → 이동 · ↑ 점프로 블록 헤딩 · 깃발 옆 파이프 타고 벽돌 위로 · Space 파이어볼!";
       } else {
         phase = "running";
         status.textContent = "마리오 출발!";
