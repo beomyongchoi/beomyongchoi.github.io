@@ -16,7 +16,7 @@ export const SERIES: Record<string, Series> = {
       { slug: "attention-why", toy: "/playground/transformer/", published: true, title: { ko: "1. 어텐션 — Q·K 궁합", en: "1. Attention — the Q·K match" } },
       { slug: "transformer-block", toy: "/playground/transformer-block/", published: true, title: { ko: "2. 트랜스포머 블록", en: "2. The Transformer block" } },
       { slug: "bert-encoder", toy: "/playground/bert/", published: true, title: { ko: "3. 인코더 온리 — BERT", en: "3. Encoder-only — BERT" } },
-      { slug: "gpt-decoder", toy: "/playground/gpt/", published: false, title: { ko: "4. 디코더 온리 — GPT", en: "4. Decoder-only — GPT" } },
+      { slug: "gpt-decoder", toy: "/playground/gpt/", published: true, title: { ko: "4. 디코더 온리 — GPT", en: "4. Decoder-only — GPT" } },
     ],
   },
 };

@@ -1,0 +1,16 @@
+---
+title: "Decoder-only GPT — Generating Left-to-Right with a Causal Mask"
+description: "Stack the transformer block decoder-only and hide the future with −∞, and you get GPT. Next-token prediction, the causal mask, teacher forcing (training is parallel, generation is sequential), and sampling (temperature/top-k/top-p). With an autoregressive-generation interactive, contrasted with BERT to close the series. Click any sentence to flip between English and Korean."
+pubDate: 2026-07-16
+lang: en
+translationKey: gpt-decoder
+tags: ["AI", "Transformer", "GPT", "Deep Learning"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import { blocks } from "../../data/gptDecoder";
+
+<SeriesNav id="transformer" current="gpt-decoder" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />

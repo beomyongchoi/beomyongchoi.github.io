@@ -1,0 +1,190 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`GPT — 자기회귀 생성 시각화 — ${SITE.authorKo}`}
+  description="GPT는 causal 마스크로 왼쪽만 보고 토큰을 하나씩 뽑아 붙이며 문장을 만듭니다. 자기회귀 생성·temperature 샘플링·causal 마스크 삼각형을 눈으로, BERT의 양방향과 대비하며."
+  locale="ko"
+  path="/playground/gpt/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">GPT, 한 토큰씩 만들어 보기</h1>
+    <p class="mt-3 text-muted">
+      GPT는 <strong>왼쪽만</strong> 보고 <strong>다음 토큰</strong>을 뽑아 붙이길 반복합니다(자기회귀). 눌러서 생성해 보세요.
+    </p>
+  </header>
+
+  <section class="gp" id="gp">
+    <div class="gp-top">
+      <a class="gp-crosslink" href="/blog/gpt-decoder/">개념 더 읽기 → 디코더 온리, GPT</a>
+    </div>
+
+    <div class="gp-seq" id="gp-seq"></div>
+
+    <div class="gp-ctl">
+      <button id="gp-gen" type="button" class="gp-btn">다음 토큰 생성 →</button>
+      <button id="gp-reset" type="button" class="gp-btn ghost">리셋</button>
+      <label class="gp-temp">temperature <input id="gp-temp" type="range" min="0.1" max="1.5" step="0.1" value="0.8" /><b id="gp-tval">0.8</b></label>
+    </div>
+
+    <div class="gp-dist">
+      <div class="gp-dist-head">다음 토큰 확률 <span class="mono" id="gp-dist-ctx"></span></div>
+      <div id="gp-bars" class="gp-bars"></div>
+    </div>
+
+    <div class="gp-matrix-wrap">
+      <div class="gp-matrix-head">
+        <span>어텐션 마스크</span>
+        <div class="gp-mtoggle" id="gp-mtoggle">
+          <button data-m="gpt" class="on">GPT (causal)</button>
+          <button data-m="bert">BERT (양방향)</button>
+        </div>
+      </div>
+      <div id="gp-matrix" class="gp-matrix"></div>
+      <p class="gp-mcap" id="gp-mcap"></p>
+    </div>
+
+    <p class="gp-note" id="gp-note"></p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .gp-top { margin-bottom: 12px; }
+  .gp-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .gp-crosslink:hover { text-decoration: underline; }
+
+  .gp-seq { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 42px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .gp-w { font-family: var(--font-mono); font-size: 0.95rem; padding: 4px 9px; border-radius: 7px; background: var(--bg); border: 1px solid var(--border); }
+  .gp-w.prompt { color: var(--muted); }
+  .gp-w.new { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .gp-cursor { width: 8px; height: 20px; background: var(--accent); border-radius: 2px; animation: gpblink 1s steps(2) infinite; }
+  @keyframes gpblink { 50% { opacity: 0; } }
+
+  .gp-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 14px 0 18px; }
+  .gp-btn { font: inherit; font-size: 0.82rem; font-family: var(--font-mono); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .gp-btn.ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+  .gp-btn:disabled { opacity: 0.4; cursor: default; }
+  .gp-temp { font-size: 0.76rem; font-family: var(--font-mono); color: var(--muted); display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+  .gp-temp input { width: 90px; accent-color: var(--accent); }
+  .gp-temp b { color: var(--accent); }
+
+  .gp-dist { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 13px 15px; max-width: 440px; }
+  .gp-dist-head { font-size: 0.88rem; font-weight: 700; margin-bottom: 9px; }
+  .gp-dist-head .mono { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); font-weight: 400; margin-left: 6px; }
+  .gp-bars { display: flex; flex-direction: column; gap: 5px; }
+  .gp-bar { display: grid; grid-template-columns: 74px 1fr 40px; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .gp-bar .k { font-family: var(--font-mono); text-align: right; color: var(--muted); }
+  .gp-bar .track { height: 12px; background: color-mix(in srgb, var(--muted) 14%, transparent); border-radius: 3px; overflow: hidden; }
+  .gp-bar .fill { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .25s; }
+  .gp-bar .v { font-family: var(--font-mono); text-align: right; font-size: 0.72rem; color: var(--fg); }
+  .gp-bar.picked .k, .gp-bar.picked .v { color: var(--accent); font-weight: 700; }
+
+  .gp-matrix-wrap { margin-top: 22px; }
+  .gp-matrix-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .gp-matrix-head > span { font-size: 0.88rem; font-weight: 700; }
+  .gp-mtoggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .gp-mtoggle button { font: inherit; font-size: 0.72rem; font-family: var(--font-mono); padding: 5px 10px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+  .gp-mtoggle button.on { background: var(--accent); color: var(--accent-fg); }
+  .gp-matrix { overflow-x: auto; }
+  .gp-grid { display: grid; gap: 2px; width: max-content; font-family: var(--font-mono); font-size: 0.6rem; }
+  .gp-lbl { color: var(--muted); display: flex; align-items: center; justify-content: flex-end; padding: 0 4px; white-space: nowrap; }
+  .gp-lbl.col { justify-content: center; writing-mode: vertical-rl; transform: rotate(180deg); padding: 4px 0; }
+  .gp-cell { width: 20px; height: 20px; border-radius: 3px; }
+  .gp-cell.on { background: var(--accent); }
+  .gp-cell.off { background: color-mix(in srgb, var(--muted) 12%, transparent); }
+  .gp-cell.diag { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .gp-mcap { margin-top: 8px; font-size: 0.78rem; color: var(--muted); }
+
+  .gp-note { margin-top: 18px; font-size: 0.88rem; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 14px; line-height: 1.6; }
+  .gp-note b { color: var(--accent); }
+</style>
+
+<script>
+  const PROMPT = ["The", "cat", "sat", "on", "the"];
+  // curated illustrative next-token logits keyed by the previous (lowercased) token.
+  const LOGITS = {
+    the: [["mat", 3.5], ["floor", 2.4], ["roof", 1.6], ["rug", 1.2], ["sofa", 0.9]],
+    mat: [[".", 3.8], ["and", 2.2], ["quietly", 1.4], ["softly", 1.0]],
+    floor: [[".", 3.5], ["and", 2.0], ["near", 1.4], ["by", 1.0]],
+    roof: [[".", 3.4], ["and", 1.8], ["above", 1.3], ["all", 0.9]],
+    rug: [[".", 3.6], ["and", 1.9], ["by", 1.2]],
+    and: [["purred", 3.0], ["fell", 2.4], ["yawned", 1.7], ["stretched", 1.3], ["slept", 1.0]],
+    purred: [["softly", 3.2], [".", 2.8], ["loudly", 1.5], ["gently", 1.1]],
+    fell: [["asleep", 3.6], [".", 1.8], ["over", 1.4], ["down", 1.1]],
+    yawned: [[".", 3.4], ["and", 2.0], ["widely", 1.4]],
+    stretched: [[".", 3.2], ["out", 2.4], ["and", 1.6]],
+    slept: [[".", 3.8], ["quietly", 1.6], ["all", 1.2]],
+    softly: [[".", 3.8], ["and", 1.5], ["then", 1.1]],
+    asleep: [[".", 4.0], ["quickly", 1.5], ["again", 1.0]],
+    out: [[".", 3.6], ["and", 1.8], ["long", 1.2]],
+  };
+  const FALLBACK = [[".", 3.0], ["and", 2.0], ["then", 1.5], ["the", 1.1]];
+
+  let seq = PROMPT.slice(), temp = 0.8, mmode = "gpt", lastPick = null;
+  const MAXLEN = 13;
+  const $ = (id) => document.getElementById(id);
+  const key = (t) => t.toLowerCase();
+  const done = () => seq[seq.length - 1] === "." || seq.length >= MAXLEN;
+
+  function dist() {
+    const raw = LOGITS[key(seq[seq.length - 1])] || FALLBACK;
+    const ex = raw.map(([w, l]) => [w, Math.exp(l / temp)]);
+    const s = ex.reduce((a, [, p]) => a + p, 0);
+    return ex.map(([w, p]) => [w, p / s]).sort((a, b) => b[1] - a[1]);
+  }
+  function sample(d) {
+    let r = Math.random();
+    for (const [w, p] of d) { if ((r -= p) <= 0) return w; }
+    return d[d.length - 1][0];
+  }
+
+  function renderSeq() {
+    $("gp-seq").innerHTML = seq.map((t, i) => {
+      const cls = i >= PROMPT.length ? (i === seq.length - 1 && lastPick ? "new" : "") : "prompt";
+      return `<span class="gp-w ${cls}">${t}</span>`;
+    }).join("") + (done() ? "" : `<span class="gp-cursor"></span>`);
+  }
+  function renderDist() {
+    const d = dist(), max = d[0][1];
+    $("gp-dist-ctx").textContent = `"…${seq.slice(-3).join(" ")}" 다음`;
+    $("gp-bars").innerHTML = d.map(([w, p]) => {
+      const pick = w === lastPick;
+      return `<div class="gp-bar${pick ? " picked" : ""}"><span class="k">${w}${pick ? " ←" : ""}</span><span class="track"><span class="fill" style="width:${Math.round(p / max * 100)}%"></span></span><span class="v">${Math.round(p * 100)}%</span></div>`;
+    }).join("");
+  }
+  function renderMatrix() {
+    const n = seq.length, cell = 22;
+    const short = (t) => (t.length > 6 ? t.slice(0, 5) + "…" : t);
+    let html = `<div class="gp-grid" style="grid-template-columns:auto repeat(${n}, ${cell}px)">`;
+    html += `<span></span>` + seq.map((t) => `<span class="gp-lbl col">${short(t)}</span>`).join("");
+    for (let i = 0; i < n; i++) {
+      html += `<span class="gp-lbl">${short(seq[i])}</span>`;
+      for (let j = 0; j < n; j++) {
+        const on = mmode === "bert" ? true : j <= i;
+        html += `<span class="gp-cell ${on ? "on" : "off"}${i === j ? " diag" : ""}"></span>`;
+      }
+    }
+    html += `</div>`;
+    $("gp-matrix").innerHTML = html;
+    $("gp-mcap").textContent = mmode === "gpt"
+      ? "행(각 토큰)이 볼 수 있는 열 = 자신과 왼쪽뿐. 오른쪽 위 삼각형은 −∞로 가려집니다(미래 차단)."
+      : "BERT는 마스크가 없어 행마다 좌우 전부를 봅니다 — 그래서 생성이 아니라 이해에 씁니다.";
+  }
+  function renderNote() {
+    if (done()) $("gp-note").innerHTML = seq[seq.length - 1] === "."
+      ? `문장 완성. GPT는 이렇게 <b>왼쪽 문맥 → 다음 토큰</b>을 반복해 만듭니다. 학습 땐 이 예측을 문장 전체에서 <b>병렬로</b> 하지만(teacher forcing), 생성 땐 지금처럼 <b>한 토큰씩</b> 이어붙입니다.`
+      : `길이 한계에 도달했어요. 리셋해서 다시 해보세요.`;
+    else $("gp-note").innerHTML = `temperature <b>${temp.toFixed(1)}</b>: 낮으면 1등 토큰으로 뾰족하게(0에 가까우면 greedy), 높으면 여러 후보로 평평하게 퍼집니다. "다음 토큰 생성"이 이 분포에서 하나를 뽑아 붙여요.`;
+  }
+  function render() { renderSeq(); renderDist(); renderMatrix(); renderNote(); $("gp-gen").disabled = done(); }
+
+  $("gp-gen").addEventListener("click", () => { if (done()) return; lastPick = sample(dist()); seq.push(lastPick); render(); });
+  $("gp-reset").addEventListener("click", () => { seq = PROMPT.slice(); lastPick = null; render(); });
+  $("gp-temp").addEventListener("input", (e) => { temp = +e.target.value; $("gp-tval").textContent = temp.toFixed(1); renderDist(); renderNote(); });
+  $("gp-mtoggle").querySelectorAll("button").forEach((b) =>
+    b.addEventListener("click", () => { mmode = b.dataset.m; $("gp-mtoggle").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); renderMatrix(); }));
+  render();
+</script>

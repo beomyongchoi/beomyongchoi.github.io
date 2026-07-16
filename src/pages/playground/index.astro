@@ -10,6 +10,7 @@ const groups = [
       { href: "/playground/transformer/", toy: "transformer", title: "Attention 시각화", tag: "1편 · 어텐션", desc: "트랜스포머 self-attention을 눈으로. 단어가 어디에 집중하는지." },
       { href: "/playground/transformer-block/", toy: "transformerblock", title: "트랜스포머 블록 시각화", tag: "2편 · 블록", desc: "토큰 벡터가 어텐션·잔차·FFN 블록을 지나며 갱신되는 잔차 스트림." },
       { href: "/playground/bert/", toy: "bert", title: "BERT 빈칸 맞히기", tag: "3편 · 인코더", desc: "양방향으로 [MASK] 자리를 맞히기. GPT의 왼쪽만-보기와 비교." },
+      { href: "/playground/gpt/", toy: "gpt", title: "GPT 자기회귀 생성", tag: "4편 · 디코더", desc: "causal 마스크로 왼쪽만 보고 토큰을 하나씩 생성. temperature·마스크 삼각형." },
     ],
   },
   {
@@ -199,7 +200,22 @@ const groups = [
     });
   }
 
-  const FN = { lotto, transformer, fanout, transformerblock, bert };
+  function gpt(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e";
+    const n = 6, cell = 13, gap = 3, gw = n * cell + (n - 1) * gap, x0 = (W - gw) / 2, y0 = (H - gw) / 2;
+    const front = Math.floor(f / 22) % (n + 3);   // autoregressive fill front (grows, then resets)
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const x = x0 + j * (cell + gap), y = y0 + i * (cell + gap);
+      if (j <= i) { ctx.globalAlpha = i <= front ? (i === front ? 0.55 + 0.45 * Math.abs(Math.sin(f * 0.1)) : 1) : 0.14; ctx.fillStyle = acc; }
+      else { ctx.globalAlpha = 1; ctx.fillStyle = "#d7dae0"; }
+      ctx.beginPath(); ctx.roundRect(x, y, cell, cell, 3); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const FN = { lotto, transformer, fanout, transformerblock, bert, gpt };
   let f = 0;
   function loop() {
     f++;
