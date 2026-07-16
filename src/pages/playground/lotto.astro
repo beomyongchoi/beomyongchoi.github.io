@@ -12,7 +12,7 @@ import { SITE } from "../../consts";
   <header class="mb-8">
     <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
     <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">LUCKY BLOCK</h1>
-    <p class="mt-2 text-muted">8비트 아케이드 로또 추첨기. Canvas·JS로 직접 만든 물리 + 픽셀아트.</p>
+    <p class="mt-2 text-muted">8비트 아케이드 로또 추첨기. <strong>MODE</strong> 버튼으로 자동(마리오가 알아서)·수동(키보드로 파이어 마리오 조작: ← → · ↑ 점프 · Space 파이어볼) 전환.</p>
   </header>
 
   <section class="lab-card">
@@ -103,6 +103,8 @@ import { SITE } from "../../consts";
 
     let blocks = [], balls = [], mario = null, phase = "idle", lastResult = null, blink = 0;
     let flagT = 0, flagDrop = 0, bonusBall = null, actx = null, muted = false, mode = "auto";
+    let fireballs = []; const keys = {};
+    const GRAV = 0.5, JUMPV = -8.8, WALK = 1.7;
     const clouds = [{ x: 28, y: 26, v: 0.10 }, { x: 150, y: 20, v: 0.06 }, { x: 100, y: 32, v: 0.14 }];
 
     const status = document.getElementById("lotto-status");
@@ -127,6 +129,7 @@ import { SITE } from "../../consts";
         if (kind === "jump") { const o = actx.createOscillator(), gn = actx.createGain(); o.type = "square"; o.frequency.setValueAtTime(240, t); o.frequency.exponentialRampToValueAtTime(560, t + 0.09); gn.gain.setValueAtTime(0.08, t); gn.gain.exponentialRampToValueAtTime(0.001, t + 0.12); o.connect(gn).connect(actx.destination); o.start(t); o.stop(t + 0.13); }
         else if (kind === "coin") { tone(988, t, 0.06, 0.11); tone(1319, t + 0.05, 0.10, 0.11); }
         else if (kind === "flag") { [392, 523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, t + i * 0.11, 0.11, 0.1)); }
+        else if (kind === "fire") { const o = actx.createOscillator(), gn = actx.createGain(); o.type = "square"; o.frequency.setValueAtTime(720, t); o.frequency.exponentialRampToValueAtTime(180, t + 0.12); gn.gain.setValueAtTime(0.07, t); gn.gain.exponentialRampToValueAtTime(0.001, t + 0.14); o.connect(gn).connect(actx.destination); o.start(t); o.stop(t + 0.15); }
       } catch (e) {}
     }
 
@@ -161,7 +164,7 @@ import { SITE } from "../../consts";
       gp(0, 0, GW, GH, SKY);
       for (const c of clouds) cloud(c.x, c.y);
       hill(-8, GROUND_Y - 18, 64); hill(150, GROUND_Y - 14, 74);
-      if (["running", "flag", "done", "manualflag", "bonus"].includes(phase)) drawFlag();
+      if (["running", "flag", "done", "bonus"].includes(phase) || (phase === "play" && allHit())) drawFlag();
       drawGround();
     }
     function drawBlock(b) {
@@ -183,8 +186,9 @@ import { SITE } from "../../consts";
       gp(x - 1, y - R, 2, 1, "rgba(255,255,255,0.6)");
       gNum(String(b.n), x, y, 1, INK);
     }
-    function drawMario(mx, my, jumping) {
-      const RD = "#e02820", S = "#f8b878", HR = "#5a2c10", B = "#2848c8", SH = "#5a2c10", top = my - 15;
+    function drawMario(mx, my, jumping, fire) {
+      const RD = "#e02820", S = "#f8b878", HR = "#5a2c10", SH = "#5a2c10", top = my - 15;
+      const B = fire ? "#f4f4f8" : "#2848c8";   // fire Mario = white overalls
       gp(mx - 4, top, 9, 3, RD); gp(mx - 5, top + 3, 11, 2, RD);
       gp(mx - 3, top + 5, 7, 4, S); gp(mx - 4, top + 5, 2, 4, HR); gp(mx + 1, top + 7, 4, 1, HR);
       gp(mx - 4, top + 9, 8, 3, RD);
@@ -204,7 +208,11 @@ import { SITE } from "../../consts";
         drawBall(b, u * u * b.p0x + 2 * u * e * b.p1x + e * e * b.p2x, u * u * b.p0y + 2 * u * e * b.p1y + e * e * b.p2y);
       }
       if (bonusBall && bonusBall.state === "slide") drawBall(bonusBall, bonusBall.x, bonusBall.y);
-      if (mario && mario.on) drawMario(mario.x, mario.y, mario.jump);
+      for (const fb of fireballs) {
+        g.fillStyle = "#a83208"; g.beginPath(); g.arc(fb.x, fb.y, 3, 0, 7); g.fill();
+        g.fillStyle = (blink >> 1) & 1 ? "#ff8c1a" : "#ffd000"; g.beginPath(); g.arc(fb.x, fb.y, 2, 0, 7); g.fill();
+      }
+      if (mario && mario.on) drawMario(mario.x, mario.y, mario.jump, mario.fire);
       gNum("+", plusX, slotY, 2, "#fff");
       g.font = "700 6px 'Press Start 2P', monospace"; g.textAlign = "center"; g.textBaseline = "middle";
       g.fillStyle = "#fff"; g.fillText("BONUS", bonusSlot.x, slotY + R + 6);
@@ -233,7 +241,7 @@ import { SITE } from "../../consts";
       ctx.beginPath(); ctx.arc(ballx, bally, 7, 0, 7); ctx.fillStyle = "#e02820"; ctx.fill();
       cp(ballx - 3, bally - 4, 3, 3, "#ff8a7a");
       // GO button (clickable, flashes)
-      const lit = !["running", "manualpick", "manualflag", "bonus"].includes(phase) && blink % 60 < 34, pr = goPressed > 0 ? 1 : 0;
+      const lit = !["running", "play", "bonus"].includes(phase) && blink % 60 < 34, pr = goPressed > 0 ? 1 : 0;
       ctx.beginPath(); ctx.arc(GO_B.x, GO_B.y + pr, GO_B.r, 0, 7); ctx.fillStyle = lit ? "#ffe04a" : "#c89010"; ctx.fill();
       ctx.beginPath(); ctx.arc(GO_B.x, GO_B.y - 2 + pr, GO_B.r - 4, 0, 7); ctx.fillStyle = lit ? "#fff7c0" : "#e0b030"; ctx.fill();
       ctx.font = "6px 'Press Start 2P', monospace"; ctx.fillStyle = "#5a2000"; ctx.fillText("GO", GO_B.x, GO_B.y + 1 + pr);
@@ -243,6 +251,22 @@ import { SITE } from "../../consts";
     function popBall(b) {
       const p0x = b.x + BS / 2;
       balls.push({ n: b.n, color: ballColor(b.n), state: "pop", t: 0, p0x, p0y: BY, p1x: p0x, p1y: BY - 22, p2x: bcx[b.i], p2y: slotY });
+    }
+    const allHit = () => blocks.length > 0 && blocks.every((b) => b.hit);
+    function openBlock(b, downVy) { b.hit = true; b.hop = 6; popBall(b); sfx("coin"); if (typeof downVy === "number" && mario) mario.vy = downVy;
+      const got = blocks.filter((x) => x.hit).length;
+      status.textContent = got === 6 ? "6개 다 깠다! → 오른쪽 깃발로 가서 보너스를 뽑으세요." : "블록 까는 중...  (" + got + " / 6)";
+    }
+    function startBonus() {
+      phase = "bonus"; flagT = 0; sfx("flag"); keys.left = keys.right = false;
+      bonusBall = { n: lastResult.bonus, color: ballColor(lastResult.bonus), state: "slide", x: FX, y: 44 };
+      status.textContent = "보너스 번호 추첨 중...";
+    }
+    function marioJump() { if (phase === "play" && mario && mario.onGround) { mario.vy = JUMPV; mario.onGround = false; sfx("jump"); } }
+    function marioShoot() {
+      if (phase !== "play" || !mario || !mario.fire || fireballs.length >= 3) return;
+      fireballs.push({ x: mario.x + mario.dir * 7, y: mario.y - 10, vx: mario.dir * 3.4, vy: -1.5, life: 130, dead: false });
+      sfx("fire");
     }
     function frame() {
       blink++; if (goPressed > 0) goPressed--;
@@ -297,6 +321,25 @@ import { SITE } from "../../consts";
           drawBtn.disabled = false; copyBtn.hidden = false; saveBtn.hidden = false;
           status.textContent = "당첨 번호  " + [...lastResult.six].sort((a, b) => a - b).join(", ") + "   +   보너스 " + lastResult.bonus;
         }
+      } else if (phase === "play" && mario) {
+        mario.vx = (keys.right ? WALK : 0) - (keys.left ? WALK : 0);
+        if (mario.vx > 0) mario.dir = 1; else if (mario.vx < 0) mario.dir = -1;
+        mario.x = Math.max(6, Math.min(GW - 6, mario.x + mario.vx));
+        mario.vy += GRAV; mario.y += mario.vy;
+        if (mario.y >= GROUND_Y) { mario.y = GROUND_Y; mario.vy = 0; mario.onGround = true; } else mario.onGround = false;
+        mario.jump = !mario.onGround;
+        if (mario.vy < 0) {   // head-bonk a block from below
+          const headY = mario.y - 15;
+          for (const b of blocks) if (!b.hit && mario.x > b.x - 3 && mario.x < b.x + BS + 3 && headY <= BY + BS && headY >= BY - 2) { openBlock(b, 2.2); break; }
+        }
+        for (const fb of fireballs) {
+          fb.vy += 0.35; fb.x += fb.vx; fb.y += fb.vy;
+          if (fb.y >= GROUND_Y) { fb.y = GROUND_Y; fb.vy = -3.2; }
+          for (const b of blocks) if (!b.hit && fb.x > b.x - 2 && fb.x < b.x + BS + 2 && fb.y <= BY + BS + 2 && fb.y >= BY - 2) { openBlock(b); fb.dead = true; break; }
+          if (fb.x < -4 || fb.x > GW + 4 || --fb.life <= 0) fb.dead = true;
+        }
+        if (fireballs.some((f) => f.dead)) fireballs = fireballs.filter((f) => !f.dead);
+        if (allHit() && mario.x >= FX - 8) startBonus();
       }
       gameRender();
       ctx.clearRect(0, 0, CW, CH);
@@ -309,11 +352,11 @@ import { SITE } from "../../consts";
     function resetGame() {
       resetBlocks(); lastResult = null; drawBtn.disabled = false; copyBtn.hidden = true; saveBtn.hidden = true;
       status.textContent = mode === "manual"
-        ? "MANUAL — GO! 를 누른 뒤 상자를 하나씩 직접 까보세요."
+        ? "MANUAL — GO! 누르고 파이어 마리오를 키보드로 조작하세요 (← → · ↑ · Space)."
         : "GO! 를 누르면 마리오가 달리며 블록을 칩니다.";
     }
     function doDraw() {
-      if (["running", "flag", "exit", "bonus", "manualpick", "manualflag"].includes(phase)) return;
+      if (["running", "flag", "exit", "bonus", "play"].includes(phase)) return;
       resetBlocks(); drawBtn.disabled = true; copyBtn.hidden = true; saveBtn.hidden = true;
       const pool = Array.from({ length: 45 }, (_, i) => i + 1);
       for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
@@ -321,8 +364,9 @@ import { SITE } from "../../consts";
       blocks.forEach((b, i) => (b.n = six[i]));
       lastResult = { six, bonus };
       if (mode === "manual") {
-        phase = "manualpick";
-        status.textContent = "상자를 하나씩 클릭해서 까보세요!  (0 / 6)";
+        phase = "play"; fireballs = []; keys.left = keys.right = false;
+        mario = { x: 16, y: GROUND_Y, vx: 0, vy: 0, dir: 1, jump: false, onGround: true, fire: true, on: true };
+        status.textContent = "← → 이동 · ↑ 점프로 블록 헤딩 · Space 파이어볼!";
       } else {
         phase = "running";
         status.textContent = "마리오 출발!";
@@ -333,33 +377,22 @@ import { SITE } from "../../consts";
     cv.addEventListener("click", (e) => {
       const rect = cv.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width * CW, y = (e.clientY - rect.top) / rect.height * CH;
-      if (Math.hypot(x - GO_B.x, y - GO_B.y) <= GO_B.r + 3) { goPressed = 6; doDraw(); return; }
-      if (mode !== "manual") return;
-      const gx = x - SX, gy = y - SY;   // cabinet → game-canvas coords
-      if (phase === "manualpick") {
-        const b = blocks.find((b) => !b.hit && gx >= b.x - 1 && gx <= b.x + BS + 1 && gy >= BY - 3 && gy <= BY + BS + 3);
-        if (b) {
-          b.hit = true; b.hop = 6; popBall(b); sfx("coin");
-          const got = blocks.filter((x) => x.hit).length;
-          if (got === 6) { phase = "manualflag"; status.textContent = "6개 다 뽑았다! 오른쪽 깃발을 눌러 보너스 번호를 뽑으세요."; }
-          else status.textContent = "상자를 하나씩 클릭해서 까보세요!  (" + got + " / 6)";
-        }
-      } else if (phase === "manualflag") {
-        if (gx >= FX - 18 && gx <= FX + 10 && gy >= 28 && gy <= GROUND_Y) {
-          phase = "bonus"; flagT = 0; sfx("flag");
-          bonusBall = { n: lastResult.bonus, color: ballColor(lastResult.bonus), state: "slide", x: FX, y: 44 };
-          status.textContent = "보너스 번호 추첨 중...";
-        }
-      }
+      if (Math.hypot(x - GO_B.x, y - GO_B.y) <= GO_B.r + 3) { goPressed = 6; doDraw(); }
     });
-    cv.addEventListener("mousemove", (e) => {
-      if (mode !== "manual" || (phase !== "manualpick" && phase !== "manualflag")) { cv.style.cursor = ""; return; }
-      const rect = cv.getBoundingClientRect();
-      const gx = (e.clientX - rect.left) / rect.width * CW - SX, gy = (e.clientY - rect.top) / rect.height * CH - SY;
-      const over = phase === "manualpick"
-        ? blocks.some((b) => !b.hit && gx >= b.x - 1 && gx <= b.x + BS + 1 && gy >= BY - 3 && gy <= BY + BS + 3)
-        : (gx >= FX - 18 && gx <= FX + 10 && gy >= 28 && gy <= GROUND_Y);
-      cv.style.cursor = over ? "pointer" : "";
+    window.addEventListener("keydown", (e) => {
+      if (mode !== "manual" || phase !== "play") return;
+      const k = e.key;
+      if (k === "ArrowLeft" || k === "a" || k === "A") { keys.left = true; e.preventDefault(); }
+      else if (k === "ArrowRight" || k === "d" || k === "D") { keys.right = true; e.preventDefault(); }
+      else if (k === "ArrowUp" || k === "w" || k === "W" || k === "z" || k === "Z") { if (!keys.up) { keys.up = true; marioJump(); } e.preventDefault(); }
+      else if (k === " " || k === "Spacebar") { if (!keys.fire) { keys.fire = true; marioShoot(); } e.preventDefault(); }
+    });
+    window.addEventListener("keyup", (e) => {
+      const k = e.key;
+      if (k === "ArrowLeft" || k === "a" || k === "A") keys.left = false;
+      else if (k === "ArrowRight" || k === "d" || k === "D") keys.right = false;
+      else if (k === "ArrowUp" || k === "w" || k === "W" || k === "z" || k === "Z") keys.up = false;
+      else if (k === " " || k === "Spacebar") keys.fire = false;
     });
     drawBtn.addEventListener("click", doDraw);
     resetBtn.addEventListener("click", resetGame);
