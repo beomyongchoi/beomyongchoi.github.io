@@ -103,8 +103,9 @@ import { SITE } from "../../consts";
 
     let blocks = [], balls = [], mario = null, phase = "idle", lastResult = null, blink = 0;
     let flagT = 0, flagDrop = 0, bonusBall = null, actx = null, muted = false, mode = "auto";
-    let fireballs = []; const keys = {};
+    let fireballs = [], platforms = []; const keys = {};
     const GRAV = 0.5, JUMPV = -8.8, WALK = 1.7;
+    const STEPS = [{ x: 150, y: 112, w: 48 }, { x: 158, y: 86, w: 40 }, { x: 166, y: 60, w: 32 }];   // manual-mode climb terrain
     const clouds = [{ x: 28, y: 26, v: 0.10 }, { x: 150, y: 20, v: 0.06 }, { x: 100, y: 32, v: 0.14 }];
 
     const status = document.getElementById("lotto-status");
@@ -180,26 +181,34 @@ import { SITE } from "../../consts";
       gp(b.x - 1, y - 1, BS + 2, 1, INK); gp(b.x - 1, y + BS, BS + 2, 1, INK);
       gp(b.x - 1, y, 1, BS, INK); gp(b.x + BS, y, 1, BS, INK);
     }
+    function drawPlatform(p) {
+      const h = 10;
+      gp(p.x, p.y, p.w, h, GND); gp(p.x, p.y, p.w, 2, GND_HI); gp(p.x, p.y + h - 2, p.w, 2, GND_D);
+      for (let x = p.x; x < p.x + p.w; x += 8) gp(x, p.y, 1, h, GND_D);
+      gp(p.x - 1, p.y - 1, p.w + 2, 1, INK);
+    }
     function drawSlot(cx) { gp(cx - R - 1, slotY - R - 1, (R + 1) * 2, (R + 1) * 2, "rgba(0,0,0,0.18)"); }
     function drawBall(b, x, y) {
       g.beginPath(); g.arc(x, y, R, 0, 7); g.fillStyle = b.color; g.fill();
       gp(x - 1, y - R, 2, 1, "rgba(255,255,255,0.6)");
       gNum(String(b.n), x, y, 1, INK);
     }
-    function drawMario(mx, my, jumping, fire) {
+    function drawMario(mx, my, jumping, fire, dir) {
       const RD = "#e02820", S = "#f8b878", HR = "#5a2c10", SH = "#5a2c10", top = my - 15;
       const B = fire ? "#f4f4f8" : "#2848c8";   // fire Mario = white overalls
-      gp(mx - 4, top, 9, 3, RD); gp(mx - 5, top + 3, 11, 2, RD);
-      gp(mx - 3, top + 5, 7, 4, S); gp(mx - 4, top + 5, 2, 4, HR); gp(mx + 1, top + 7, 4, 1, HR);
-      gp(mx - 4, top + 9, 8, 3, RD);
-      gp(mx - 3, top + 11, 6, 3, B); gp(mx - 3, top + 9, 2, 3, B); gp(mx + 1, top + 9, 2, 3, B);
-      gp(mx - 6, top + 9, 2, 3, S); gp(mx + 4, top + 9, 2, 3, S);
-      if (jumping) { gp(mx - 4, my - 2, 4, 2, SH); gp(mx + 1, my - 2, 4, 2, SH); }
-      else if (((mx | 0) >> 2) & 1) { gp(mx - 4, my - 2, 4, 2, SH); gp(mx + 2, my, 3, 2, SH); }
-      else { gp(mx, my - 2, 4, 2, SH); gp(mx - 5, my, 3, 2, SH); }
+      const px = (ox, y, w, h, c) => gp(dir < 0 ? mx - ox - w : mx + ox, y, w, h, c);   // mirror around mx when facing left
+      px(-4, top, 9, 3, RD); px(-5, top + 3, 11, 2, RD);
+      px(-3, top + 5, 7, 4, S); px(-4, top + 5, 2, 4, HR); px(1, top + 7, 4, 1, HR);
+      px(-4, top + 9, 8, 3, RD);
+      px(-3, top + 11, 6, 3, B); px(-3, top + 9, 2, 3, B); px(1, top + 9, 2, 3, B);
+      px(-6, top + 9, 2, 3, S); px(4, top + 9, 2, 3, S);
+      if (jumping) { px(-4, my - 2, 4, 2, SH); px(1, my - 2, 4, 2, SH); }
+      else if (((mx | 0) >> 2) & 1) { px(-4, my - 2, 4, 2, SH); px(2, my, 3, 2, SH); }
+      else { px(0, my - 2, 4, 2, SH); px(-5, my, 3, 2, SH); }
     }
     function gameRender() {
       drawScene();
+      for (const p of platforms) drawPlatform(p);
       for (const s of slots) drawSlot(s.x); drawSlot(bonusSlot.x);
       for (const b of blocks) drawBlock(b);
       for (const b of balls) if (b.state === "placed") drawBall(b, b.p2x, b.p2y);
@@ -212,7 +221,7 @@ import { SITE } from "../../consts";
         g.fillStyle = "#a83208"; g.beginPath(); g.arc(fb.x, fb.y, 3, 0, 7); g.fill();
         g.fillStyle = (blink >> 1) & 1 ? "#ff8c1a" : "#ffd000"; g.beginPath(); g.arc(fb.x, fb.y, 2, 0, 7); g.fill();
       }
-      if (mario && mario.on) drawMario(mario.x, mario.y, mario.jump, mario.fire);
+      if (mario && mario.on) drawMario(mario.x, mario.y, mario.jump, mario.fire, mario.dir);
       gNum("+", plusX, slotY, 2, "#fff");
       g.font = "700 6px 'Press Start 2P', monospace"; g.textAlign = "center"; g.textBaseline = "middle";
       g.fillStyle = "#fff"; g.fillText("BONUS", bonusSlot.x, slotY + R + 6);
@@ -265,7 +274,8 @@ import { SITE } from "../../consts";
     function marioJump() { if (phase === "play" && mario && mario.onGround) { mario.vy = JUMPV; mario.onGround = false; sfx("jump"); } }
     function marioShoot() {
       if (phase !== "play" || !mario || !mario.fire || fireballs.length >= 3) return;
-      fireballs.push({ x: mario.x + mario.dir * 7, y: mario.y - 10, vx: mario.dir * 3.4, vy: -1.5, life: 130, dead: false });
+      // real Mario fireball: travels horizontally, bounces along surfaces. From the climb ledge it sweeps the block row.
+      fireballs.push({ x: mario.x + mario.dir * 7, y: mario.y - 8, vx: mario.dir * 3, vy: -0.5, life: 150, dead: false });
       sfx("fire");
     }
     function frame() {
@@ -322,20 +332,25 @@ import { SITE } from "../../consts";
           status.textContent = "당첨 번호  " + [...lastResult.six].sort((a, b) => a - b).join(", ") + "   +   보너스 " + lastResult.bonus;
         }
       } else if (phase === "play" && mario) {
-        mario.vx = (keys.right ? WALK : 0) - (keys.left ? WALK : 0);
-        if (mario.vx > 0) mario.dir = 1; else if (mario.vx < 0) mario.dir = -1;
+        const tdir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);   // accel toward input, coast to a stop
+        if (tdir !== 0) { mario.vx += tdir * 0.32; mario.vx = Math.max(-WALK, Math.min(WALK, mario.vx)); mario.dir = tdir; }
+        else { mario.vx *= 0.8; if (Math.abs(mario.vx) < 0.05) mario.vx = 0; }
         mario.x = Math.max(6, Math.min(GW - 6, mario.x + mario.vx));
-        mario.vy += GRAV; mario.y += mario.vy;
-        if (mario.y >= GROUND_Y) { mario.y = GROUND_Y; mario.vy = 0; mario.onGround = true; } else mario.onGround = false;
+        mario.vy += GRAV; const prevFeet = mario.y; mario.y += mario.vy; mario.onGround = false;
+        if (mario.y >= GROUND_Y) { mario.y = GROUND_Y; mario.vy = 0; mario.onGround = true; }
+        else if (mario.vy > 0) {   // land on a platform top (one-way: only from above)
+          for (const p of platforms) if (mario.x > p.x - 2 && mario.x < p.x + p.w + 2 && prevFeet <= p.y + 1 && mario.y >= p.y) { mario.y = p.y; mario.vy = 0; mario.onGround = true; break; }
+        }
         mario.jump = !mario.onGround;
         if (mario.vy < 0) {   // head-bonk a block from below
           const headY = mario.y - 15;
           for (const b of blocks) if (!b.hit && mario.x > b.x - 3 && mario.x < b.x + BS + 3 && headY <= BY + BS && headY >= BY - 2) { openBlock(b, 2.2); break; }
         }
         for (const fb of fireballs) {
-          fb.vy += 0.35; fb.x += fb.vx; fb.y += fb.vy;
-          if (fb.y >= GROUND_Y) { fb.y = GROUND_Y; fb.vy = -3.2; }
-          for (const b of blocks) if (!b.hit && fb.x > b.x - 2 && fb.x < b.x + BS + 2 && fb.y <= BY + BS + 2 && fb.y >= BY - 2) { openBlock(b); fb.dead = true; break; }
+          fb.vy += 0.18; fb.x += fb.vx; fb.y += fb.vy;                 // low gravity → travels far at block height
+          if (fb.y >= GROUND_Y) { fb.y = GROUND_Y; fb.vy = -3; }
+          else if (fb.vy > 0) for (const p of platforms) if (fb.x > p.x && fb.x < p.x + p.w && fb.y >= p.y && fb.y <= p.y + 6) { fb.y = p.y; fb.vy = -3; break; }
+          for (const b of blocks) if (!b.hit && fb.x > b.x - 2 && fb.x < b.x + BS + 2 && fb.y <= BY + BS + 2 && fb.y >= BY - 4) { openBlock(b); fb.dead = true; break; }
           if (fb.x < -4 || fb.x > GW + 4 || --fb.life <= 0) fb.dead = true;
         }
         if (fireballs.some((f) => f.dead)) fireballs = fireballs.filter((f) => !f.dead);
@@ -348,11 +363,11 @@ import { SITE } from "../../consts";
       requestAnimationFrame(frame);
     }
 
-    function resetBlocks() { blocks = bx.map((x, i) => ({ x, i, n: null, hit: false, hop: 0 })); balls = []; mario = null; bonusBall = null; flagDrop = 0; phase = "idle"; }
+    function resetBlocks() { blocks = bx.map((x, i) => ({ x, i, n: null, hit: false, hop: 0 })); balls = []; mario = null; bonusBall = null; flagDrop = 0; phase = "idle"; fireballs = []; platforms = []; }
     function resetGame() {
       resetBlocks(); lastResult = null; drawBtn.disabled = false; copyBtn.hidden = true; saveBtn.hidden = true;
       status.textContent = mode === "manual"
-        ? "MANUAL — GO! 누르고 파이어 마리오를 키보드로 조작하세요 (← → · ↑ · Space)."
+        ? "MANUAL — GO! 누르고 파이어 마리오 조작: ← → 이동 · ↑ 점프 · 발판 올라 Space 파이어볼."
         : "GO! 를 누르면 마리오가 달리며 블록을 칩니다.";
     }
     function doDraw() {
@@ -365,8 +380,9 @@ import { SITE } from "../../consts";
       lastResult = { six, bonus };
       if (mode === "manual") {
         phase = "play"; fireballs = []; keys.left = keys.right = false;
+        platforms = STEPS.map((s) => ({ ...s }));
         mario = { x: 16, y: GROUND_Y, vx: 0, vy: 0, dir: 1, jump: false, onGround: true, fire: true, on: true };
-        status.textContent = "← → 이동 · ↑ 점프로 블록 헤딩 · Space 파이어볼!";
+        status.textContent = "← → 이동 · ↑ 점프(블록 헤딩) · 발판 딛고 올라가 Space 파이어볼로 쏘기!";
       } else {
         phase = "running";
         status.textContent = "마리오 출발!";
