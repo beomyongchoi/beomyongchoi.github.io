@@ -105,7 +105,7 @@ import { SITE } from "../../consts";
     let flagT = 0, flagDrop = 0, bonusBall = null, actx = null, muted = false, mode = "auto";
     let fireballs = [], platforms = []; const keys = {};
     const GRAV = 0.5, JUMPV = -8.8, WALK = 1.7;
-    const STEPS = [{ x: 150, y: 112, w: 48 }, { x: 158, y: 86, w: 40 }, { x: 166, y: 60, w: 32 }];   // manual-mode climb terrain
+    const STEPS = [{ x: 40, y: 128, w: 44 }, { x: 76, y: 106, w: 44 }, { x: 108, y: 84, w: 44 }, { x: 140, y: 62, w: 46 }];   // manual-mode climb hill (rises L→R to block height)
     const clouds = [{ x: 28, y: 26, v: 0.10 }, { x: 150, y: 20, v: 0.06 }, { x: 100, y: 32, v: 0.14 }];
 
     const status = document.getElementById("lotto-status");
@@ -182,10 +182,11 @@ import { SITE } from "../../consts";
       gp(b.x - 1, y, 1, BS, INK); gp(b.x + BS, y, 1, BS, INK);
     }
     function drawPlatform(p) {
-      const h = 10;
-      gp(p.x, p.y, p.w, h, GND); gp(p.x, p.y, p.w, 2, GND_HI); gp(p.x, p.y + h - 2, p.w, 2, GND_D);
-      for (let x = p.x; x < p.x + p.w; x += 8) gp(x, p.y, 1, h, GND_D);
-      gp(p.x - 1, p.y - 1, p.w + 2, 1, INK);
+      const bot = GROUND_Y;                                  // dirt runs to the ground → reads as a solid mound, not a floating bar
+      gp(p.x, p.y + 3, p.w, bot - p.y - 3, GND);             // dirt body
+      for (let x = p.x + 3; x < p.x + p.w; x += 9) gp(x, p.y + 4, 1, bot - p.y - 4, GND_D);
+      gp(p.x, p.y, p.w, 3, HILL); gp(p.x, p.y + 3, p.w, 1, HILL_D);   // grass cap
+      gp(p.x, p.y, p.w, 1, "#7ee87e");
     }
     function drawSlot(cx) { gp(cx - R - 1, slotY - R - 1, (R + 1) * 2, (R + 1) * 2, "rgba(0,0,0,0.18)"); }
     function drawBall(b, x, y) {
@@ -338,8 +339,9 @@ import { SITE } from "../../consts";
         mario.x = Math.max(6, Math.min(GW - 6, mario.x + mario.vx));
         mario.vy += GRAV; const prevFeet = mario.y; mario.y += mario.vy; mario.onGround = false;
         if (mario.y >= GROUND_Y) { mario.y = GROUND_Y; mario.vy = 0; mario.onGround = true; }
-        else if (mario.vy > 0) {   // land on a platform top (one-way: only from above)
+        else if (mario.vy > 0) {   // land on a platform / block top (one-way: only from above)
           for (const p of platforms) if (mario.x > p.x - 2 && mario.x < p.x + p.w + 2 && prevFeet <= p.y + 1 && mario.y >= p.y) { mario.y = p.y; mario.vy = 0; mario.onGround = true; break; }
+          if (!mario.onGround) for (const b of blocks) if (mario.x > b.x - 2 && mario.x < b.x + BS + 2 && prevFeet <= BY + 1 && mario.y >= BY) { mario.y = BY; mario.vy = 0; mario.onGround = true; break; }
         }
         mario.jump = !mario.onGround;
         if (mario.vy < 0) {   // head-bonk a block from below
