@@ -8,6 +8,7 @@ const groups = [
     desc: "어텐션부터 GPT까지, LLM이 어떻게 작동하는지 글 + 인터랙티브로 하나씩.",
     toys: [
       { href: "/playground/transformer/", toy: "transformer", title: "Attention 시각화", tag: "1편 · 어텐션", desc: "트랜스포머 self-attention을 눈으로. 단어가 어디에 집중하는지." },
+      { href: "/playground/transformer-block/", toy: "transformerblock", title: "트랜스포머 블록 시각화", tag: "2편 · 블록", desc: "토큰 벡터가 어텐션·잔차·FFN 블록을 지나며 갱신되는 잔차 스트림." },
     ],
   },
   {
@@ -162,7 +163,25 @@ const groups = [
     pass.forEach((p) => { ctx.fillStyle = p.ret ? acc : "#c9ccd2"; ctx.beginPath(); ctx.roundRect(px, p.y, pw, 10, 3); ctx.fill(); });
   }
 
-  const FN = { lotto, transformer, fanout };
+  function transformerblock(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e";
+    const sx = 22, rows = 4, cells = 8, cw = (W - 74) / cells, x0 = 58;
+    ctx.strokeStyle = acc; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx, 16); ctx.lineTo(sx, H - 16); ctx.stroke();
+    for (let r = 0; r < rows; r++) {
+      const y = 18 + r * (H - 36) / (rows - 1);
+      ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(sx, y, r === 0 || r === rows - 1 ? 5 : 4, 0, 7); ctx.fill();
+      for (let c = 0; c < cells; c++) {
+        const v = 0.15 + 0.7 * Math.abs(Math.sin(c * 0.8 + r * 1.3 + f * 0.03));
+        ctx.globalAlpha = 0.12; ctx.fillStyle = acc; ctx.fillRect(x0 + c * cw, y - 7, cw - 2, 14);
+        ctx.globalAlpha = v; ctx.fillRect(x0 + c * cw, y - 7, cw - 2, 14);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const FN = { lotto, transformer, fanout, transformerblock };
   let f = 0;
   function loop() {
     f++;

@@ -1,0 +1,185 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`트랜스포머 블록 시각화 — ${SITE.authorKo}`}
+  description="어텐션 하나에 잔차·정규화·FFN을 붙이면 트랜스포머 블록이 됩니다. 한 토큰의 벡터가 잔차 스트림을 타고 블록을 통과하며 갱신되고, 블록을 층층이 쌓는 과정을 눈으로."
+  locale="ko"
+  path="/playground/transformer-block/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">트랜스포머 블록, 눈으로 보기</h1>
+    <p class="mt-3 text-muted">
+      한 토큰의 벡터가 <strong>잔차 스트림</strong>을 타고 [어텐션 → +잔차·정규화 → FFN → +잔차·정규화]를 지나며 갱신됩니다. 블록을 쌓아보세요.
+    </p>
+  </header>
+
+  <section class="tb" id="tb">
+    <div class="tb-top">
+      <a class="tb-crosslink" href="/blog/transformer-block/">개념 더 읽기 → 트랜스포머 블록</a>
+      <div class="tb-layer">
+        <span class="tb-layer-label">층(layer)</span>
+        <b id="tb-layer">1</b>
+        <button id="tb-stack" type="button" class="tb-btn">다음 블록 쌓기 ↑</button>
+        <button id="tb-reset" type="button" class="tb-btn ghost">처음으로</button>
+      </div>
+    </div>
+
+    <div class="tb-toks">
+      <span class="tb-toks-label">토큰</span>
+      <div id="tb-toks" class="tb-toks-row"></div>
+    </div>
+
+    <div class="tb-flow" id="tb-flow"></div>
+
+    <p class="tb-note" id="tb-note"></p>
+
+    <details class="tb-modern">
+      <summary>요즘 LLM은 이 블록을 어떻게 바꿨나 (pre-norm · RMSNorm · RoPE · SwiGLU)</summary>
+      <div class="tb-modern-body">
+        <p>원조 트랜스포머(2017)는 <strong>정규화를 서브층 뒤(post-norm)</strong>, <strong>sinusoidal 위치 인코딩</strong>, <strong>ReLU FFN</strong>이었습니다. 요즘 LLM은 대체로:</p>
+        <ul>
+          <li><strong>pre-norm</strong> — 정규화를 서브층 <em>앞</em>에. 깊게 쌓아도 그래디언트가 흘러 학습이 안정적(GPT-3·PaLM·LLaMA).</li>
+          <li><strong>RMSNorm</strong> — LayerNorm 대신. 더 가볍고 사실상 표준(Llama·Mistral·Qwen).</li>
+          <li><strong>RoPE</strong> — 위치를 임베딩에 더하지 않고 Q·K를 회전시켜 주입(LLaMA·PaLM).</li>
+          <li><strong>SwiGLU</strong> — FFN 활성화를 게이트형으로. 2023년 이후 대부분.</li>
+        </ul>
+        <p class="tb-caveat">단, OLMo 2·Gemma 3처럼 post-norm을 다시 쓰는 최신 모델도 있습니다 — 정답이 하나는 아닙니다.</p>
+      </div>
+    </details>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .tb-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 16px; }
+  .tb-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .tb-crosslink:hover { text-decoration: underline; }
+  .tb-layer { display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; font-family: var(--font-mono); color: var(--muted); }
+  .tb-layer b { color: var(--accent); font-size: 1.05rem; }
+  .tb-btn { font: inherit; font-size: 0.76rem; font-family: var(--font-mono); padding: 5px 11px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .tb-btn.ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+  .tb-btn:hover { filter: brightness(1.05); }
+
+  .tb-toks { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tb-toks-label { font-size: 0.72rem; font-family: var(--font-mono); color: var(--muted); }
+  .tb-toks-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tb-tok { font: inherit; font-size: 0.9rem; padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--fg); cursor: pointer; }
+  .tb-tok.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+  /* residual-stream flow */
+  .tb-flow { position: relative; display: flex; flex-direction: column; gap: 0; padding-left: 26px; }
+  .tb-stream { position: absolute; left: 10px; top: 12px; bottom: 12px; width: 3px; background: color-mix(in srgb, var(--accent) 30%, var(--border)); border-radius: 2px; }
+  .tb-node { position: relative; padding: 12px 0; }
+  .tb-node::before { content: ""; position: absolute; left: -19px; top: 22px; width: 11px; height: 11px; border-radius: 50%; background: var(--bg); border: 3px solid var(--accent); }
+  .tb-node.op::before { content: "+"; display: flex; align-items: center; justify-content: center; color: var(--accent); font-weight: 800; font-size: 12px; background: var(--bg); }
+  .tb-row { display: grid; grid-template-columns: 130px 1fr; gap: 12px; align-items: center; }
+  @media (max-width: 560px) { .tb-row { grid-template-columns: 1fr; gap: 6px; } }
+  .tb-stage-name { font-size: 0.86rem; font-weight: 700; }
+  .tb-stage-name small { display: block; font-weight: 400; font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); margin-top: 2px; }
+
+  .tb-sub { margin: 2px 0 2px; border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--border)); border-radius: 10px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
+  .tb-sub .tb-row { grid-template-columns: 130px 1fr; }
+  .tb-subtag { font-size: 0.66rem; font-family: var(--font-mono); color: var(--accent); letter-spacing: 0.05em; }
+
+  .tb-vec { display: flex; gap: 3px; height: 22px; }
+  .tb-cell { flex: 1; border-radius: 2px; border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent); }
+  .tb-vec.mini { height: 15px; }
+
+  .tb-note { margin-top: 18px; font-size: 0.88rem; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 14px; min-height: 2.2em; line-height: 1.55; }
+
+  .tb-modern { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .tb-modern summary { cursor: pointer; font-size: 0.88rem; font-weight: 600; }
+  .tb-modern-body { margin-top: 12px; font-size: 0.9rem; line-height: 1.65; color: var(--fg); }
+  .tb-modern-body ul { margin: 8px 0 8px 1.1em; display: flex; flex-direction: column; gap: 5px; }
+  .tb-modern-body li { list-style: disc; }
+  .tb-modern-body strong { color: var(--accent); }
+  .tb-caveat { color: var(--muted); font-size: 0.84rem; margin-top: 8px; }
+</style>
+
+<script>
+  const tokens = ["The", "cat", "sat", "down"];
+  const DIM = 10, N = tokens.length;
+  // illustrative embeddings (0..1) — the numbers are demo values, the STRUCTURE is real.
+  const rand = (seed) => { let x = Math.sin(seed) * 43758.5; return x - Math.floor(x); };
+  const emb = tokens.map((_, t) => Array.from({ length: DIM }, (_, d) => 0.35 + 0.5 * rand((t + 1) * 7.3 + d * 2.1)));
+  const pos = tokens.map((_, t) => Array.from({ length: DIM }, (_, d) => 0.12 * Math.sin(t / 3 + d * 0.9)));
+  const attnW = tokens.map((_, i) => {                       // illustrative attention weights (self-heavy)
+    const w = tokens.map((_, j) => (i === j ? 1.6 : 0.5 + 0.5 * rand(i * 3.1 + j * 1.7)));
+    const s = w.reduce((a, b) => a + b, 0); return w.map((x) => x / s);
+  });
+  const ffnG = Array.from({ length: DIM }, (_, d) => 0.7 + 1.1 * rand(d * 5.5 + 2));
+  const ffnB = Array.from({ length: DIM }, (_, d) => -0.25 + 0.5 * rand(d * 4.2 + 9));
+
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const norm01 = (v) => { const mn = Math.min(...v), mx = Math.max(...v), r = mx - mn || 1; return v.map((x) => (x - mn) / r); };
+  const add = (a, b) => a.map((x, i) => x + b[i]);
+  // x0 for every token at the current layer (updated as we stack)
+  let X = emb.map((e, t) => e.map((v, d) => clamp01(v + pos[t][d])));
+  let layer = 1, sel = 1;
+
+  function computeStages(i) {
+    const x0 = X[i].slice();
+    const a = Array.from({ length: DIM }, (_, d) => X.reduce((s, xj, j) => s + attnW[i][j] * xj[d], 0));  // attention = weighted mix of tokens
+    const x1 = norm01(add(x0, a));                                                                        // Add & Norm
+    const f = x1.map((v, d) => clamp01(v * ffnG[d] + ffnB[d]));                                           // FFN (per-dim, position-wise)
+    const x2 = norm01(add(x1, f));                                                                        // Add & Norm
+    return { x0, a, x1, f, x2 };
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const cellColor = (v) => `color-mix(in srgb, var(--accent) ${Math.round(v * 88 + 6)}%, var(--surface))`;
+  const vecHTML = (v, mini) => `<div class="tb-vec${mini ? " mini" : ""}">${v.map((x) => `<span class="tb-cell" style="background:${cellColor(x)}"></span>`).join("")}</div>`;
+
+  const NOTES = {
+    x0: "입력 = 토큰 임베딩 + 위치 인코딩. self-attention은 순서를 모르기 때문에 위치 정보를 여기서 더해 넣습니다.",
+    attn: "멀티헤드 어텐션 — 이 토큰이 다른 토큰들의 벡터를 가중해 섞습니다(1편의 Q·K). 토큰들 사이 '정보 섞기' 단계.",
+    add1: "⊕ Add & Norm — 어텐션 결과를 원래 벡터에 '더하고'(잔차) 정규화. 서브층은 변화량(Δ)만 학습하고, 원본은 잔차 스트림으로 그대로 흐릅니다.",
+    ffn: "피드포워드(FFN) — 각 토큰에 '독립적으로' 적용되는 작은 MLP(차원 확장→축소). 토큰끼리 안 섞고, 위치별로 처리합니다.",
+    add2: "⊕ Add & Norm — FFN 결과를 다시 더하고 정규화. 여기까지가 블록 하나. 이 출력이 다음 블록의 입력이 됩니다.",
+  };
+
+  function stream(name, sub, vec, key) {
+    return `<div class="tb-node${sub ? " op" : ""}" data-note="${key}">
+      <div class="tb-row"><div class="tb-stage-name">${name}</div>${vecHTML(vec)}</div></div>`;
+  }
+  function subbox(tag, name, vec, key) {
+    return `<div class="tb-node sub-anchor" data-note="${key}"><div class="tb-sub">
+      <div class="tb-subtag">${tag}</div>
+      <div class="tb-row"><div class="tb-stage-name">${name}</div>${vecHTML(vec, true)}</div></div></div>`;
+  }
+
+  function render() {
+    $("tb-layer").textContent = layer;
+    [...$("tb-toks").children].forEach((b, i) => b.classList.toggle("on", i === sel));
+    const s = computeStages(sel);
+    $("tb-flow").innerHTML = `<div class="tb-stream"></div>` +
+      stream(`입력 x<sub>0</sub><small>임베딩 + 위치</small>`, false, s.x0, "x0") +
+      subbox("sublayer", `멀티헤드 어텐션<small>토큰 섞기</small>`, s.a, "attn") +
+      stream(`Add &amp; Norm → x<sub>1</sub><small>x₀ + 어텐션</small>`, true, s.x1, "add1") +
+      subbox("sublayer", `FFN<small>토큰별 처리</small>`, s.f, "ffn") +
+      stream(`Add &amp; Norm → x<sub>2</sub><small>x₁ + FFN</small>`, true, s.x2, "add2") +
+      `<div class="tb-node" data-note="out"><div class="tb-row"><div class="tb-stage-name" style="color:var(--accent)">출력 → 다음 층</div>${vecHTML(s.x2)}</div></div>`;
+    $("tb-note").textContent = NOTES.x0;
+    $("tb-flow").querySelectorAll("[data-note]").forEach((el) =>
+      el.addEventListener("mouseenter", () => { const n = NOTES[el.dataset.note]; if (n) $("tb-note").textContent = n; }));
+  }
+
+  function buildToks() {
+    $("tb-toks").innerHTML = tokens.map((t, i) => `<button class="tb-tok" data-i="${i}">${t}</button>`).join("");
+    [...$("tb-toks").children].forEach((b) => b.addEventListener("click", () => { sel = +b.dataset.i; render(); }));
+  }
+
+  $("tb-stack").addEventListener("click", () => {                 // feed every token's x2 back as the next layer's input
+    X = X.map((_, i) => computeStages(i).x2);
+    layer++; render();
+    $("tb-note").textContent = `블록 ${layer}층째. 같은 구조를 반복하며 표현이 점점 문맥에 맞게 다듬어집니다. (GPT-3는 96층)`;
+  });
+  $("tb-reset").addEventListener("click", () => {
+    X = emb.map((e, t) => e.map((v, d) => clamp01(v + pos[t][d]))); layer = 1; render();
+  });
+
+  buildToks(); render();
+</script>
