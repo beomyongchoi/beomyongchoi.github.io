@@ -1,0 +1,16 @@
+---
+title: "How Text Becomes Vectors — Tokenization and Embeddings"
+description: "A model can't work with text directly. It goes characters → tokens (subwords, BPE) → IDs → vectors (embeddings), and the only thing learned is that embedding matrix. Why similar meanings land near each other and king−man+woman≈queen works. The series' starting point (part 0), with an interactive. Click any sentence to flip between English and Korean."
+pubDate: 2026-07-16
+lang: en
+translationKey: tokens-embeddings
+tags: ["AI", "Embeddings", "Tokenization", "Deep Learning"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import { blocks } from "../../data/tokensEmbeddings";
+
+<SeriesNav id="transformer" current="tokens-embeddings" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />

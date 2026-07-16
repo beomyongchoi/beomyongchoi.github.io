@@ -1,0 +1,155 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`토큰화·임베딩 시각화 — ${SITE.authorKo}`}
+  description="글자가 벡터가 되기까지. 단어가 서브워드 토큰으로 쪼개지고, 각 토큰이 임베딩 공간의 한 점이 되어 비슷한 뜻끼리 모이고 king−man+woman≈queen 같은 산술이 되는 걸 눈으로."
+  locale="ko"
+  path="/playground/embeddings/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">글자가 벡터가 되기까지</h1>
+    <p class="mt-3 text-muted">
+      텍스트는 <strong>토큰</strong>으로 쪼개지고, 각 토큰은 <strong>임베딩 공간</strong>의 한 점이 됩니다. 두 단계를 만져보세요.
+    </p>
+  </header>
+
+  <section class="eb">
+    <div class="eb-top">
+      <a class="eb-crosslink" href="/blog/tokens-embeddings/">개념 더 읽기 → 토큰화·임베딩</a>
+    </div>
+
+    <h2 class="eb-h">① 토큰화 — 단어를 서브워드로</h2>
+    <p class="eb-sub">단어를 골라보세요. 흔한 단어는 한 조각, 드물거나 긴 단어는 여러 조각으로 쪼개집니다.</p>
+    <div class="eb-words" id="eb-words"></div>
+    <div class="eb-tokline" id="eb-tokline"></div>
+    <p class="eb-note" id="eb-toknote"></p>
+
+    <h2 class="eb-h eb-h2">② 임베딩 — 뜻을 좌표에 놓기</h2>
+    <p class="eb-sub">각 토큰 ID는 학습된 벡터가 됩니다. 비슷한 뜻이면 가까이 모입니다. 단어를 클릭하면 가장 가까운 이웃이, 토글하면 <strong>king − man + woman ≈ queen</strong> 산술이 보입니다.</p>
+    <div class="eb-space-top">
+      <div class="eb-toggle" id="eb-toggle">
+        <button data-m="nn" class="on">유사어</button>
+        <button data-m="arith">벡터 산술</button>
+      </div>
+    </div>
+    <div class="eb-space"><svg id="eb-svg"></svg></div>
+    <p class="eb-note" id="eb-spacenote"></p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .eb-top { margin-bottom: 14px; }
+  .eb-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .eb-crosslink:hover { text-decoration: underline; }
+  .eb-h { font-size: 1.05rem; font-weight: 700; margin: 8px 0 4px; }
+  .eb-h2 { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .eb-sub { font-size: 0.86rem; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+  .eb-sub strong { color: var(--accent); font-family: var(--font-mono); }
+
+  .eb-words { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+  .eb-word { font: inherit; font-size: 0.88rem; font-family: var(--font-mono); padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); cursor: pointer; }
+  .eb-word.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+  .eb-tokline { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; min-height: 52px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .eb-tok { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .eb-tok .piece { font-family: var(--font-mono); font-size: 0.92rem; padding: 5px 10px; border-radius: 7px; background: color-mix(in srgb, var(--accent) 12%, var(--bg)); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); color: var(--fg); }
+  .eb-tok .id { font-family: var(--font-mono); font-size: 0.64rem; color: var(--muted); }
+  .eb-plus { align-self: center; color: var(--muted); font-family: var(--font-mono); }
+
+  .eb-space-top { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .eb-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .eb-toggle button { font: inherit; font-size: 0.76rem; font-family: var(--font-mono); padding: 5px 12px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+  .eb-toggle button.on { background: var(--accent); color: var(--accent-fg); }
+  .eb-space { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  #eb-svg { display: block; width: 100%; }
+
+  .eb-note { margin-top: 14px; font-size: 0.86rem; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 14px; line-height: 1.6; }
+  .eb-note b { color: var(--accent); }
+</style>
+
+<script>
+  // ── ① tokenizer (curated illustrative subword splits + fake ids) ──
+  const TOK = {
+    cat: [["cat", 2543]],
+    cats: [["cat", 2543], ["s", 264]],
+    playing: [["play", 1759], ["ing", 278]],
+    transformer: [["transform", 41876], ["er", 263]],
+    tokenization: [["token", 11241], ["ization", 1634]],
+    unbelievable: [["un", 403], ["believ", 22412], ["able", 540]],
+    antidisestablishment: [["anti", 4291], ["dis", 6381], ["establish", 8095], ["ment", 434]],
+  };
+  const WORDLIST = Object.keys(TOK);
+  let selWord = "tokenization";
+  const $ = (id) => document.getElementById(id);
+
+  function renderTok() {
+    $("eb-words").innerHTML = WORDLIST.map((w) => `<button class="eb-word${w === selWord ? " on" : ""}" data-w="${w}">${w}</button>`).join("");
+    $("eb-words").querySelectorAll(".eb-word").forEach((b) => b.addEventListener("click", () => { selWord = b.dataset.w; renderTok(); }));
+    const toks = TOK[selWord];
+    $("eb-tokline").innerHTML = toks.map((t, i) =>
+      `${i ? '<span class="eb-plus">+</span>' : ""}<div class="eb-tok"><span class="piece">${t[0]}</span><span class="id">#${t[1]}</span></div>`).join("");
+    $("eb-toknote").innerHTML = toks.length === 1
+      ? `"<b>${selWord}</b>"은 흔해서 <b>1개</b> 토큰. 각 토큰은 정수 ID로 바뀌어 다음 단계(임베딩)로 갑니다.`
+      : `"<b>${selWord}</b>"은 <b>${toks.length}조각</b>으로 쪼개집니다. 이렇게 하면 어떤 단어도 조각으로 표현돼 '모르는 단어'가 없어지고, 어근·접미사(${toks.map((t) => t[0]).join("·")})가 드러납니다.`;
+  }
+
+  // ── ② embedding space (curated 2D coords; clusters + a clean analogy) ──
+  const WORDS = [
+    { w: "man", x: 2.5, y: 3, c: "r" }, { w: "king", x: 2.5, y: 7, c: "r" },
+    { w: "woman", x: 6, y: 3, c: "r" }, { w: "queen", x: 6, y: 7, c: "r" },
+    { w: "prince", x: 3.5, y: 6.2, c: "r" }, { w: "princess", x: 5.0, y: 6.4, c: "r" },
+    { w: "cat", x: 8.6, y: 7.7, c: "a" }, { w: "kitten", x: 8.1, y: 8.6, c: "a" },
+    { w: "dog", x: 9.3, y: 8.1, c: "a" }, { w: "puppy", x: 9.0, y: 9.0, c: "a" },
+    { w: "apple", x: 1.6, y: 1.5, c: "f" }, { w: "bread", x: 2.4, y: 1.0, c: "f" }, { w: "rice", x: 1.0, y: 0.9, c: "f" },
+  ];
+  const CLUSTER = { r: "var(--accent)", a: "#22a06b", f: "#e0842a" };
+  let emode = "nn", pick = "king";
+  const svg = $("eb-svg");
+  const near = (w, k) => WORDS.filter((o) => o.w !== w.w).map((o) => ({ o, d: Math.hypot(o.x - w.x, o.y - w.y) })).sort((a, b) => a.d - b.d).slice(0, k);
+
+  function drawSpace() {
+    const cs = getComputedStyle(document.documentElement), g = (n, f) => cs.getPropertyValue(n).trim() || f;
+    const fg = g("--fg", "#1a1a1f"), muted = g("--muted", "#6b6f76"), acc = g("--accent", "#2b4a7e"), border = g("--border", "#e5e6e9");
+    const W = 620, H = 340, pad = 34, PX = (x) => pad + x / 10 * (W - 2 * pad), PY = (y) => H - pad - y / 10 * (H - 2 * pad);
+    const col = (c) => (c === "r" ? acc : c === "a" ? "#22a06b" : "#e0842a");
+    let s = "";
+    // faint grid axes
+    s += `<line x1="${pad}" y1="${H - pad}" x2="${W - pad}" y2="${H - pad}" stroke="${border}"/><line x1="${pad}" y1="${pad}" x2="${pad}" y2="${H - pad}" stroke="${border}"/>`;
+    if (emode === "arith") {
+      const get = (n) => WORDS.find((o) => o.w === n);
+      const mk = (a, b, color) => `<defs></defs><line x1="${PX(a.x)}" y1="${PY(a.y)}" x2="${PX(b.x)}" y2="${PY(b.y)}" stroke="${color}" stroke-width="2" marker-end="url(#ah)"/>`;
+      s += `<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${acc}"/></marker></defs>`;
+      s += mk(get("man"), get("king"), acc) + mk(get("woman"), get("queen"), acc);
+      const q = get("queen");
+      s += `<circle cx="${PX(q.x)}" cy="${PY(q.y)}" r="13" fill="none" stroke="${acc}" stroke-dasharray="3 2"/>`;
+    } else {
+      const p = WORDS.find((o) => o.w === pick);
+      near(p, 3).forEach((n) => { s += `<line x1="${PX(p.x)}" y1="${PY(p.y)}" x2="${PX(n.o.x)}" y2="${PY(n.o.y)}" stroke="${acc}" stroke-opacity="0.35" stroke-width="1.5"/>`; });
+    }
+    WORDS.forEach((o) => {
+      const isPick = emode === "nn" && o.w === pick;
+      s += `<g data-w="${o.w}" style="cursor:pointer"><circle cx="${PX(o.x)}" cy="${PY(o.y)}" r="${isPick ? 6.5 : 5}" fill="${col(o.c)}"${isPick ? ` stroke="${fg}" stroke-width="2"` : ""}/>` +
+        `<text x="${PX(o.x) + 9}" y="${PY(o.y) + 4}" font-family="ui-monospace, monospace" font-size="12" fill="${isPick ? acc : fg}" font-weight="${isPick ? 700 : 400}">${o.w}</text></g>`;
+    });
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.style.height = "auto";
+    svg.innerHTML = s;
+    svg.querySelectorAll("g[data-w]").forEach((gEl) => gEl.addEventListener("click", () => { if (emode === "nn") { pick = gEl.dataset.w; drawSpace(); renderSpaceNote(); } }));
+  }
+  function renderSpaceNote() {
+    if (emode === "arith")
+      $("eb-spacenote").innerHTML = `<b>king − man + woman ≈ queen</b>. man→king 화살표와 woman→queen 화살표가 <b>평행</b>합니다 — 같은 '왕족' 방향. 성별 축과 왕족 축이 좌표에 직교로 놓여, 뜻의 관계가 <b>벡터 산술</b>이 됩니다. (word2vec으로 유명)`;
+    else {
+      const p = WORDS.find((o) => o.w === pick), ns = near(p, 3).map((n) => n.o.w).join(", ");
+      $("eb-spacenote").innerHTML = `"<b>${pick}</b>"에서 가장 가까운 이웃: <b>${ns}</b>. 가까울수록 비슷한 뜻 — 임베딩은 의미를 좌표로 놓은 것입니다. 이 시작 벡터는 아직 <b>정적</b>(문맥과 무관)이고, 문맥을 얻는 건 <a href="/blog/attention-why/">어텐션(1편) →</a> 부터입니다.`;
+    }
+  }
+
+  $("eb-toggle").querySelectorAll("button").forEach((b) =>
+    b.addEventListener("click", () => { emode = b.dataset.m; $("eb-toggle").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); drawSpace(); renderSpaceNote(); }));
+  window.addEventListener("resize", drawSpace);
+  renderTok(); drawSpace(); renderSpaceNote();
+</script>

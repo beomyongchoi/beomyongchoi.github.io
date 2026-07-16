@@ -13,6 +13,7 @@ export const SERIES: Record<string, Series> = {
       en: "From attention to GPT — how LLMs actually work, one post + interactive at a time.",
     },
     parts: [
+      { slug: "tokens-embeddings", toy: "/playground/embeddings/", published: true, title: { ko: "0. 토큰화·임베딩", en: "0. Tokens & embeddings" } },
       { slug: "attention-why", toy: "/playground/transformer/", published: true, title: { ko: "1. 어텐션 — Q·K 궁합", en: "1. Attention — the Q·K match" } },
       { slug: "transformer-block", toy: "/playground/transformer-block/", published: true, title: { ko: "2. 트랜스포머 블록", en: "2. The Transformer block" } },
       { slug: "bert-encoder", toy: "/playground/bert/", published: true, title: { ko: "3. 인코더 온리 — BERT", en: "3. Encoder-only — BERT" } },

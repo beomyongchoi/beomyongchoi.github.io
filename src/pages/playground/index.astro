@@ -7,6 +7,7 @@ const groups = [
     label: "🧠 트랜스포머 시리즈",
     desc: "어텐션부터 GPT까지, LLM이 어떻게 작동하는지 글 + 인터랙티브로 하나씩.",
     toys: [
+      { href: "/playground/embeddings/", toy: "embeddings", title: "토큰화·임베딩", tag: "0편 · 온램프", desc: "단어가 서브워드로 쪼개지고, 임베딩 공간에서 뜻이 좌표가 되는 것." },
       { href: "/playground/transformer/", toy: "transformer", title: "Attention 시각화", tag: "1편 · 어텐션", desc: "트랜스포머 self-attention을 눈으로. 단어가 어디에 집중하는지." },
       { href: "/playground/transformer-block/", toy: "transformerblock", title: "트랜스포머 블록 시각화", tag: "2편 · 블록", desc: "토큰 벡터가 어텐션·잔차·FFN 블록을 지나며 갱신되는 잔차 스트림." },
       { href: "/playground/bert/", toy: "bert", title: "BERT 빈칸 맞히기", tag: "3편 · 인코더", desc: "양방향으로 [MASK] 자리를 맞히기. GPT의 왼쪽만-보기와 비교." },
@@ -215,7 +216,25 @@ const groups = [
     ctx.globalAlpha = 1;
   }
 
-  const FN = { lotto, transformer, fanout, transformerblock, bert, gpt };
+  function embeddings(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e";
+    const pts = [
+      [58, 44, acc], [92, 42, acc], [58, 78, acc], [92, 76, acc],   // royalty square
+      [188, 34, "#22a06b"], [206, 30, "#22a06b"], [198, 48, "#22a06b"],   // animals
+      [150, 96, "#e0842a"], [168, 90, "#e0842a"],   // food
+    ];
+    const pulse = 0.5 + 0.5 * Math.sin(f * 0.05);
+    ctx.strokeStyle = acc; ctx.lineWidth = 1.6; ctx.globalAlpha = 0.35 + 0.35 * pulse;   // parallel analogy arrows
+    [[0, 1], [2, 3]].forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); ctx.stroke();
+      const ang = Math.atan2(pts[b][1] - pts[a][1], pts[b][0] - pts[a][0]); const hx = pts[b][0], hy = pts[b][1];
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx - 5 * Math.cos(ang - 0.5), hy - 5 * Math.sin(ang - 0.5)); ctx.moveTo(hx, hy); ctx.lineTo(hx - 5 * Math.cos(ang + 0.5), hy - 5 * Math.sin(ang + 0.5)); ctx.stroke(); });
+    ctx.globalAlpha = 1;
+    pts.forEach(([x, y, c]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, 4.5, 0, 7); ctx.fill(); });
+  }
+
+  const FN = { lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
   let f = 0;
   function loop() {
     f++;
