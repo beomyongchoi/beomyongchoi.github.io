@@ -1,0 +1,16 @@
+---
+title: "Encoder-only BERT — Reading Both Ways by Filling in Blanks"
+description: "Stack the transformer block encoder-only and you get BERT. How every token sees left and right context at once ('bidirectional' isn't cheating, because it's fill-in-the-blank), plus MLM's 15% and 80/10/10 masking and [CLS]. With a bidirectional fill-in interactive. Click any sentence to flip between English and Korean."
+pubDate: 2026-07-16
+lang: en
+translationKey: bert-encoder
+tags: ["AI", "Transformer", "BERT", "Deep Learning"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import { blocks } from "../../data/bertEncoder";
+
+<SeriesNav id="transformer" current="bert-encoder" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />

@@ -9,6 +9,7 @@ const groups = [
     toys: [
       { href: "/playground/transformer/", toy: "transformer", title: "Attention 시각화", tag: "1편 · 어텐션", desc: "트랜스포머 self-attention을 눈으로. 단어가 어디에 집중하는지." },
       { href: "/playground/transformer-block/", toy: "transformerblock", title: "트랜스포머 블록 시각화", tag: "2편 · 블록", desc: "토큰 벡터가 어텐션·잔차·FFN 블록을 지나며 갱신되는 잔차 스트림." },
+      { href: "/playground/bert/", toy: "bert", title: "BERT 빈칸 맞히기", tag: "3편 · 인코더", desc: "양방향으로 [MASK] 자리를 맞히기. GPT의 왼쪽만-보기와 비교." },
     ],
   },
   {
@@ -181,7 +182,24 @@ const groups = [
     ctx.globalAlpha = 1;
   }
 
-  const FN = { lotto, transformer, fanout, transformerblock };
+  function bert(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e";
+    const n = 6, mid = 2, y = H * 0.66, xs = Array.from({ length: n }, (_, i) => 26 + i * (W - 52) / (n - 1));
+    const mx = xs[mid], pulse = 0.5 + 0.5 * Math.sin(f * 0.05);
+    ctx.strokeStyle = acc; ctx.lineCap = "round";
+    xs.forEach((x, i) => { if (i === mid) return; ctx.globalAlpha = 0.25 + 0.4 * pulse; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(x, y - 4); ctx.quadraticCurveTo((x + mx) / 2, y - 30 - Math.abs(x - mx) * 0.14, mx, y - 12); ctx.stroke(); });
+    ctx.globalAlpha = 1;
+    xs.forEach((x, i) => {
+      if (i === mid) { ctx.fillStyle = acc; ctx.beginPath(); ctx.roundRect(x - 13, y - 9, 26, 18, 4); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "700 9px ui-monospace, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("MASK", x, y); }
+      else { ctx.fillStyle = "#9aa0aa"; ctx.beginPath(); ctx.arc(x, y, 4.5, 0, 7); ctx.fill(); }
+    });
+  }
+
+  const FN = { lotto, transformer, fanout, transformerblock, bert };
   let f = 0;
   function loop() {
     f++;

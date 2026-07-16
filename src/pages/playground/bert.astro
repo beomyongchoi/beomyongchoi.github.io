@@ -1,0 +1,155 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`BERT — 양방향 빈칸 맞히기 시각화 — ${SITE.authorKo}`}
+  description="BERT는 좌우 문맥을 모두 보고 [MASK] 자리를 맞힙니다. 양방향(BERT)과 왼쪽만 보는 causal(GPT)을 토글로 비교하며, 왜 인코더는 이해에 강한지 눈으로."
+  locale="ko"
+  path="/playground/bert/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">BERT, 양방향으로 빈칸 맞히기</h1>
+    <p class="mt-3 text-muted">
+      <strong>[MASK]</strong> 자리를 맞힐 때 BERT는 <strong>양쪽 문맥</strong>을 다 봅니다. 아래 토글로 GPT식 <strong>왼쪽만</strong> 보기와 비교해 보세요.
+    </p>
+  </header>
+
+  <section class="bt" id="bt">
+    <div class="bt-top">
+      <a class="bt-crosslink" href="/blog/bert-encoder/">개념 더 읽기 → 인코더 온리, BERT</a>
+      <div class="bt-toggle" id="bt-toggle">
+        <button data-mode="bert" class="on">양방향 (BERT)</button>
+        <button data-mode="gpt">왼쪽만 (GPT causal)</button>
+      </div>
+    </div>
+
+    <p class="bt-hint">💡 다른 단어를 클릭하면 그 자리를 <strong>[MASK]</strong> 로 가릴 수 있어요.</p>
+
+    <div class="bt-stage" id="bt-stage">
+      <svg id="bt-svg"></svg>
+    </div>
+
+    <div class="bt-pred">
+      <div class="bt-pred-head">빈칸 예측 <span id="bt-pred-ctx" class="mono"></span></div>
+      <div id="bt-bars" class="bt-bars"></div>
+    </div>
+
+    <p class="bt-note" id="bt-note"></p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .bt-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 12px; }
+  .bt-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .bt-crosslink:hover { text-decoration: underline; }
+  .bt-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+  .bt-toggle button { font: inherit; font-size: 0.8rem; font-family: var(--font-mono); padding: 6px 13px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+  .bt-toggle button.on { background: var(--accent); color: var(--accent-fg); }
+  .bt-hint { font-size: 0.84rem; color: var(--muted); margin-bottom: 8px; }
+  .bt-hint strong { color: var(--accent); font-family: var(--font-mono); }
+
+  .bt-stage { position: relative; margin: 0 auto; max-width: 620px; }
+  #bt-arcs { position: absolute; left: 0; right: 0; top: 0; width: 100%; height: 78px; overflow: visible; pointer-events: none; }
+  .bt-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; padding-top: 80px; }
+  .bt-tok {
+    font: inherit; font-size: 0.95rem; font-family: var(--font-mono); padding: 7px 11px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; transition: opacity .15s, background .15s, border-color .15s;
+  }
+  .bt-tok.cls { color: var(--muted); border-style: dashed; cursor: default; }
+  .bt-tok.mask { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 700; cursor: default; }
+  .bt-tok.dim { opacity: 0.3; }
+  .bt-tok.seen { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+
+  .bt-pred { margin-top: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 14px 16px; max-width: 460px; }
+  .bt-pred-head { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; display: flex; gap: 8px; align-items: baseline; }
+  .bt-pred-head .mono { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); font-weight: 400; }
+  .bt-bars { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  .bt-bar { display: grid; grid-template-columns: 72px 1fr 42px; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .bt-bar .w { font-family: var(--font-mono); text-align: right; color: var(--muted); }
+  .bt-bar .track { height: 12px; background: color-mix(in srgb, var(--muted) 14%, transparent); border-radius: 3px; overflow: hidden; }
+  .bt-bar .fill { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }
+  .bt-bar .v { font-family: var(--font-mono); text-align: right; font-size: 0.72rem; color: var(--fg); }
+  .bt-bar.top .w, .bt-bar.top .v { color: var(--accent); font-weight: 700; }
+
+  .bt-note { margin-top: 18px; font-size: 0.88rem; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 14px; line-height: 1.6; }
+  .bt-note b { color: var(--accent); }
+</style>
+
+<script>
+  const toks = ["[CLS]", "the", "dog", "barked", "at", "the", "mailman"];
+  // curated illustrative predictions per maskable position, for both modes.
+  const DATA = {
+    2: { ans: "dog", bert: [["dog", 71], ["puppy", 10], ["cat", 5], ["animal", 4], ["boy", 3]],
+         gpt: [["man", 14], ["dog", 12], ["house", 9], ["boy", 8], ["car", 7]] },
+    3: { ans: "barked", bert: [["barked", 55], ["growled", 13], ["ran", 8], ["jumped", 6], ["stared", 4]],
+         gpt: [["ran", 16], ["was", 14], ["barked", 12], ["is", 10], ["sat", 8]] },
+    6: { ans: "mailman", bert: [["mailman", 41], ["stranger", 15], ["door", 10], ["cat", 8], ["gate", 6]],
+         gpt: [["mailman", 30], ["door", 18], ["cat", 12], ["gate", 9], ["man", 8]] },
+  };
+  const MASKABLE = Object.keys(DATA).map(Number);
+
+  let mask = 2, mode = "bert";
+  const $ = (id) => document.getElementById(id);
+  const stage = $("bt-stage"), svg = $("bt-svg");
+  const COL = () => { const cs = getComputedStyle(document.documentElement), g = (n, f) => cs.getPropertyValue(n).trim() || f;
+    return { acc: g("--accent", "#2b4a7e"), accfg: g("--accent-fg", "#fff"), surface: g("--surface", "#f2f3f5"), fg: g("--fg", "#1a1a1f"), muted: g("--muted", "#6b6f76"), border: g("--border", "#e5e6e9") }; };
+
+  // deterministic: compute token positions and draw everything (tokens + arcs) in one SVG.
+  function drawStage() {
+    const c = COL(), W = stage.clientWidth || 600, H = 148, gap = 8, padX = 11, charW = 9, tokH = 30, rowY = 96;
+    const labels = toks.map((t, i) => (i === mask ? "[MASK]" : t));
+    const widths = labels.map((l) => l.length * charW + padX * 2);
+    const total = widths.reduce((a, b) => a + b, 0) + gap * (toks.length - 1);
+    let x = Math.max(4, (W - total) / 2);
+    const xs = [], cxs = [];
+    widths.forEach((w) => { xs.push(x); cxs.push(x + w / 2); x += w + gap; });
+    const seen = toks.map((_, i) => i !== mask && i !== 0 && (mode === "bert" || i < mask));   // GPT: left only
+    const mcx = cxs[mask];
+    let arcs = "";
+    cxs.forEach((cx, i) => {
+      if (!seen[i]) return;
+      const peak = rowY - 22 - Math.abs(cx - mcx) * 0.16;
+      arcs += `<path d="M ${cx.toFixed(1)} ${rowY} Q ${((cx + mcx) / 2).toFixed(1)} ${peak.toFixed(1)} ${mcx.toFixed(1)} ${rowY}" fill="none" stroke="${c.acc}" stroke-width="1.8" stroke-linecap="round" opacity="0.5"/><circle cx="${cx.toFixed(1)}" cy="${rowY}" r="2.5" fill="${c.acc}"/>`;
+    });
+    let tks = "";
+    labels.forEach((l, i) => {
+      const w = widths[i], isMask = i === mask, isCls = i === 0, dim = !seen[i] && !isMask && !isCls;
+      const fill = isMask ? c.acc : c.surface, tcol = isMask ? c.accfg : isCls ? c.muted : c.fg;
+      const stroke = isMask || seen[i] ? c.acc : c.border, sop = isMask ? 1 : seen[i] ? 0.55 : 1, dash = isCls ? ' stroke-dasharray="4 3"' : "";
+      const canClick = MASKABLE.includes(i);
+      tks += `<g data-i="${i}" opacity="${dim ? 0.32 : 1}"${canClick ? ' style="cursor:pointer"' : ""}>` +
+        `<rect x="${xs[i].toFixed(1)}" y="${rowY}" width="${w}" height="${tokH}" rx="8" fill="${fill}" stroke="${stroke}" stroke-opacity="${sop}"${dash}/>` +
+        `<text x="${cxs[i].toFixed(1)}" y="${rowY + tokH / 2 + 1}" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, monospace" font-size="15" font-weight="${isMask ? 700 : 400}" fill="${tcol}">${l}</text></g>`;
+    });
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", "100%"); svg.style.height = H + "px";
+    svg.innerHTML = arcs + tks;
+    svg.querySelectorAll("g[data-i]").forEach((g) => { const i = +g.dataset.i; if (MASKABLE.includes(i)) g.addEventListener("click", () => { mask = i; render(); }); });
+  }
+
+  function preds() {
+    const d = DATA[mask], list = d[mode], max = list[0][1];
+    $("bt-pred-ctx").textContent = mode === "bert" ? "· 좌우 문맥 모두 사용" : "· 왼쪽 문맥만 사용";
+    $("bt-bars").innerHTML = list.map(([w, p]) => {
+      const isAns = w === d.ans;
+      return `<div class="bt-bar${isAns ? " top" : ""}"><span class="w">${w}${isAns ? " ✓" : ""}</span><span class="track"><span class="fill" style="width:${Math.round(p / max * 100)}%"></span></span><span class="v">${p}%</span></div>`;
+    }).join("");
+    const ansP = (list.find(([w]) => w === d.ans) || [null, 0])[1];
+    if (mode === "bert")
+      $("bt-note").innerHTML = `BERT는 <b>양쪽</b>을 다 봅니다. 오른쪽 "${toks.slice(mask + 1).join(" ")}"까지 읽고 "<b>${d.ans}</b>"를 <b>${ansP}%</b>로 자신 있게 맞힙니다. 미래 토큰을 봐도 '빈칸 채우기'라 커닝이 아니거든요.`;
+    else
+      $("bt-note").innerHTML = `GPT식 causal은 <b>왼쪽만</b> 봅니다("${toks.slice(0, mask).join(" ")} ___"). 오른쪽을 못 보니 "${d.ans}"는 <b>${ansP}%</b>로 흐릿하고 후보가 퍼집니다. 다음 토큰을 예측하는 모델이라 오른쪽(정답)을 보면 커닝이 되기 때문이죠 — 그래서 <b>생성엔 causal, 이해엔 양방향</b>.`;
+  }
+
+  function render() { drawStage(); preds(); }
+  $("bt-toggle").querySelectorAll("button").forEach((b) =>
+    b.addEventListener("click", () => {
+      mode = b.dataset.mode;
+      $("bt-toggle").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+      render();
+    }));
+  window.addEventListener("resize", drawStage);
+  render();
+</script>
