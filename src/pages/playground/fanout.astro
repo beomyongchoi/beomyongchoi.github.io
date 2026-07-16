@@ -1,0 +1,166 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`Query Fan-out 시각화 — ${SITE.authorKo}`}
+  description="AI 답변 엔진은 문서를 통째로 안 읽는다. 질문 하나가 하위 쿼리로 쪼개지고(fan-out), 구체적인 문단만 검색되고 형용사뿐인 문단은 걸러지는 과정을 눈으로."
+  locale="ko"
+  path="/playground/fanout/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Query Fan-out, 눈으로 보기</h1>
+    <p class="mt-3 text-muted">
+      질문 하나가 하위 쿼리로 쪼개지고, 구체적인 문단만 “검색”됩니다. 왼쪽 하위 쿼리에 마우스를 올려보세요.
+    </p>
+  </header>
+
+  <section class="fo" id="fo">
+    <div class="fo-top">
+      <a class="fo-crosslink" href="/blog/query-fanout/">개념 더 읽기 → AI는 문단 단위로 검색한다</a>
+      <button id="fo-replay" type="button" class="fo-btn">↻ 다시 보기</button>
+    </div>
+
+    <div class="fo-q">
+      <span class="fo-qlabel">질문</span>
+      <p class="fo-qtext">“가족이 가기 좋고 수영장이 따뜻한 서울 4성급 호텔 추천해줘”</p>
+    </div>
+    <div class="fo-split">↓ &nbsp;엔진이 하위 쿼리로 <strong>fan-out</strong>&nbsp; ↓</div>
+
+    <div class="fo-cols" id="fo-cols">
+      <div class="fo-subs" id="fo-subs"></div>
+      <svg id="fo-lines" aria-hidden="true"></svg>
+      <div class="fo-pass" id="fo-pass"></div>
+    </div>
+
+    <div class="fo-legend">
+      <span><i class="sw ret"></i> 구체적 수치·고유명사 문단 → 검색됨</span>
+      <span><i class="sw pruned"></i> 형용사뿐인 문단 → 걸러짐</span>
+    </div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .fo-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+  .fo-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .fo-crosslink:hover { text-decoration: underline; }
+  .fo-btn { font: inherit; font-size: 0.8rem; font-family: var(--font-mono); padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+  .fo-btn:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+
+  .fo-q { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 12px 16px; text-align: center; }
+  .fo-qlabel { font-size: 0.68rem; font-family: var(--font-mono); color: var(--muted); letter-spacing: 0.1em; }
+  .fo-qtext { font-size: 1.05rem; font-weight: 600; margin-top: 3px; }
+  .fo-split { text-align: center; font-size: 0.8rem; color: var(--muted); margin: 12px 0; font-family: var(--font-mono); }
+  .fo-split strong { color: var(--accent); }
+
+  .fo-cols { position: relative; display: grid; grid-template-columns: 130px 1fr; gap: 34px; padding: 0; }
+  @media (min-width: 640px) { .fo-cols { grid-template-columns: 160px 1fr; gap: 44px; } }
+  #fo-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 1; }
+  .fo-subs { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+  .fo-sub {
+    position: relative; z-index: 2; font-size: 0.8rem; font-family: var(--font-mono); text-align: right;
+    padding: 7px 10px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    border-radius: 8px; background: var(--bg); color: var(--fg); cursor: default;
+    opacity: 0; transform: translateX(-8px); transition: opacity .28s, transform .28s, box-shadow .15s;
+  }
+  .fo-sub.show { opacity: 1; transform: none; }
+  .fo-sub.hot { box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
+  .fo-sub.cool { opacity: 0.4; }
+
+  .fo-pass { display: flex; flex-direction: column; gap: 10px; }
+  .fo-p {
+    position: relative; z-index: 2; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface); padding: 10px 13px; transition: opacity .3s, border-color .3s, background .3s;
+  }
+  .fo-ptext { font-size: 0.9rem; line-height: 1.5; }
+  .fo-ptag { display: inline-block; margin-top: 6px; font-size: 0.68rem; font-family: var(--font-mono); font-weight: 700; }
+  .fo .fo-p { opacity: 0.55; }
+  .fo.go .fo-p.ret { opacity: 1; border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+  .fo.go .fo-p.ret .fo-ptag { color: var(--accent); }
+  .fo.go .fo-p.pruned { opacity: 0.38; }
+  .fo.go .fo-p.pruned .fo-ptext { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent); }
+  .fo.go .fo-p.pruned .fo-ptag { color: var(--muted); }
+  .fo-p.cool { opacity: 0.28 !important; }
+  .fo-p.hot { box-shadow: 0 0 0 2px var(--accent); }
+
+  .fo-legend { display: flex; flex-wrap: wrap; gap: 16px 22px; justify-content: center; margin-top: 20px; font-size: 0.8rem; color: var(--muted); }
+  .fo-legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: middle; margin-right: 5px; }
+  .fo-legend .sw.ret { background: color-mix(in srgb, var(--accent) 30%, var(--surface)); border: 1px solid var(--accent); }
+  .fo-legend .sw.pruned { background: var(--surface); border: 1px solid var(--border); }
+</style>
+
+<script>
+  const subs = ["서울 4성급 호텔", "가족·키즈 시설", "수영장 수온", "위치·교통 접근성"];
+  const passages = [
+    { t: "실내 수영장은 연중 <strong>29–31°C</strong>로 유지되고, 만 4세 이하 유아 풀이 따로 있습니다.", dense: true, m: [1, 2] },
+    { t: "최고의 휴식과 잊지 못할 추억을 선사하는 프리미엄 공간입니다.", dense: false, m: [] },
+    { t: "서울 중구 4성급, <strong>시청역 도보 3분</strong>. 전 객실 금연, <strong>190실</strong> 규모.", dense: true, m: [0, 3] },
+    { t: "키즈 라운지 <strong>09–20시</strong> 운영, 유아 침대·젖병 소독기 무료 대여.", dense: true, m: [1] },
+    { t: "아늑하고 세련된 분위기의 객실에서 완벽한 하루를 경험하세요.", dense: false, m: [] },
+    { t: "<strong>4인 가족실 34㎡</strong>, 얼리 체크인 가능(추가 요금 2만 원).", dense: true, m: [0, 1] },
+  ];
+  const isRet = (p) => p.dense && p.m.length > 0;
+
+  const $ = (id) => document.getElementById(id);
+  const section = $("fo"), cols = $("fo-cols"), subsEl = $("fo-subs"), passEl = $("fo-pass"), svg = $("fo-lines");
+  let hover = null;
+
+  function build() {
+    subsEl.innerHTML = subs.map((s, i) => `<div class="fo-sub" data-i="${i}">${s}</div>`).join("");
+    passEl.innerHTML = passages.map((p, j) => {
+      const ret = isRet(p);
+      return `<div class="fo-p ${ret ? "ret" : "pruned"}" data-j="${j}"><p class="fo-ptext">${p.t}</p><span class="fo-ptag">${ret ? "✓ 검색됨 (retrieved)" : "✕ 걸러짐 (pruned)"}</span></div>`;
+    }).join("");
+    subsEl.querySelectorAll(".fo-sub").forEach((el) => {
+      el.addEventListener("mouseenter", () => { hover = +el.dataset.i; paint(); });
+      el.addEventListener("mouseleave", () => { hover = null; paint(); });
+    });
+  }
+
+  function drawLines() {
+    let p = "";
+    passages.forEach((pa, j) => {
+      if (!isRet(pa)) return;
+      const card = passEl.querySelector(`[data-j="${j}"]`);
+      const x1 = card.offsetLeft, y2 = card.offsetTop + card.offsetHeight / 2;
+      pa.m.forEach((i) => {
+        const chip = subsEl.querySelector(`[data-i="${i}"]`);
+        const x2 = chip.offsetLeft + chip.offsetWidth, y1 = chip.offsetTop + chip.offsetHeight / 2;
+        const on = hover == null || hover === i;
+        const mx = (x2 + x1) / 2;
+        p += `<path d="M ${x2} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x1} ${y2}" fill="none" stroke="var(--accent)" stroke-width="${on ? 2.2 : 1}" stroke-linecap="round" opacity="${on ? 0.72 : 0.1}"/>`;
+      });
+    });
+    svg.innerHTML = p;
+  }
+
+  function paint() {
+    drawLines();
+    subsEl.querySelectorAll(".fo-sub").forEach((el) => {
+      const i = +el.dataset.i;
+      el.classList.toggle("hot", hover === i);
+      el.classList.toggle("cool", hover != null && hover !== i);
+    });
+    passEl.querySelectorAll(".fo-p").forEach((el) => {
+      const j = +el.dataset.j, pa = passages[j], matched = hover != null && isRet(pa) && pa.m.includes(hover);
+      el.classList.toggle("hot", matched);
+      el.classList.toggle("cool", hover != null && !matched);
+    });
+  }
+
+  function run() {
+    section.classList.remove("go");
+    hover = null; svg.innerHTML = "";
+    const chips = subsEl.querySelectorAll(".fo-sub");
+    chips.forEach((el) => el.classList.remove("show"));
+    chips.forEach((el, i) => setTimeout(() => el.classList.add("show"), 130 * i));
+    setTimeout(() => { section.classList.add("go"); paint(); }, 130 * subs.length + 220);
+  }
+
+  build();
+  run();
+  $("fo-replay").addEventListener("click", run);
+  window.addEventListener("resize", () => { if (section.classList.contains("go")) drawLines(); });
+</script>

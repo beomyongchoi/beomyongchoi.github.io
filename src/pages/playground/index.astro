@@ -5,6 +5,7 @@ import { SITE } from "../../consts";
 const toys = [
   { href: "/playground/lotto/", toy: "lotto", title: "LUCKY BLOCK", tag: "8-bit · Canvas", desc: "마리오가 달리며 블록을 치는 8비트 아케이드 로또 추첨기." },
   { href: "/playground/transformer/", toy: "transformer", title: "Attention 시각화", tag: "AI · 인터랙티브", desc: "트랜스포머 self-attention을 눈으로. 단어가 어디에 집중하는지." },
+  { href: "/playground/fanout/", toy: "fanout", title: "Query Fan-out 시각화", tag: "AI · 인터랙티브", desc: "질문이 하위 쿼리로 쪼개져, 구체적인 문단만 검색되는 과정." },
 ];
 ---
 
@@ -113,10 +114,28 @@ const toys = [
     }
   }
 
+  function fanout(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e";
+    const qx = 24, qy = H / 2;
+    const subs = [{ x: 104, y: 30 }, { x: 104, y: 60 }, { x: 104, y: 90 }];
+    const pass = [{ y: 20, ret: true }, { y: 48, ret: true }, { y: 76, ret: false }, { y: 104, ret: true }];
+    const px = 166, pw = 54, pulse = 0.5 + 0.5 * Math.sin(f * 0.05);
+    ctx.strokeStyle = acc; ctx.lineCap = "round";
+    subs.forEach((s) => { ctx.globalAlpha = 0.3 + 0.22 * pulse; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(qx + 6, qy); ctx.bezierCurveTo((qx + s.x) / 2, qy, (qx + s.x) / 2, s.y, s.x - 4, s.y); ctx.stroke(); });
+    [[0, 0], [1, 1], [2, 3], [1, 3]].forEach(([si, pj]) => { const s = subs[si], p = pass[pj]; if (!p.ret) return; ctx.globalAlpha = 0.28 + 0.42 * pulse; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(s.x + 4, s.y); ctx.bezierCurveTo((s.x + px) / 2, s.y, (s.x + px) / 2, p.y + 5, px, p.y + 5); ctx.stroke(); });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(qx, qy, 7, 0, 7); ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+    subs.forEach((s) => { ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(s.x, s.y, 4.5, 0, 7); ctx.fill(); });
+    pass.forEach((p) => { ctx.fillStyle = p.ret ? acc : "#c9ccd2"; ctx.beginPath(); ctx.roundRect(px, p.y, pw, 10, 3); ctx.fill(); });
+  }
+
+  const FN = { lotto, transformer, fanout };
   let f = 0;
   function loop() {
     f++;
-    for (const t of thumbs) (t.toy === "lotto" ? lotto : transformer)(t.ctx, t.W, t.H, f);
+    for (const t of thumbs) FN[t.toy](t.ctx, t.W, t.H, f);
     requestAnimationFrame(loop);
   }
   loop();
