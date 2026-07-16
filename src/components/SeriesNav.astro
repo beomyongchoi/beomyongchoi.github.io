@@ -1,0 +1,53 @@
+---
+import { SERIES } from "../data/series";
+import { type Locale as SiteLocale } from "../consts";
+
+interface Props { id: string; current: string; lang?: SiteLocale }
+const { id, current, lang = "ko" } = Astro.props;
+const s = SERIES[id];
+const base = lang === "ko" ? "" : "/en";
+const curIdx = s.parts.findIndex((p) => p.slug === current);
+const t = (o: { ko: string; en: string }) => (lang === "en" ? o.en : o.ko);
+---
+
+{s && (
+  <aside class="series-nav">
+    <div class="series-head">
+      <span class="series-badge">📚 {t(s.title)}</span>
+      <span class="series-blurb">{t(s.blurb)}</span>
+    </div>
+    <ol class="series-list">
+      {s.parts.map((p, i) => (
+        <li class={i === curIdx ? "cur" : p.published ? "done" : "soon"}>
+          {i === curIdx ? (
+            <span>{t(p.title)}</span>
+          ) : p.published ? (
+            <a href={`${base}/blog/${p.slug}/`}>{t(p.title)}</a>
+          ) : (
+            <span>{t(p.title)} <em>{lang === "en" ? "soon" : "곧"}</em></span>
+          )}
+        </li>
+      ))}
+    </ol>
+  </aside>
+)}
+
+<style>
+  .series-nav {
+    border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 4px 12px 12px 4px; background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+    padding: 14px 18px; margin: 0 0 1.8em;
+  }
+  .series-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-bottom: 10px; }
+  .series-badge { font-weight: 700; font-size: 0.95rem; }
+  .series-blurb { font-size: 0.82rem; color: var(--muted); }
+  .series-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .series-list li { font-size: 0.9rem; font-family: var(--font-mono); }
+  .series-list a { color: var(--accent); text-decoration: none; }
+  .series-list a:hover { text-decoration: underline; }
+  .series-list .cur > span { font-weight: 700; color: var(--fg); }
+  .series-list .cur { position: relative; }
+  .series-list .cur::before { content: "▸ "; color: var(--accent); }
+  .series-list .soon { color: var(--muted); }
+  .series-list .soon em { font-style: normal; font-size: 0.7rem; border: 1px solid var(--border); border-radius: 999px; padding: 0 6px; margin-left: 4px; }
+</style>

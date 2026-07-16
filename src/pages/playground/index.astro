@@ -2,10 +2,28 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { SITE } from "../../consts";
 
-const toys = [
-  { href: "/playground/lotto/", toy: "lotto", title: "LUCKY BLOCK", tag: "8-bit · Canvas", desc: "마리오가 달리며 블록을 치는 8비트 아케이드 로또 추첨기." },
-  { href: "/playground/transformer/", toy: "transformer", title: "Attention 시각화", tag: "AI · 인터랙티브", desc: "트랜스포머 self-attention을 눈으로. 단어가 어디에 집중하는지." },
-  { href: "/playground/fanout/", toy: "fanout", title: "Query Fan-out 시각화", tag: "AI · 인터랙티브", desc: "질문이 하위 쿼리로 쪼개져, 구체적인 문단만 검색되는 과정." },
+const groups = [
+  {
+    label: "🧠 트랜스포머 시리즈",
+    desc: "어텐션부터 GPT까지, LLM이 어떻게 작동하는지 글 + 인터랙티브로 하나씩.",
+    toys: [
+      { href: "/playground/transformer/", toy: "transformer", title: "Attention 시각화", tag: "1편 · 어텐션", desc: "트랜스포머 self-attention을 눈으로. 단어가 어디에 집중하는지." },
+    ],
+  },
+  {
+    label: "🔎 그 외 AI 실험",
+    desc: "",
+    toys: [
+      { href: "/playground/fanout/", toy: "fanout", title: "Query Fan-out 시각화", tag: "AI · 검색", desc: "질문이 하위 쿼리로 쪼개져, 구체적인 문단만 검색되는 과정." },
+    ],
+  },
+  {
+    label: "🎮 그냥 재미",
+    desc: "",
+    toys: [
+      { href: "/playground/lotto/", toy: "lotto", title: "LUCKY BLOCK", tag: "8-bit · Canvas", desc: "마리오를 키보드로 몰아 블록을 까는 8비트 아케이드 로또 추첨기." },
+    ],
+  },
 ];
 ---
 
@@ -20,25 +38,33 @@ const toys = [
     <p class="mt-3 text-muted">블로그 곁에서 굴려보는 소소한 것들. Canvas·JS로 직접 만든 장난감과 시각화.</p>
   </header>
 
-  <div class="pg-grid">
-    {
-      toys.map((t) => (
-        <a class="pg-card" href={t.href}>
-          <div class="pg-thumb-wrap">
-            <canvas class="pg-thumb" data-toy={t.toy}></canvas>
-            <span class="pg-play">▶ PLAY</span>
-          </div>
-          <div class="pg-meta">
-            <div class="pg-title-row">
-              <h2>{t.title}</h2>
-              <span class="pg-tag">{t.tag}</span>
-            </div>
-            <p>{t.desc}</p>
-          </div>
-        </a>
-      ))
-    }
-  </div>
+  {
+    groups.map((g) => (
+      <section class="pg-group">
+        <div class="pg-grouphead">
+          <h2>{g.label}</h2>
+          {g.desc && <p>{g.desc}</p>}
+        </div>
+        <div class="pg-grid">
+          {g.toys.map((t) => (
+            <a class="pg-card" href={t.href}>
+              <div class="pg-thumb-wrap">
+                <canvas class="pg-thumb" data-toy={t.toy}></canvas>
+                <span class="pg-play">▶ PLAY</span>
+              </div>
+              <div class="pg-meta">
+                <div class="pg-title-row">
+                  <h3>{t.title}</h3>
+                  <span class="pg-tag">{t.tag}</span>
+                </div>
+                <p>{t.desc}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))
+  }
 </BaseLayout>
 
 <style>
@@ -59,9 +85,14 @@ const toys = [
   .pg-card:hover .pg-play { opacity: 1; }
   .pg-meta { padding: 14px 16px 16px; }
   .pg-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-  .pg-meta h2 { font-size: 1.05rem; font-weight: 700; }
+  .pg-meta h3 { font-size: 1.05rem; font-weight: 700; }
   .pg-tag { font-size: 0.68rem; color: var(--muted); font-family: var(--font-mono); white-space: nowrap; }
   .pg-meta p { margin-top: 6px; font-size: 0.86rem; color: var(--muted); line-height: 1.5; }
+
+  .pg-group { margin-bottom: 34px; }
+  .pg-grouphead { margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .pg-grouphead h2 { font-size: 1.15rem; font-weight: 700; }
+  .pg-grouphead p { margin-top: 3px; font-size: 0.85rem; color: var(--muted); }
 </style>
 
 <script>

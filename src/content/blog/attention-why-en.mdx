@@ -8,6 +8,9 @@ tags: ["Transformer", "Attention", "self-attention", "Query-Key-Value", "Deep Le
 ---
 
 import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
 import { blocks } from "../../data/attentionWhy";
+
+<SeriesNav id="transformer" current="attention-why" lang="en" />
 
 <BilingualArticle blocks={blocks} lang="en" />
