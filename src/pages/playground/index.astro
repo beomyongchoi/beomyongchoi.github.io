@@ -9,6 +9,7 @@ const groups = [
     toys: [
       { href: "/playground/vectors/", toy: "vectors", title: "벡터와 내적", tag: "0편 · 왜 벡터", desc: "두 벡터를 드래그하면 내적·각도·투영이 실시간으로. 내적이 '닮음의 점수'인 걸 손으로." },
       { href: "/playground/matmul/", toy: "matmul", title: "행렬곱 = 내적의 묶음", tag: "1편 · 행렬", desc: "결과 셀을 클릭하면 A의 행·B의 열이 켜지고 그 셀이 둘의 내적으로 채워지는 행렬곱." },
+      { href: "/playground/linear-map/", toy: "linearmap", title: "선형변환 — 공간 휘기", tag: "2편 · 기하", desc: "î·ĵ를 드래그하면 격자가 따라 휘는 3B1B식. 회전·확대·전단·투영을 눈으로." },
     ],
   },
   {
@@ -294,7 +295,36 @@ const groups = [
     for (let i = 0; i < M; i++) for (let j = 0; j < N; j++) box(Clx + j * step, Cly + i * step, i === si && j === sj, acc, true);
   }
 
-  const FN = { vectors, matmul, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
+  // a grid that continuously shears/rotates, with î (accent) and ĵ (green)
+  // arrows — "a matrix bends the whole plane" at a glance.
+  function linearmap(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const border = cs.getPropertyValue("--border").trim() || "#e5e6e9";
+    const ox = W / 2, oy = H / 2, u = 15;
+    // animated basis: gentle shear + breathe
+    const s = Math.sin(f * 0.028), c = Math.cos(f * 0.02);
+    const ix = { x: 1 + 0.15 * c, y: 0.28 * s }, jx = { x: 0.5 * s, y: 1 + 0.12 * c };
+    const P = (m, n) => [ox + (m * ix.x + n * jx.x) * u, oy - (m * ix.y + n * jx.y) * u];
+    ctx.strokeStyle = acc; ctx.globalAlpha = 0.4; ctx.lineWidth = 1;
+    for (let k = -6; k <= 6; k++) {
+      let a = P(k, -4), b = P(k, 4); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      a = P(-6, k); b = P(6, k); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // unit parallelogram
+    const o = P(0, 0), pi = P(1, 0), pij = P(1, 1), pj = P(0, 1);
+    ctx.fillStyle = acc; ctx.globalAlpha = 0.16; ctx.beginPath();
+    ctx.moveTo(o[0], o[1]); ctx.lineTo(pi[0], pi[1]); ctx.lineTo(pij[0], pij[1]); ctx.lineTo(pj[0], pj[1]); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+    const arw = (p, col) => { ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(p[0], p[1]); ctx.stroke();
+      ctx.beginPath(); ctx.arc(p[0], p[1], 3, 0, 7); ctx.fill(); };
+    arw(pj, grn); arw(pi, acc);
+  }
+
+  const FN = { vectors, matmul, linearmap, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
   let f = 0;
   function loop() {
     f++;

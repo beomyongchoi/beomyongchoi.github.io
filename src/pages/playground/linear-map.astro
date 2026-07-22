@@ -1,0 +1,250 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`선형변환 — 공간을 휘어보기 — ${SITE.authorKo}`}
+  description="î와 ĵ 끝점을 드래그하면 격자 전체가 따라 휩니다. 행렬의 두 열이 곧 기저벡터가 착지하는 자리 — 회전·확대·전단·투영을 눈으로. 넓이가 0이 되면 납작하게 눌려 되돌릴 수 없습니다. 행렬로 생각하기 시리즈 2편."
+  locale="ko"
+  path="/playground/linear-map/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">선형변환 — 공간을 휘어보기</h1>
+    <p class="mt-3 text-muted">
+      <strong class="lm-a">î</strong>와 <strong class="lm-b">ĵ</strong>의 끝점을 <strong>드래그</strong>해보세요. 격자 전체가 따라 휩니다 — 이 두 화살표가 곧 <strong>행렬의 두 열</strong>입니다.
+    </p>
+  </header>
+
+  <section class="lm">
+    <div class="lm-top">
+      <a class="lm-crosslink" href="/blog/linear-geometry/">개념 더 읽기 → 선형변환의 기하 (2편)</a>
+    </div>
+
+    <div class="lm-stage">
+      <div class="lm-canvas"><svg id="lm-svg"></svg></div>
+
+      <div class="lm-side">
+        <div class="lm-matrix">
+          <span class="lm-mlabel">W =</span>
+          <span class="lm-brk">[</span>
+          <span class="lm-cols">
+            <span class="lm-col lm-a"><b id="lm-ax">1</b><b id="lm-ay">0</b></span>
+            <span class="lm-col lm-b"><b id="lm-bx">0</b><b id="lm-by">1</b></span>
+          </span>
+          <span class="lm-brk">]</span>
+        </div>
+        <p class="lm-cap"><span class="lm-a">1열 = î</span> · <span class="lm-b">2열 = ĵ</span> 착지점</p>
+
+        <div class="lm-area" id="lm-area"></div>
+
+        <div class="lm-presets">
+          <button data-p="identity">원래대로</button>
+          <button data-p="rotate">회전 90°</button>
+          <button data-p="scale">확대 ×2</button>
+          <button data-p="shear">전단(shear)</button>
+          <button data-p="project">투영(납작)</button>
+          <button data-p="reflect">거울(뒤집기)</button>
+        </div>
+
+        <label class="lm-toggle"><input type="checkbox" id="lm-ref" checked /> 원래 격자 함께 보기</label>
+        <label class="lm-toggle"><input type="checkbox" id="lm-pt" checked /> 점 (1,1) = î + ĵ 보기</label>
+      </div>
+    </div>
+
+    <p class="lm-note" id="lm-note"></p>
+
+    <p class="lm-foot">
+      여기서 격자선은 늘 <strong>곧게</strong> 유지됩니다 — 그게 '선형'의 힘이자 한계예요. 선형만 쌓으면 세상은 평평한 채입니다. 공간을 <strong>구부리려면</strong> 비선형 한 단계가 필요하고, 그게 <strong>신경망</strong>입니다.
+      <a href="/blog/linear-geometry/">개념 다시 읽기 → 선형변환의 기하</a>
+    </p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .lm-a { color: var(--accent); }
+  .lm-b { color: #1a7a52; }
+  .lm-top { margin-bottom: 14px; }
+  .lm-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .lm-crosslink:hover { text-decoration: underline; }
+
+  .lm-stage { display: grid; grid-template-columns: minmax(0, 1fr) 232px; gap: 18px; align-items: start; }
+  @media (max-width: 640px) { .lm-stage { grid-template-columns: 1fr; } }
+
+  .lm-canvas { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  #lm-svg { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; }
+
+  .lm-side { font-family: var(--font-mono); }
+  .lm-matrix { display: flex; align-items: center; gap: 4px; font-size: 1.1rem; }
+  .lm-mlabel { font-weight: 700; margin-right: 4px; }
+  .lm-brk { font-size: 2.4rem; color: var(--muted); font-weight: 300; }
+  .lm-cols { display: flex; gap: 14px; padding: 0 4px; }
+  .lm-col { display: flex; flex-direction: column; gap: 3px; text-align: center; }
+  .lm-col b { font-weight: 700; }
+  .lm-cap { font-size: 0.74rem; color: var(--muted); margin: 4px 0 12px; }
+  .lm-cap .lm-a, .lm-cap .lm-b { font-weight: 700; }
+
+  .lm-area { font-size: 0.82rem; padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); margin-bottom: 14px; line-height: 1.5; }
+  .lm-area b { font-weight: 700; }
+
+  .lm-presets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .lm-presets button { font: inherit; font-family: var(--font-mono); font-size: 0.76rem; padding: 6px 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); cursor: pointer; }
+  .lm-presets button:hover { border-color: var(--accent); color: var(--accent); }
+
+  .lm-toggle { display: flex; align-items: center; font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+  .lm-toggle input { accent-color: var(--accent); margin-right: 6px; }
+
+  .lm-note { margin-top: 16px; font-size: 0.88rem; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 11px 15px; line-height: 1.65; }
+  .lm-note b { color: var(--accent); }
+
+  .lm-foot { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 0.86rem; color: var(--muted); line-height: 1.6; }
+  .lm-foot a { display: inline-block; margin-top: 4px; color: var(--accent); text-decoration: none; font-family: var(--font-mono); font-size: 0.82rem; }
+  .lm-foot a:hover { text-decoration: underline; }
+</style>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const svg = $("lm-svg");
+
+  const R = 5, W = 460, H = 460, cx = W / 2, cy = H / 2;
+  const scale = (W / 2 - 26) / R;
+  const SX = (x) => cx + x * scale, SY = (y) => cy - y * scale;
+  const IX = (px) => (px - cx) / scale, IY = (py) => (cy - py) / scale;
+
+  // î (accent) and ĵ (green) — their tips ARE the two columns of W.
+  let ihat = { x: 1, y: 0 }, jhat = { x: 0, y: 1 };
+  let showRef = true, showPt = true, drag = null, anim = null;
+  const clamp = (v) => Math.max(-R, Math.min(R, Math.round(v * 100) / 100));
+
+  // world point for lattice coords (m,n): m*î + n*ĵ
+  const wpt = (m, n) => ({ x: m * ihat.x + n * jhat.x, y: m * ihat.y + n * jhat.y });
+  const det = () => ihat.x * jhat.y - jhat.x * ihat.y;
+
+  function gridPath(useT) {
+    // returns SVG polylines for the grid; useT=false → identity reference
+    const ix = useT ? ihat : { x: 1, y: 0 }, jx = useT ? jhat : { x: 0, y: 1 };
+    const P = (m, n) => `${SX(m * ix.x + n * jx.x).toFixed(1)},${SY(m * ix.y + n * jx.y).toFixed(1)}`;
+    let d = "";
+    for (let k = -R; k <= R; k++) {
+      d += `<polyline points="${P(k, -R)} ${P(k, R)}" fill="none"/>`; // vertical line x=k
+      d += `<polyline points="${P(-R, k)} ${P(R, k)}" fill="none"/>`; // horizontal line y=k
+    }
+    return d;
+  }
+
+  function arrow(v, color, key, label) {
+    const x2 = SX(v.x), y2 = SY(v.y);
+    return `<line x1="${SX(0)}" y1="${SY(0)}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="3.5" marker-end="url(#lm-ah-${key})"/>` +
+      `<circle class="lm-handle" data-k="${key}" cx="${x2}" cy="${y2}" r="22" fill="${color}" fill-opacity="0.001" style="cursor:grab"/>` +
+      `<circle cx="${x2}" cy="${y2}" r="10" fill="${color}" fill-opacity="0.14" stroke="${color}" stroke-width="2" style="pointer-events:none"/>` +
+      `<circle cx="${x2}" cy="${y2}" r="4.5" fill="${color}" style="pointer-events:none"/>` +
+      `<text x="${x2 + (v.x >= 0 ? 13 : -13)}" y="${y2 + (v.y > 0 ? -12 : 20)}" font-family="ui-monospace,monospace" font-size="16" font-weight="700" fill="${color}" text-anchor="${v.x >= 0 ? "start" : "end"}" style="pointer-events:none">${label}</text>`;
+  }
+
+  function draw() {
+    const cs = getComputedStyle(document.documentElement), g = (n, f) => cs.getPropertyValue(n).trim() || f;
+    const acc = g("--accent", "#2b4a7e"), grn = "#1a7a52", muted = g("--muted", "#6b6f76"), border = g("--border", "#e5e6e9");
+    let s = "";
+
+    // reference (identity) grid, faint
+    if (showRef) s += `<g stroke="${border}" stroke-width="1" opacity="0.7">${gridPath(false)}</g>`;
+    // transformed grid
+    s += `<g stroke="${acc}" stroke-width="1.1" opacity="0.5">${gridPath(true)}</g>`;
+    // transformed axes (k=0 lines) bolder
+    const ax = (m0, n0, m1, n1, col) => { const a = wpt(m0, n0), b = wpt(m1, n1); return `<line x1="${SX(a.x)}" y1="${SY(a.y)}" x2="${SX(b.x)}" y2="${SY(b.y)}" stroke="${col}" stroke-width="1.6" opacity="0.9"/>`; };
+    s += ax(-R, 0, R, 0, acc) + ax(0, -R, 0, R, acc);
+
+    s += `<defs>` +
+      `<marker id="lm-ah-i" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="${acc}"/></marker>` +
+      `<marker id="lm-ah-j" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="${grn}"/></marker>` +
+      `</defs>`;
+
+    // the unit square → parallelogram spanned by î, ĵ (shaded, tinted by orientation)
+    const o = wpt(0, 0), i = wpt(1, 0), ij = wpt(1, 1), j = wpt(0, 1);
+    const fillCol = Math.abs(det()) < 0.02 ? muted : det() < 0 ? "#d8503a" : acc;
+    s += `<polygon points="${SX(o.x)},${SY(o.y)} ${SX(i.x)},${SY(i.y)} ${SX(ij.x)},${SY(ij.y)} ${SX(j.x)},${SY(j.y)}" fill="${fillCol}" opacity="0.13"/>`;
+
+    // sample point (1,1) = î + ĵ
+    if (showPt) {
+      s += `<circle cx="${SX(ij.x)}" cy="${SY(ij.y)}" r="5" fill="#e0842a"/>` +
+        `<text x="${SX(ij.x) + 9}" y="${SY(ij.y) + 4}" font-family="ui-monospace,monospace" font-size="12.5" font-weight="700" fill="#c26a15" style="pointer-events:none">(1,1)</text>`;
+    }
+
+    s += arrow(jhat, grn, "j", "ĵ") + arrow(ihat, acc, "i", "î");
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+    svg.querySelectorAll(".lm-handle").forEach((h) =>
+      h.addEventListener("pointerdown", (e) => { stopAnim(); drag = h.dataset.k; svg.setPointerCapture(e.pointerId); e.preventDefault(); }));
+    readout();
+  }
+
+  const fmt = (n) => { const r = Math.round(n * 100) / 100; return Number.isInteger(r) ? String(r) : r.toFixed(2).replace(/0$/, ""); };
+
+  function readout() {
+    $("lm-ax").textContent = fmt(ihat.x); $("lm-ay").textContent = fmt(ihat.y);
+    $("lm-bx").textContent = fmt(jhat.x); $("lm-by").textContent = fmt(jhat.y);
+    const d = det(), ad = Math.abs(d);
+    let msg, note;
+    if (ad < 0.02) {
+      msg = `넓이 <b>×0</b> — 납작하게 눌림`;
+      note = `두 열이 한 직선 위에 겹쳤습니다. 평면 전체가 <b>선 하나로 뭉개져</b> 넓이가 0 — 이렇게 눌리면 <b>되돌릴 수 없습니다</b>(정보 손실). 투영이 바로 이거예요.`;
+    } else {
+      msg = `넓이 <b>×${fmt(ad)}</b>${d < 0 ? " · <b>뒤집힘</b>(거울)" : ""}`;
+      note = d < 0
+        ? `단위 정사각형이 넓이 <b>${fmt(ad)}배</b>로 바뀌고, 방향이 <b>뒤집혔습니다</b>(î·ĵ 순서가 거울처럼 반전). 격자선은 그래도 <b>곧게</b> 유지되죠 — 그게 선형입니다.`
+        : `단위 정사각형(î·ĵ가 만드는 넓이)이 <b>${fmt(ad)}배</b>가 됐습니다. 격자선은 곧고 평행하고 간격이 일정 — 원점도 그대로. 이 세 가지가 <b>선형변환</b>의 정의예요.`;
+    }
+    $("lm-area").innerHTML = msg;
+    $("lm-note").innerHTML = note;
+  }
+
+  // ── drag ──
+  function toMath(e) {
+    const r = svg.getBoundingClientRect();
+    return { x: clamp(IX((e.clientX - r.left) / r.width * W)), y: clamp(IY((e.clientY - r.top) / r.height * H)) };
+  }
+  svg.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const m = toMath(e);
+    if (drag === "i") ihat = m; else jhat = m;
+    draw();
+  });
+  const end = () => { drag = null; };
+  svg.addEventListener("pointerup", end);
+  svg.addEventListener("pointercancel", end);
+
+  $("lm-ref").addEventListener("change", (e) => { showRef = e.target.checked; draw(); });
+  $("lm-pt").addEventListener("change", (e) => { showPt = e.target.checked; draw(); });
+
+  // ── presets (animated) ──
+  const PRE = {
+    identity: [{ x: 1, y: 0 }, { x: 0, y: 1 }],
+    rotate: [{ x: 0, y: 1 }, { x: -1, y: 0 }],
+    scale: [{ x: 2, y: 0 }, { x: 0, y: 2 }],
+    shear: [{ x: 1, y: 0 }, { x: 1, y: 1 }],
+    project: [{ x: 1, y: 0 }, { x: 0.6, y: 0 }],
+    reflect: [{ x: 1, y: 0 }, { x: 0, y: -1 }],
+  };
+  function stopAnim() { if (anim) cancelAnimationFrame(anim); anim = null; }
+  function animateTo(ti, tj) {
+    stopAnim();
+    const si = { ...ihat }, sj = { ...jhat };
+    let t = 0;
+    const stepFn = () => {
+      t = Math.min(1, t + 0.06);
+      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // easeInOut
+      ihat = { x: si.x + (ti.x - si.x) * e, y: si.y + (ti.y - si.y) * e };
+      jhat = { x: sj.x + (tj.x - sj.x) * e, y: sj.y + (tj.y - sj.y) * e };
+      draw();
+      if (t < 1) anim = requestAnimationFrame(stepFn); else anim = null;
+    };
+    stepFn();
+  }
+  document.querySelectorAll(".lm-presets button").forEach((b) =>
+    b.addEventListener("click", () => { const p = PRE[b.dataset.p]; animateTo(p[0], p[1]); }));
+
+  window.addEventListener("resize", draw);
+  draw();
+</script>
