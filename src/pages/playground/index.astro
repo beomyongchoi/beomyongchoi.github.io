@@ -8,6 +8,7 @@ const groups = [
     desc: "LLM 밑바닥의 선형대수. 왜 벡터로 표현하고 왜 행렬곱인지 — 트랜스포머 시리즈의 prequel.",
     toys: [
       { href: "/playground/vectors/", toy: "vectors", title: "벡터와 내적", tag: "0편 · 왜 벡터", desc: "두 벡터를 드래그하면 내적·각도·투영이 실시간으로. 내적이 '닮음의 점수'인 걸 손으로." },
+      { href: "/playground/matmul/", toy: "matmul", title: "행렬곱 = 내적의 묶음", tag: "1편 · 행렬", desc: "결과 셀을 클릭하면 A의 행·B의 열이 켜지고 그 셀이 둘의 내적으로 채워지는 행렬곱." },
     ],
   },
   {
@@ -267,7 +268,33 @@ const groups = [
     ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(ox, oy, 3, 0, 7); ctx.fill();
   }
 
-  const FN = { vectors, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
+  // miniature A·B=C: the selected output cell cycles, lighting its A-row and
+  // B-column, so "each cell = a row·col dot product" reads at a glance.
+  function matmul(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const border = cs.getPropertyValue("--border").trim() || "#e5e6e9";
+    const K = 3, N = 2, M = 2, step = 17, cell = 14, gap = 7;
+    const Clx = K * step + gap, Cly = K * step + gap;
+    const clusterW = Clx + (N - 1) * step + cell, clusterH = Cly + (M - 1) * step + cell;
+    const ox = (W - clusterW) / 2, oy = (H - clusterH) / 2;
+    const sel = Math.floor(f / 45) % (M * N), si = Math.floor(sel / N), sj = sel % N;
+    const box = (x, y, on, col, pulse) => {
+      ctx.fillStyle = on ? col : "#ffffff"; ctx.globalAlpha = on ? (pulse ? 0.5 + 0.4 * Math.abs(Math.sin(f * 0.12)) : 0.9) : 1;
+      ctx.fillRect(ox + x, oy + y, cell, cell);
+      ctx.globalAlpha = 1; ctx.strokeStyle = on ? col : border; ctx.lineWidth = on ? 1.5 : 1;
+      ctx.strokeRect(ox + x, oy + y, cell, cell);
+    };
+    // B (top-right), highlight column sj
+    for (let r = 0; r < K; r++) for (let j = 0; j < N; j++) box(Clx + j * step, r * step, j === sj, grn, false);
+    // A (bottom-left), highlight row si
+    for (let i = 0; i < M; i++) for (let k = 0; k < K; k++) box(k * step, Cly + i * step, i === si, acc, false);
+    // C (bottom-right), highlight the selected cell (pulsing)
+    for (let i = 0; i < M; i++) for (let j = 0; j < N; j++) box(Clx + j * step, Cly + i * step, i === si && j === sj, acc, true);
+  }
+
+  const FN = { vectors, matmul, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
   let f = 0;
   function loop() {
     f++;

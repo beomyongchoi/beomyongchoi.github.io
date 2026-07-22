@@ -1,0 +1,16 @@
+---
+title: "A Matrix Transforms Many Vectors at Once"
+description: "A matrix is just a table of stacked vectors. Multiplying a vector by it runs many dot products at once — each output value is one row dotted with the input. A neural layer, and attention's Q=X·W, are exactly this one operation, which is why GPUs make LLMs feasible. Part 1 of Thinking in Matrices, with an interactive. Click any sentence to flip between English and Korean."
+pubDate: 2026-07-22
+lang: en
+translationKey: matrix-transform
+tags: ["AI", "Linear Algebra", "Matrices", "Deep Learning"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import { blocks } from "../../data/matrixTransform";
+
+<SeriesNav id="linalg" current="matrix-transform" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
