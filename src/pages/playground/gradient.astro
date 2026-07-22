@@ -1,0 +1,227 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`경사하강 — 공 굴리기 — ${SITE.authorKo}`}
+  description="손실 곡선 위에 공을 놓고 learning rate를 돌려보세요. 작으면 기어가고, 적당하면 골짜기에 안착하고, 1이면 영원히 핑퐁, 넘으면 발산해서 날아갑니다. w ← w − lr × 기울기 한 줄이 학습의 전부인 이유. 모델은 어떻게 배우나 시리즈 1편."
+  locale="ko"
+  path="/playground/gradient/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">경사하강 — 공 굴리기</h1>
+    <p class="mt-3 text-muted">
+      <strong>learning rate</strong>를 바꿔가며 공을 굴려보세요. 같은 곡선인데 <strong>보폭</strong> 하나로 안착·핑퐁·발산이 갈립니다.
+    </p>
+  </header>
+
+  <section class="gd">
+    <div class="gd-top">
+      <a class="gd-crosslink" href="/blog/gradient-descent/">개념 더 읽기 → 경사하강 — 내리막으로 한 걸음씩 (1편)</a>
+    </div>
+
+    <div class="gd-stage">
+      <div class="gd-canvas"><svg id="gd-svg"></svg></div>
+
+      <div class="gd-side">
+        <div class="gd-regime" id="gd-regime">골짜기로 수렴</div>
+
+        <div class="gd-ctrl">
+          <label>learning rate <b id="gd-lrv">0.25</b></label>
+          <input type="range" id="gd-lr" min="0.05" max="1.3" step="0.05" value="0.25" />
+          <div class="gd-marks"><span>0.05</span><span>1.0 = 핑퐁</span><span>1.3</span></div>
+        </div>
+
+        <div class="gd-btns">
+          <button id="gd-step">한 걸음</button>
+          <button id="gd-auto">▶ 자동</button>
+          <button id="gd-reset">↺ 리셋</button>
+        </div>
+
+        <div class="gd-read">
+          <div><span>w</span><b id="gd-w">5.00</b></div>
+          <div><span>기울기</span><b id="gd-slope">+4.0</b></div>
+          <div><span>손실</span><b id="gd-loss">4.00</b></div>
+          <div><span>걸음</span><b id="gd-n">0</b></div>
+        </div>
+
+        <div class="gd-rule">w ← w − lr × 기울기</div>
+      </div>
+    </div>
+
+    <p class="gd-note" id="gd-note"></p>
+
+    <p class="gd-foot">
+      실제 모델은 가중치가 수백만 개 — 걸음마다 <strong>기울기도 수백만 개</strong> 필요합니다. 하나씩 찔러보면 하세월이죠. 한 번의 역방향 계산으로 전부 구하는 트릭이 <strong>역전파</strong>(2편)입니다.
+      <a href="/blog/gradient-descent/">개념 다시 읽기 → 경사하강</a>
+    </p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .gd-top { margin-bottom: 14px; }
+  .gd-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .gd-crosslink:hover { text-decoration: underline; }
+
+  .gd-stage { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 18px; align-items: start; }
+  @media (max-width: 640px) { .gd-stage { grid-template-columns: 1fr; } }
+
+  .gd-canvas { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  #gd-svg { display: block; width: 100%; height: auto; }
+
+  .gd-side { font-family: var(--font-mono); }
+  .gd-regime { text-align: center; font-weight: 700; font-size: 0.88rem; padding: 7px; border-radius: 8px; margin-bottom: 13px; border: 1px solid var(--border); }
+  .gd-regime.ok { background: color-mix(in srgb, #22a06b 15%, var(--surface)); color: #1a7a52; border-color: color-mix(in srgb, #22a06b 40%, var(--border)); }
+  .gd-regime.warn { background: color-mix(in srgb, #e0842a 14%, var(--surface)); color: #c26a15; border-color: color-mix(in srgb, #e0842a 40%, var(--border)); }
+  .gd-regime.bad { background: color-mix(in srgb, #d8503a 14%, var(--surface)); color: #b53c28; border-color: color-mix(in srgb, #d8503a 40%, var(--border)); }
+
+  .gd-ctrl label { font-size: 0.8rem; display: block; margin-bottom: 6px; }
+  .gd-ctrl label b { color: var(--accent); }
+  .gd-ctrl input[type=range] { width: 100%; accent-color: var(--accent); }
+  .gd-marks { display: flex; justify-content: space-between; font-size: 0.64rem; color: var(--muted); margin-top: 2px; }
+
+  .gd-btns { display: flex; gap: 6px; margin: 13px 0; }
+  .gd-btns button { flex: 1; font: inherit; font-family: var(--font-mono); font-size: 0.76rem; font-weight: 700; padding: 8px 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); cursor: pointer; }
+  .gd-btns button:hover { border-color: var(--accent); color: var(--accent); }
+  .gd-btns #gd-step { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .gd-btns #gd-auto.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+  .gd-read { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; padding: 10px 13px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); margin-bottom: 10px; }
+  .gd-read div { display: flex; justify-content: space-between; font-size: 0.8rem; }
+  .gd-read span { color: var(--muted); }
+  .gd-read b { color: var(--fg); }
+
+  .gd-rule { text-align: center; font-size: 0.86rem; font-weight: 700; color: var(--accent); padding: 8px; border: 1px dashed var(--border); border-radius: 8px; }
+
+  .gd-note { margin-top: 16px; font-size: 0.88rem; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 11px 15px; line-height: 1.65; }
+  .gd-note b { color: var(--accent); }
+
+  .gd-foot { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 0.86rem; color: var(--muted); line-height: 1.6; }
+  .gd-foot a { display: inline-block; margin-top: 4px; color: var(--accent); text-decoration: none; font-family: var(--font-mono); font-size: 0.82rem; }
+  .gd-foot a:hover { text-decoration: underline; }
+</style>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const svg = $("gd-svg");
+
+  // Same example as the post: loss = (w−3)², slope = 2(w−3), start at w=5.
+  const MIN = 3, W0 = 5;
+  const f = (w) => (w - MIN) ** 2;
+  const slope = (w) => 2 * (w - MIN);
+
+  const Wd = 520, Ht = 380, padL = 44, padR = 18, padT = 20, padB = 34;
+  const X0 = -5, X1 = 11, Y1 = 40; // domain
+  const PX = (x) => padL + (x - X0) / (X1 - X0) * (Wd - padL - padR);
+  const PY = (y) => Ht - padB - y / Y1 * (Ht - padT - padB);
+
+  let w = W0, lr = 0.25, steps = 0, trail = [W0], auto = false, timer = null, blown = false;
+
+  function regime() {
+    // w−3 is multiplied by (1−2lr) each step
+    const m = Math.abs(1 - 2 * lr);
+    if (lr === 1) return { k: "warn", t: "영원한 핑퐁 (lr = 1)" };
+    if (m < 0.999) return lr < 0.5 ? { k: "ok", t: "골짜기로 수렴" } : { k: "ok", t: "튕기며 수렴" };
+    return { k: "bad", t: "발산 — 걸음마다 더 멀어짐" };
+  }
+
+  function draw() {
+    const cs = getComputedStyle(document.documentElement), g = (n, fb) => cs.getPropertyValue(n).trim() || fb;
+    const acc = g("--accent", "#2b4a7e"), muted = g("--muted", "#6b6f76"), border = g("--border", "#e5e6e9");
+    const grn = "#1a7a52", red = "#b53c28";
+    let s = "";
+
+    // axes + grid
+    s += `<line x1="${padL}" y1="${PY(0)}" x2="${Wd - padR}" y2="${PY(0)}" stroke="${muted}" stroke-width="1.2"/>`;
+    [10, 20, 30, 40].forEach((yv) => {
+      s += `<line x1="${padL}" y1="${PY(yv)}" x2="${Wd - padR}" y2="${PY(yv)}" stroke="${border}" stroke-width="0.7"/>`;
+      s += `<text x="${padL - 6}" y="${PY(yv) + 4}" font-family="ui-monospace,monospace" font-size="10.5" fill="${muted}" text-anchor="end">${yv}</text>`;
+    });
+    [-4, -2, 0, 2, 3, 4, 6, 8, 10].forEach((xv) => {
+      s += `<text x="${PX(xv)}" y="${PY(0) + 15}" font-family="ui-monospace,monospace" font-size="10.5" fill="${xv === MIN ? grn : muted}" font-weight="${xv === MIN ? 700 : 400}" text-anchor="middle">${xv}</text>`;
+    });
+    s += `<text x="${Wd - padR}" y="${PY(0) - 8}" font-family="ui-monospace,monospace" font-size="11" fill="${muted}" text-anchor="end">w</text>`;
+
+    // curve
+    let path = "";
+    for (let i = 0; i <= 200; i++) {
+      const x = X0 + (X1 - X0) * i / 200, y = Math.min(Y1, f(x));
+      path += `${i ? "L" : "M"}${PX(x).toFixed(1)},${PY(y).toFixed(1)} `;
+    }
+    s += `<path d="${path}" fill="none" stroke="${acc}" stroke-width="2.5"/>`;
+    // valley marker
+    s += `<line x1="${PX(MIN)}" y1="${PY(0)}" x2="${PX(MIN)}" y2="${padT}" stroke="${grn}" stroke-width="1" stroke-dasharray="4 3"/>`;
+    s += `<text x="${PX(MIN)}" y="${padT + 11}" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="${grn}" text-anchor="middle">valley w=3</text>`;
+
+    // trail: fading dots + hop arcs
+    const R = regime();
+    const trailCol = R.k === "bad" ? red : acc;
+    for (let i = 0; i < trail.length; i++) {
+      const tw = trail[i];
+      if (tw < X0 - 1 || tw > X1 + 1) continue;
+      const op = 0.15 + 0.85 * (i / Math.max(1, trail.length - 1));
+      const y = Math.min(Y1, f(tw));
+      if (i > 0) {
+        const pw = trail[i - 1];
+        if (pw >= X0 - 1 && pw <= X1 + 1) {
+          const x1 = PX(pw), y1 = PY(Math.min(Y1, f(pw))), x2 = PX(tw), y2 = PY(y);
+          const mx = (x1 + x2) / 2, my = Math.min(y1, y2) - 22;
+          s += `<path d="M${x1},${y1} Q${mx},${my} ${x2},${y2}" fill="none" stroke="${trailCol}" stroke-width="1.3" stroke-opacity="${op * 0.6}" stroke-dasharray="3 3"/>`;
+        }
+      }
+      if (i < trail.length - 1)
+        s += `<circle cx="${PX(tw)}" cy="${PY(y)}" r="4" fill="${trailCol}" fill-opacity="${op * 0.55}"/>`;
+    }
+    // current ball
+    if (!blown) {
+      const y = Math.min(Y1, f(w));
+      s += `<circle cx="${PX(w)}" cy="${PY(y)}" r="8" fill="${Math.abs(w - MIN) < 0.05 ? grn : trailCol}" stroke="#fff" stroke-width="2.5"/>`;
+    } else {
+      s += `<text x="${Wd / 2}" y="${Ht / 2 - 10}" font-family="ui-monospace,monospace" font-size="26" font-weight="800" fill="${red}" text-anchor="middle">발산! 💥</text>`;
+      s += `<text x="${Wd / 2}" y="${Ht / 2 + 14}" font-family="ui-monospace,monospace" font-size="12" fill="${muted}" text-anchor="middle">ball left the chart — reset to try again</text>`;
+    }
+
+    svg.setAttribute("viewBox", `0 0 ${Wd} ${Ht}`);
+    svg.innerHTML = s;
+    readout();
+  }
+
+  function readout() {
+    const R = regime();
+    const rg = $("gd-regime"); rg.className = "gd-regime " + R.k; rg.textContent = R.t;
+    $("gd-w").textContent = blown ? "—" : w.toFixed(2);
+    $("gd-slope").textContent = blown ? "—" : (slope(w) >= 0 ? "+" : "") + slope(w).toFixed(1);
+    $("gd-loss").textContent = blown ? "∞" : f(w).toFixed(2);
+    $("gd-n").textContent = String(steps);
+    const near = Math.abs(w - MIN) < 0.05;
+    $("gd-note").innerHTML = blown
+      ? `보폭(lr)이 커서 걸음마다 골짜기 <b>반대편 더 높은 곳</b>에 착지했습니다. 몇 걸음 만에 차트 밖으로 — 실전에서 손실이 <b>NaN</b>으로 치솟는 그 현상입니다. lr을 줄이고 리셋해보세요.`
+      : near
+      ? `골짜기 바닥(w=3)에 안착했습니다. <b>${steps}걸음</b> 걸렸어요. lr을 바꿔 다시 굴려보세요 — <b>1.0</b>이면 5↔1 영원한 핑퐁, <b>1.05 이상</b>이면 발산합니다.`
+      : lr === 1
+      ? `lr=1: 기울기 +4에 걸음 −4 → w=5에서 <b>정확히 w=1로</b>, 거기선 기울기 −4라 <b>다시 w=5로</b>. 영원히 골짜기를 건너뛰는 핑퐁입니다.`
+      : `현재 기울기 <b>${(slope(w) >= 0 ? "+" : "") + slope(w).toFixed(1)}</b> → 다음 걸음은 <b>${(-lr * slope(w)).toFixed(2)}</b>만큼. 기울기의 <b>반대</b>로 가니 내리막입니다. "한 걸음"을 눌러보세요.`;
+  }
+
+  function step() {
+    if (blown) return;
+    w = w - lr * slope(w);
+    steps++;
+    trail.push(w);
+    if (trail.length > 30) trail.shift();
+    if (Math.abs(w - MIN) > 60) { blown = true; stopAuto(); }
+    draw();
+  }
+  function stopAuto() { auto = false; if (timer) clearInterval(timer); $("gd-auto").classList.remove("on"); $("gd-auto").textContent = "▶ 자동"; }
+  function startAuto() { auto = true; $("gd-auto").classList.add("on"); $("gd-auto").textContent = "■ 정지"; timer = setInterval(() => { step(); if (Math.abs(w - MIN) < 0.01 && Math.abs(slope(w)) < 0.02) stopAuto(); }, 450); }
+
+  $("gd-step").addEventListener("click", () => { stopAuto(); step(); });
+  $("gd-auto").addEventListener("click", () => (auto ? stopAuto() : startAuto()));
+  $("gd-reset").addEventListener("click", () => { stopAuto(); w = W0; steps = 0; trail = [W0]; blown = false; draw(); });
+  $("gd-lr").addEventListener("input", (e) => { lr = +e.target.value; $("gd-lrv").textContent = lr.toFixed(2); draw(); });
+
+  window.addEventListener("resize", draw);
+  draw();
+</script>

@@ -14,7 +14,7 @@ export const SERIES: Record<string, Series> = {
     },
     parts: [
       { slug: "loss-function", toy: "/playground/loss/", published: true, title: { ko: "0. 손실 — 틀림을 숫자로", en: "0. Loss — error as a number" } },
-      { slug: "gradient-descent", toy: "/playground/gradient/", published: false, title: { ko: "1. 경사하강 — 내리막 한 걸음", en: "1. Gradient descent — one step downhill" } },
+      { slug: "gradient-descent", toy: "/playground/gradient/", published: true, title: { ko: "1. 경사하강 — 내리막 한 걸음", en: "1. Gradient descent — one step downhill" } },
       { slug: "backprop", toy: "/playground/backprop/", published: false, title: { ko: "2. 역전파 — 책임을 거꾸로", en: "2. Backprop — blame flows backward" } },
       { slug: "training-live", toy: "/playground/train/", published: false, title: { ko: "3. 실전 — 학습을 지켜보기", en: "3. Watching a network learn" } },
     ],

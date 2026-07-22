@@ -1,0 +1,19 @@
+---
+title: "경사하강 — 내리막으로 한 걸음씩"
+description: "지형 전체는 안 보여도 발밑의 기울기는 잴 수 있습니다 — 가중치를 살짝 밀어보면 됩니다. 그리고 기울기의 반대로 한 걸음: w ← w − lr × 기울기. 이 한 줄의 반복이 학습입니다. learning rate가 기어가기·안착·핑퐁·발산을 가르는 걸 정확한 숫자로. 모델은 어떻게 배우나 시리즈 1편, 인터랙티브와 함께. 문장을 클릭하면 한/영 원문을 볼 수 있습니다."
+pubDate: 2026-07-22T16:00:00
+lang: ko
+translationKey: gradient-descent
+tags: ["AI", "딥러닝", "경사하강", "LLM"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/gradientDescent";
+
+<SeriesNav id="training" current="gradient-descent" lang="ko" />
+
+<BilingualArticle blocks={blocks} />
+
+<SeriesNext id="training" current="gradient-descent" lang="ko" />

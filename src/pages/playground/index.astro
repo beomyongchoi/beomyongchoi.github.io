@@ -29,6 +29,7 @@ const groups = [
     desc: "손실부터 역전파, 라이브 학습까지 — W가 실제로 어떻게 정해지는지.",
     toys: [
       { href: "/playground/loss/", toy: "loss", title: "손실 — 틀림을 숫자로", tag: "0편 · 손실", desc: "예측 슬라이더로 제곱 오차 포물선 위를 움직이고, −log p가 폭발하는 걸 눈으로." },
+      { href: "/playground/gradient/", toy: "gradient", title: "경사하강 — 공 굴리기", tag: "1편 · 경사하강", desc: "learning rate 하나로 안착·핑퐁·발산이 갈리는 걸 공 굴리며 체험." },
     ],
   },
   {
@@ -383,7 +384,42 @@ const groups = [
     ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
   }
 
-  const FN = { vectors, matmul, linearmap, neurallayer, loss, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
+  // ball hopping down a parabola in discrete steps with dashed hop arcs —
+  // the update-rule walk, distinct from the smooth loss thumbnail.
+  function gradient(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const border = cs.getPropertyValue("--border").trim() || "#e5e6e9";
+    const x0 = 22, x1 = W - 22, ymin = H - 24, ytop = 16, mid = (x0 + x1) / 2;
+    // parabola with the valley at bottom-center (screen y grows downward)
+    const Y = (x) => ymin - (ymin - ytop) * ((x - mid) / (x1 - mid)) ** 2;
+    ctx.strokeStyle = border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0 - 4, ymin + 4); ctx.lineTo(x1 + 4, ymin + 4); ctx.stroke();
+    ctx.strokeStyle = acc; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (let x = x0; x <= x1; x += 3) { const y = Y(x); x === x0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+    ctx.stroke();
+    ctx.fillStyle = grn; ctx.beginPath(); ctx.arc(mid, Y(mid), 3, 0, 7); ctx.fill();
+    // discrete hops: geometric approach from the right side, looping
+    const HOPS = 5, phase = Math.floor(f / 40) % (HOPS + 2);
+    let px = null, py = null;
+    ctx.strokeStyle = acc;
+    for (let i = 0; i <= Math.min(phase, HOPS); i++) {
+      const t = 0.85 * Math.pow(0.55, i);           // fraction of half-width from valley
+      const x = mid + t * (x1 - mid), y = Y(x);
+      if (px !== null) {
+        ctx.globalAlpha = 0.5; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.quadraticCurveTo((px + x) / 2, Math.min(py, y) - 16, x, y); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = i === Math.min(phase, HOPS) ? acc : "rgba(43,74,126,0.35)";
+      ctx.beginPath(); ctx.arc(x, y, i === Math.min(phase, HOPS) ? 5 : 3.5, 0, 7); ctx.fill();
+      if (i === Math.min(phase, HOPS)) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.8; ctx.stroke(); ctx.strokeStyle = acc; }
+      px = x; py = y;
+    }
+  }
+
+  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
   let f = 0;
   function loop() {
     f++;

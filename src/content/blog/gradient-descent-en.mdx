@@ -1,0 +1,19 @@
+---
+title: "Gradient Descent — One Step Downhill at a Time"
+description: "You can't see the whole landscape, but you can measure the slope under your feet — just nudge a weight. Then step against the slope: w ← w − lr × slope. That one line, repeated, is training. How the learning rate decides crawl, settle, ping-pong, or explosion — with exact numbers. Part 1 of How Models Learn, with an interactive. Click any sentence to flip between English and Korean."
+pubDate: 2026-07-22T16:00:00
+lang: en
+translationKey: gradient-descent
+tags: ["AI", "Deep Learning", "Gradient Descent", "LLM"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/gradientDescent";
+
+<SeriesNav id="training" current="gradient-descent" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="training" current="gradient-descent" lang="en" />
