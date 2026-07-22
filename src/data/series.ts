@@ -6,6 +6,19 @@ export type SeriesPart = { slug: string; title: L; toy?: string; published: bool
 export type Series = { title: L; blurb: L; parts: SeriesPart[] };
 
 export const SERIES: Record<string, Series> = {
+  linalg: {
+    title: { ko: "행렬로 생각하기", en: "Thinking in Matrices" },
+    blurb: {
+      ko: "LLM 밑바닥의 선형대수. 왜 벡터로 표현하고 왜 행렬곱인지, 글 + 인터랙티브로 한 편씩. (트랜스포머 시리즈의 prequel)",
+      en: "The linear algebra under LLMs. Why vectors, why matrix multiplication — one post + interactive at a time. (Prequel to the Transformer series.)",
+    },
+    parts: [
+      { slug: "vectors-why", toy: "/playground/vectors/", published: true, title: { ko: "0. 왜 벡터인가", en: "0. Why vectors" } },
+      { slug: "matrix-transform", toy: "/playground/matmul/", published: false, title: { ko: "1. 행렬 = 한 번에 변환", en: "1. Matrix = transform at once" } },
+      { slug: "linear-geometry", toy: "/playground/linear-map/", published: false, title: { ko: "2. 선형변환의 기하", en: "2. The geometry of linear maps" } },
+      { slug: "nonlinear-network", toy: "/playground/neural-layer/", published: false, title: { ko: "3. 선형 + 비선형 = 신경망", en: "3. Linear + nonlinear = a network" } },
+    ],
+  },
   transformer: {
     title: { ko: "트랜스포머 뜯어보기", en: "Taking the Transformer Apart" },
     blurb: {

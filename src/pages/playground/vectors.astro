@@ -1,0 +1,264 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`벡터와 내적 — ${SITE.authorKo}`}
+  description="두 벡터를 드래그하면 내적·각도·cosθ·투영이 실시간으로 바뀝니다. 같은 방향이면 내적이 커지고, 직각이면 0, 반대면 음수 — 내적이 '닮음의 점수'라는 걸 손으로 만져보세요. 행렬로 생각하기 시리즈 0편."
+  locale="ko"
+  path="/playground/vectors/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">벡터와 내적</h1>
+    <p class="mt-3 text-muted">
+      두 벡터 <strong>a</strong>, <strong>b</strong>의 <strong>끝점을 드래그</strong>해보세요. 내적이 어떻게 <strong>닮음의 점수</strong>가 되는지 눈으로 보입니다.
+    </p>
+  </header>
+
+  <section class="vt">
+    <div class="vt-top">
+      <a class="vt-crosslink" href="/blog/vectors-why/">개념 더 읽기 → 왜 벡터인가 (0편)</a>
+    </div>
+
+    <div class="vt-stage">
+      <div class="vt-canvas"><svg id="vt-svg"></svg></div>
+
+      <div class="vt-panel">
+        <div class="vt-badge" id="vt-badge">같은 방향</div>
+
+        <div class="vt-row"><span class="vt-k vt-a">a</span><span class="vt-v" id="vt-av">(3, 1)</span></div>
+        <div class="vt-row"><span class="vt-k vt-b">b</span><span class="vt-v" id="vt-bv">(1, 3)</span></div>
+
+        <div class="vt-sep"></div>
+
+        <div class="vt-calc" id="vt-calc"></div>
+
+        <div class="vt-dot">
+          <span class="vt-dot-lbl">a · b</span>
+          <span class="vt-dot-val" id="vt-dot">6</span>
+        </div>
+
+        <div class="vt-metrics">
+          <div><span>|a|</span><b id="vt-ma">3.16</b></div>
+          <div><span>|b|</span><b id="vt-mb">3.16</b></div>
+          <div><span>θ</span><b id="vt-th">53°</b></div>
+          <div><span>cos θ</span><b id="vt-cos">0.60</b></div>
+        </div>
+
+        <div class="vt-toggles">
+          <label><input type="checkbox" id="vt-proj" checked /> 투영 보기</label>
+          <label><input type="checkbox" id="vt-snap" checked /> 격자에 붙이기</label>
+        </div>
+      </div>
+    </div>
+
+    <p class="vt-note" id="vt-note"></p>
+
+    <div class="vt-presets">
+      <span>바로 보기:</span>
+      <button data-p="same">같은 방향 →+</button>
+      <button data-p="perp">직각 →0</button>
+      <button data-p="opp">반대 →−</button>
+    </div>
+
+    <p class="vt-foot">
+      벡터 하나·내적 하나는 여기까지. 실제 층은 <strong>많은 벡터를 한 번에</strong> 견줍니다 — 그 묶음이 바로 <strong>행렬</strong>이에요. (1편에서 이어집니다)
+      <a href="/blog/vectors-why/">개념 다시 읽기 → 왜 벡터인가</a>
+    </p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .vt-top { margin-bottom: 14px; }
+  .vt-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .vt-crosslink:hover { text-decoration: underline; }
+
+  .vt-stage { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 18px; align-items: start; }
+  @media (max-width: 640px) { .vt-stage { grid-template-columns: 1fr; } }
+
+  .vt-canvas { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  #vt-svg { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; }
+
+  .vt-panel { font-family: var(--font-mono); font-size: 0.86rem; }
+  .vt-badge { text-align: center; font-weight: 700; font-size: 0.9rem; padding: 7px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border); }
+  .vt-badge.pos { background: color-mix(in srgb, #22a06b 15%, var(--surface)); color: #1a7a52; border-color: color-mix(in srgb, #22a06b 40%, var(--border)); }
+  .vt-badge.zero { background: color-mix(in srgb, var(--muted) 12%, var(--surface)); color: var(--muted); }
+  .vt-badge.neg { background: color-mix(in srgb, #d8503a 14%, var(--surface)); color: #b53c28; border-color: color-mix(in srgb, #d8503a 40%, var(--border)); }
+
+  .vt-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .vt-k { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; font-weight: 700; color: #fff; }
+  .vt-a { background: var(--accent); }
+  .vt-b { background: #22a06b; }
+  .vt-v { color: var(--fg); }
+
+  .vt-sep { height: 1px; background: var(--border); margin: 12px 0; }
+  .vt-calc { font-size: 0.82rem; color: var(--muted); line-height: 1.7; margin-bottom: 10px; }
+  .vt-calc b { color: var(--fg); }
+
+  .vt-dot { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
+  .vt-dot-lbl { font-weight: 700; }
+  .vt-dot-val { font-size: 1.6rem; font-weight: 800; }
+  .vt-dot-val.pos { color: #1a7a52; } .vt-dot-val.zero { color: var(--muted); } .vt-dot-val.neg { color: #b53c28; }
+
+  .vt-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin: 12px 0; }
+  .vt-metrics div { display: flex; justify-content: space-between; font-size: 0.8rem; }
+  .vt-metrics span { color: var(--muted); }
+  .vt-metrics b { color: var(--fg); }
+
+  .vt-toggles { display: flex; flex-direction: column; gap: 5px; font-size: 0.78rem; color: var(--muted); }
+  .vt-toggles input { accent-color: var(--accent); margin-right: 5px; }
+
+  .vt-note { margin-top: 16px; font-size: 0.88rem; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 11px 15px; line-height: 1.65; }
+  .vt-note b { color: var(--accent); }
+
+  .vt-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; font-size: 0.82rem; color: var(--muted); }
+  .vt-presets button { font: inherit; font-family: var(--font-mono); font-size: 0.78rem; padding: 5px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); cursor: pointer; }
+  .vt-presets button:hover { border-color: var(--accent); color: var(--accent); }
+
+  .vt-foot { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 0.86rem; color: var(--muted); line-height: 1.6; }
+  .vt-foot a { display: inline-block; margin-top: 4px; color: var(--accent); text-decoration: none; font-family: var(--font-mono); font-size: 0.82rem; }
+  .vt-foot a:hover { text-decoration: underline; }
+</style>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const svg = $("vt-svg");
+
+  // math space: x,y in [-R, R], origin centered
+  const R = 5;
+  const W = 460, H = 460, cx = W / 2, cy = H / 2;
+  const scale = (W / 2 - 26) / R;
+  const MX = (x) => cx + x * scale;
+  const MY = (y) => cy - y * scale;
+  const IX = (px) => (px - cx) / scale;
+  const IY = (py) => (cy - py) / scale;
+
+  let a = { x: 3, y: 1 }, b = { x: 1, y: 3 };
+  let showProj = true, snap = true;
+  const clamp = (v) => Math.max(-R, Math.min(R, v));
+  const snapv = (v) => (snap ? Math.round(v * 2) / 2 : Math.round(v * 100) / 100);
+
+  const dot = () => a.x * b.x + a.y * b.y;
+  const mag = (v) => Math.hypot(v.x, v.y);
+
+  function arrow(v, color, key) {
+    const x2 = MX(v.x), y2 = MY(v.y);
+    return `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="3" marker-end="url(#ah-${key})"/>` +
+      `<circle class="vt-handle" data-k="${key}" cx="${x2}" cy="${y2}" r="11" fill="${color}" fill-opacity="0.001" stroke="${color}" stroke-width="2" style="cursor:grab"/>` +
+      `<circle cx="${x2}" cy="${y2}" r="4.5" fill="${color}"/>` +
+      `<text x="${x2 + (v.x >= 0 ? 12 : -12)}" y="${y2 + (v.y >= 0 ? -10 : 20)}" font-family="ui-monospace,monospace" font-size="15" font-weight="700" fill="${color}" text-anchor="${v.x >= 0 ? "start" : "end"}">${key}</text>`;
+  }
+
+  function draw() {
+    const cs = getComputedStyle(document.documentElement), g = (n, f) => cs.getPropertyValue(n).trim() || f;
+    const fg = g("--fg", "#1a1a1f"), muted = g("--muted", "#6b6f76"), border = g("--border", "#e5e6e9");
+    const acc = g("--accent", "#2b4a7e"), grn = "#22a06b";
+    let s = "";
+    // grid
+    for (let i = -R; i <= R; i++) {
+      const gx = MX(i), gy = MY(i);
+      const w = i === 0 ? 1.5 : 1, col = i === 0 ? muted : border;
+      s += `<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="${col}" stroke-width="${w}"/>`;
+      s += `<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="${col}" stroke-width="${w}"/>`;
+    }
+    s += `<text x="${MX(R) - 4}" y="${cy - 6}" font-family="ui-monospace,monospace" font-size="11" fill="${muted}" text-anchor="end">x</text>`;
+    s += `<text x="${cx + 6}" y="${MY(R) + 12}" font-family="ui-monospace,monospace" font-size="11" fill="${muted}">y</text>`;
+
+    // projection of a onto b (dot = |b| * signed projection of a onto b-direction)
+    if (showProj && mag(b) > 0.001) {
+      const f = dot() / (b.x * b.x + b.y * b.y); // scalar so that f*b is the foot
+      const foot = { x: f * b.x, y: f * b.y };
+      s += `<line x1="${MX(a.x)}" y1="${MY(a.y)}" x2="${MX(foot.x)}" y2="${MY(foot.y)}" stroke="${muted}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+      // projection segment along b, thick, colored by sign
+      const pcol = dot() > 0.001 ? grn : dot() < -0.001 ? "#d8503a" : muted;
+      s += `<line x1="${cx}" y1="${cy}" x2="${MX(foot.x)}" y2="${MY(foot.y)}" stroke="${pcol}" stroke-width="6" stroke-opacity="0.28" stroke-linecap="round"/>`;
+    }
+
+    // arrow defs
+    s += `<defs>` +
+      `<marker id="ah-a" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="${acc}"/></marker>` +
+      `<marker id="ah-b" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="${grn}"/></marker>` +
+      `</defs>`;
+
+    // right-angle tick when perpendicular
+    if (Math.abs(dot()) < 0.02 && mag(a) > 0.1 && mag(b) > 0.1) {
+      const ua = { x: a.x / mag(a), y: a.y / mag(a) }, ub = { x: b.x / mag(b), y: b.y / mag(b) };
+      const t = 0.5;
+      const p1 = { x: ua.x * t, y: ua.y * t }, p2 = { x: (ua.x + ub.x) * t, y: (ua.y + ub.y) * t }, p3 = { x: ub.x * t, y: ub.y * t };
+      s += `<polyline points="${MX(p1.x)},${MY(p1.y)} ${MX(p2.x)},${MY(p2.y)} ${MX(p3.x)},${MY(p3.y)}" fill="none" stroke="${muted}" stroke-width="1.5"/>`;
+    }
+
+    s += arrow(b, grn, "b") + arrow(a, acc, "a");
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+    bindHandles();
+    readout();
+  }
+
+  function readout() {
+    const d = dot(), ma = mag(a), mb = mag(b);
+    const cos = ma > 0.001 && mb > 0.001 ? d / (ma * mb) : 0;
+    const th = Math.round(Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI);
+    const sign = d > 0.02 ? "pos" : d < -0.02 ? "neg" : "zero";
+
+    $("vt-av").textContent = `(${fmt(a.x)}, ${fmt(a.y)})`;
+    $("vt-bv").textContent = `(${fmt(b.x)}, ${fmt(b.y)})`;
+    $("vt-calc").innerHTML = `a·b = a<sub>x</sub>·b<sub>x</sub> + a<sub>y</sub>·b<sub>y</sub><br>= <b>${fmt(a.x)}·${fmt(b.x)}</b> + <b>${fmt(a.y)}·${fmt(b.y)}</b> = <b>${fmt(d)}</b>`;
+
+    const dv = $("vt-dot"); dv.textContent = fmt(d); dv.className = "vt-dot-val " + sign;
+    $("vt-ma").textContent = ma.toFixed(2);
+    $("vt-mb").textContent = mb.toFixed(2);
+    $("vt-th").textContent = th + "°";
+    $("vt-cos").textContent = cos.toFixed(2);
+
+    const badge = $("vt-badge");
+    badge.className = "vt-badge " + sign;
+    badge.textContent = sign === "pos" ? "같은 쪽을 향함 · 내적 +" : sign === "neg" ? "반대쪽을 향함 · 내적 −" : "직각 · 내적 0";
+
+    $("vt-note").innerHTML = sign === "pos"
+      ? `두 벡터가 <b>같은 방향</b>일수록 내적이 커집니다 (지금 θ=${th}°). 내적은 <b>얼마나 나란한가</b>를 재는 점수예요 — 임베딩이 비슷한 뜻을 가까운 방향에 두는 이유, 어텐션이 <b>q·k</b>로 궁합을 재는 이유가 이겁니다.`
+      : sign === "neg"
+      ? `θ가 90°를 넘으면(지금 ${th}°) 내적이 <b>음수</b>가 됩니다 — 서로 <b>반대쪽</b>을 향한다는 뜻. 닮음 점수가 마이너스인 셈이죠.`
+      : `딱 <b>직각</b>(θ=90°)이면 내적이 <b>0</b>입니다 — 두 방향이 서로 <b>무관</b>하다는 뜻. 크기가 아무리 커도 나란한 성분이 없으면 0이에요.`;
+  }
+
+  const fmt = (n) => { const r = Math.round(n * 100) / 100; return Number.isInteger(r) ? String(r) : r.toFixed(2).replace(/0$/, ""); };
+
+  // ── dragging ──
+  let drag = null;
+  function toMath(e) {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width * W, py = (e.clientY - r.top) / r.height * H;
+    return { x: clamp(snapv(IX(px))), y: clamp(snapv(IY(py))) };
+  }
+  function bindHandles() {
+    svg.querySelectorAll(".vt-handle").forEach((h) =>
+      h.addEventListener("pointerdown", (e) => { drag = h.dataset.k; svg.setPointerCapture(e.pointerId); e.preventDefault(); }));
+  }
+  svg.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const m = toMath(e);
+    if (drag === "a") a = m; else b = m;
+    draw();
+  });
+  const end = () => { drag = null; };
+  svg.addEventListener("pointerup", end);
+  svg.addEventListener("pointercancel", end);
+
+  $("vt-proj").addEventListener("change", (e) => { showProj = e.target.checked; draw(); });
+  $("vt-snap").addEventListener("change", (e) => { snap = e.target.checked; draw(); });
+
+  const PRESETS = {
+    same: [{ x: 3, y: 1 }, { x: 4, y: 2 }],
+    perp: [{ x: 3, y: 1.5 }, { x: -1.5, y: 3 }],
+    opp: [{ x: 3, y: 1 }, { x: -3, y: -1.5 }],
+  };
+  document.querySelectorAll(".vt-presets button").forEach((btn) =>
+    btn.addEventListener("click", () => { const p = PRESETS[btn.dataset.p]; a = { ...p[0] }; b = { ...p[1] }; draw(); }));
+
+  window.addEventListener("resize", draw);
+  draw();
+</script>
