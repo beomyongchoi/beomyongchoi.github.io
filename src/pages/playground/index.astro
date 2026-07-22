@@ -10,6 +10,7 @@ const groups = [
       { href: "/playground/vectors/", toy: "vectors", title: "벡터와 내적", tag: "0편 · 왜 벡터", desc: "두 벡터를 드래그하면 내적·각도·투영이 실시간으로. 내적이 '닮음의 점수'인 걸 손으로." },
       { href: "/playground/matmul/", toy: "matmul", title: "행렬곱 = 내적의 묶음", tag: "1편 · 행렬", desc: "결과 셀을 클릭하면 A의 행·B의 열이 켜지고 그 셀이 둘의 내적으로 채워지는 행렬곱." },
       { href: "/playground/linear-map/", toy: "linearmap", title: "선형변환 — 공간 휘기", tag: "2편 · 기하", desc: "î·ĵ를 드래그하면 격자가 따라 휘는 3B1B식. 회전·확대·전단·투영을 눈으로." },
+      { href: "/playground/neural-layer/", toy: "neurallayer", title: "선형 vs 비선형 경계", tag: "3편 · 신경망", desc: "직선으론 고리를 못 가른다. ReLU 한 스푼이면 경계가 휘어 감싸는 걸 비교." },
     ],
   },
   {
@@ -324,7 +325,33 @@ const groups = [
     arw(pj, grn); arw(pi, acc);
   }
 
-  const FN = { vectors, matmul, linearmap, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
+  // concentric data (inner blue blob, outer green ring) with a breathing
+  // diamond boundary — "nonlinearity carves a curved boundary" at a glance.
+  function neurallayer(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const ox = W / 2, oy = H / 2, u = 13;
+    const P = (x, y) => [ox + x * u, oy - y * u];
+    const T = 2.0 + 0.12 * Math.sin(f * 0.05);
+    // region tint (inside diamond = blue, outside = green)
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = grn; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = acc; ctx.beginPath();
+    const d = [P(T, 0), P(0, T), P(-T, 0), P(0, -T)];
+    ctx.moveTo(d[0][0], d[0][1]); d.slice(1).forEach((p) => ctx.lineTo(p[0], p[1])); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+    // diamond boundary
+    ctx.strokeStyle = grn; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(d[0][0], d[0][1]); d.slice(1).forEach((p) => ctx.lineTo(p[0], p[1])); ctx.closePath(); ctx.stroke();
+    // points
+    const blob = [[0.3, 0.2], [-0.4, 0.5], [0.6, -0.3], [-0.2, -0.5], [0.1, 0.7], [-0.6, -0.1]];
+    const ring = [[2.6, 0.4], [1.9, 1.9], [0.3, 2.8], [-1.8, 2.0], [-2.7, 0.2], [-2.0, -1.9], [0.2, -2.7], [2.1, -1.8]];
+    blob.forEach(([x, y]) => { const p = P(x, y); ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(p[0], p[1], 3.2, 0, 7); ctx.fill(); });
+    ring.forEach(([x, y]) => { const p = P(x, y); ctx.fillStyle = grn; ctx.beginPath(); ctx.arc(p[0], p[1], 3.2, 0, 7); ctx.fill(); });
+  }
+
+  const FN = { vectors, matmul, linearmap, neurallayer, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
   let f = 0;
   function loop() {
     f++;

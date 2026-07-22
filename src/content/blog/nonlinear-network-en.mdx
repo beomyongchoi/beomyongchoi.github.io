@@ -1,0 +1,16 @@
+---
+title: "Linear + Nonlinear = a Network — The One Spoon That Bends Space"
+description: "Stack linear maps however you like and you still get one linear map — W2(W1 x)=(W2·W1)x. So even 100 layers draw only one straight boundary. Slip a single ReLU kink between them and stacked layers fold space into curves. That Linear→nonlinear→Linear sandwich is a neural network, and it's the transformer's FFN. Part 3 (finale) of Thinking in Matrices. Click any sentence to flip between English and Korean."
+pubDate: 2026-07-22
+lang: en
+translationKey: nonlinear-network
+tags: ["AI", "Linear Algebra", "Neural Networks", "Deep Learning"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import { blocks } from "../../data/nonlinearNetwork";
+
+<SeriesNav id="linalg" current="nonlinear-network" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />

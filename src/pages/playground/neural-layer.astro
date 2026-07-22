@@ -1,0 +1,182 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`선형 vs 비선형 — 결정경계 — ${SITE.authorKo}`}
+  description="직선 하나로는 고리 안팎을 못 가릅니다. 각도를 아무리 돌려도 정확도가 안 오르죠. 선형→ReLU→선형을 켜면 경계가 휘어 감쌉니다. 비선형 한 스푼이 신경망을 만드는 이유를 눈으로. 행렬로 생각하기 시리즈 3편(피날레)."
+  locale="ko"
+  path="/playground/neural-layer/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">선형 vs 비선형 — 결정경계</h1>
+    <p class="mt-3 text-muted">
+      안쪽 <strong class="nl-a">파랑</strong>과 바깥 <strong class="nl-b">초록</strong>을 갈라보세요. <strong>직선 하나</strong>로는 각도를 아무리 돌려도 안 됩니다. <strong>ReLU</strong>를 켜면 경계가 휩니다.
+    </p>
+  </header>
+
+  <section class="nl">
+    <div class="nl-top">
+      <a class="nl-crosslink" href="/blog/nonlinear-network/">개념 더 읽기 → 선형 + 비선형 = 신경망 (3편)</a>
+    </div>
+
+    <div class="nl-stage">
+      <div class="nl-canvas"><canvas id="nl-cv"></canvas></div>
+
+      <div class="nl-side">
+        <div class="nl-toggle" id="nl-toggle">
+          <button data-m="linear" class="on">선형만</button>
+          <button data-m="relu">선형→ReLU→선형</button>
+        </div>
+
+        <div class="nl-ctrl" id="nl-ctrl-linear">
+          <label>직선 각도 <b id="nl-thv">20°</b></label>
+          <input type="range" id="nl-theta" min="0" max="360" value="20" />
+          <p class="nl-tip">돌려봐도 정확도가 안 오릅니다 — 직선으론 고리를 못 가릅니다.</p>
+        </div>
+        <div class="nl-ctrl" id="nl-ctrl-relu" hidden>
+          <label>경계 크기 T <b id="nl-tv">2.0</b></label>
+          <input type="range" id="nl-T" min="1" max="3.5" step="0.1" value="2" />
+          <p class="nl-tip"><code>|x|+|y| &gt; T</code> — ReLU 4개로 만든 다이아몬드 경계가 안쪽을 감쌉니다.</p>
+        </div>
+
+        <div class="nl-acc" id="nl-acc"></div>
+      </div>
+    </div>
+
+    <p class="nl-note" id="nl-note"></p>
+
+    <p class="nl-foot">
+      직선 하나 = <strong>선형</strong>. 접어 구부리는 한 스푼 = <strong>비선형(ReLU)</strong>. 이 둘을 번갈아 쌓은 게 <strong>신경망</strong>이고, 트랜스포머의 FFN이 바로 이 <strong>선형→GELU→선형</strong>입니다.
+      <a href="/blog/nonlinear-network/">개념 다시 읽기 → 선형 + 비선형 = 신경망</a>
+    </p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .nl-a { color: var(--accent); }
+  .nl-b { color: #1a7a52; }
+  .nl-top { margin-bottom: 14px; }
+  .nl-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .nl-crosslink:hover { text-decoration: underline; }
+
+  .nl-stage { display: grid; grid-template-columns: minmax(0, 1fr) 224px; gap: 18px; align-items: start; }
+  @media (max-width: 640px) { .nl-stage { grid-template-columns: 1fr; } }
+
+  .nl-canvas { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  #nl-cv { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; }
+
+  .nl-side { font-family: var(--font-mono); }
+  .nl-toggle { display: flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; margin-bottom: 14px; }
+  .nl-toggle button { flex: 1; font: inherit; font-size: 0.74rem; font-weight: 600; padding: 7px 4px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+  .nl-toggle button.on { background: var(--accent); color: var(--accent-fg); }
+
+  .nl-ctrl { margin-bottom: 14px; }
+  .nl-ctrl label { font-size: 0.8rem; display: block; margin-bottom: 6px; }
+  .nl-ctrl label b { color: var(--accent); }
+  .nl-ctrl input[type=range] { width: 100%; accent-color: var(--accent); }
+  .nl-tip { font-size: 0.74rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .nl-tip code { font-size: 0.72rem; }
+
+  .nl-acc { font-size: 0.86rem; padding: 11px 13px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); line-height: 1.6; }
+  .nl-acc .big { font-size: 1.5rem; font-weight: 800; }
+  .nl-acc .good { color: #1a7a52; } .nl-acc .bad { color: #b53c28; }
+
+  .nl-note { margin-top: 16px; font-size: 0.88rem; color: var(--fg); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 11px 15px; line-height: 1.65; }
+  .nl-note b { color: var(--accent); }
+
+  .nl-foot { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 0.86rem; color: var(--muted); line-height: 1.6; }
+  .nl-foot a { display: inline-block; margin-top: 4px; color: var(--accent); text-decoration: none; font-family: var(--font-mono); font-size: 0.82rem; }
+  .nl-foot a:hover { text-decoration: underline; }
+</style>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const cv = $("nl-cv"), ctx = cv.getContext("2d");
+  const RES = 480, RANGE = 4;
+  cv.width = RES; cv.height = RES;
+  const MX = (x) => (x + RANGE) / (2 * RANGE) * RES;
+  const MY = (y) => (RANGE - y) / (2 * RANGE) * RES;
+
+  // deterministic dataset: inner blob (class 0) + outer ring (class 1)
+  function seeded(seed) { let s = seed; return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }; }
+  const rnd = seeded(20260722);
+  const pts = [];
+  for (let i = 0; i < 22; i++) { const r = rnd() * 1.15, a = rnd() * 6.283; pts.push({ x: r * Math.cos(a), y: r * Math.sin(a), c: 0 }); }
+  for (let i = 0; i < 34; i++) { const r = 2.35 + rnd() * 1.05, a = rnd() * 6.283; pts.push({ x: r * Math.cos(a), y: r * Math.sin(a), c: 1 }); }
+
+  let mode = "linear", theta = 20 * Math.PI / 180, T = 2.0;
+
+  // model: returns predicted class (1 = outer/green)
+  const predict = (x, y) =>
+    mode === "linear"
+      ? (x * Math.cos(theta) + y * Math.sin(theta) > 0 ? 1 : 0)
+      : (Math.abs(x) + Math.abs(y) > T ? 1 : 0);
+
+  function cssVar(n, f) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || f; }
+
+  function render() {
+    const acc = cssVar("--accent", "#2b4a7e"), grn = "#22a06b", border = cssVar("--border", "#e5e6e9");
+    const surface = cssVar("--surface", "#f2f3f5");
+    ctx.fillStyle = surface; ctx.fillRect(0, 0, RES, RES);
+
+    // decision regions (coarse blocks)
+    const B = 6;
+    for (let px = 0; px < RES; px += B) for (let py = 0; py < RES; py += B) {
+      const mx = px / RES * 2 * RANGE - RANGE, my = RANGE - py / RES * 2 * RANGE;
+      ctx.fillStyle = predict(mx, my) ? "rgba(34,160,107,0.13)" : "rgba(43,74,126,0.13)";
+      ctx.fillRect(px, py, B, B);
+    }
+
+    // axes
+    ctx.strokeStyle = border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(MX(-RANGE), MY(0)); ctx.lineTo(MX(RANGE), MY(0));
+    ctx.moveTo(MX(0), MY(-RANGE)); ctx.lineTo(MX(0), MY(RANGE)); ctx.stroke();
+
+    // boundary
+    ctx.lineWidth = 2.5;
+    if (mode === "linear") {
+      ctx.strokeStyle = "#b53c28";
+      const dx = -Math.sin(theta), dy = Math.cos(theta);
+      ctx.beginPath(); ctx.moveTo(MX(-dx * 8), MY(-dy * 8)); ctx.lineTo(MX(dx * 8), MY(dy * 8)); ctx.stroke();
+    } else {
+      ctx.strokeStyle = grn;
+      ctx.beginPath();
+      ctx.moveTo(MX(T), MY(0)); ctx.lineTo(MX(0), MY(T)); ctx.lineTo(MX(-T), MY(0)); ctx.lineTo(MX(0), MY(-T)); ctx.closePath();
+      ctx.stroke();
+    }
+
+    // points (true class colour; misclassified get a red ring)
+    let wrong = 0;
+    pts.forEach((p) => {
+      const ok = predict(p.x, p.y) === p.c; if (!ok) wrong++;
+      ctx.beginPath(); ctx.arc(MX(p.x), MY(p.y), 6, 0, 7);
+      ctx.fillStyle = p.c ? grn : acc; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = ok ? "#fff" : "#d8503a";
+      if (!ok) { ctx.beginPath(); ctx.arc(MX(p.x), MY(p.y), 9.5, 0, 7); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.arc(MX(p.x), MY(p.y), 6, 0, 7); ctx.stroke(); }
+    });
+
+    const total = pts.length, right = total - wrong, pct = Math.round(right / total * 100);
+    const cls = pct >= 90 ? "good" : "bad";
+    $("nl-acc").innerHTML = `정확도 <span class="big ${cls}">${pct}%</span><br>맞음 ${right} · <b>틀림 ${wrong}</b> / ${total}`;
+    $("nl-note").innerHTML = mode === "linear"
+      ? `직선은 평면을 <b>두 쪽</b>으로만 나눕니다. 고리는 안팎이 섞여 있어서, 각도를 어떻게 돌려도 절반쯤은 틀립니다 — <b>선형으로는 못 푸는</b> 문제예요. (아무리 선형 층을 쌓아도 결국 직선 하나입니다.)`
+      : `<code>|x|+|y|</code>는 ReLU 4개로 만듭니다: <code>ReLU(x)+ReLU(-x)+ReLU(y)+ReLU(-y)</code>. 여기에 <b>T</b>로 문턱을 주면 다이아몬드 경계가 안쪽을 <b>감쌉니다</b>. 선형→비선형→선형, 그게 신경망이 <b>곡선</b>을 긋는 방법입니다.`;
+  }
+
+  $("nl-toggle").querySelectorAll("button").forEach((b) =>
+    b.addEventListener("click", () => {
+      mode = b.dataset.m;
+      $("nl-toggle").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+      $("nl-ctrl-linear").hidden = mode !== "linear";
+      $("nl-ctrl-relu").hidden = mode !== "relu";
+      render();
+    }));
+  $("nl-theta").addEventListener("input", (e) => { theta = e.target.value * Math.PI / 180; $("nl-thv").textContent = e.target.value + "°"; render(); });
+  $("nl-T").addEventListener("input", (e) => { T = +e.target.value; $("nl-tv").textContent = (+e.target.value).toFixed(1); render(); });
+
+  render();
+</script>

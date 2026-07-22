@@ -16,7 +16,7 @@ export const SERIES: Record<string, Series> = {
       { slug: "vectors-why", toy: "/playground/vectors/", published: true, title: { ko: "0. 왜 벡터인가", en: "0. Why vectors" } },
       { slug: "matrix-transform", toy: "/playground/matmul/", published: true, title: { ko: "1. 행렬 = 한 번에 변환", en: "1. Matrix = transform at once" } },
       { slug: "linear-geometry", toy: "/playground/linear-map/", published: true, title: { ko: "2. 선형변환의 기하", en: "2. The geometry of linear maps" } },
-      { slug: "nonlinear-network", toy: "/playground/neural-layer/", published: false, title: { ko: "3. 선형 + 비선형 = 신경망", en: "3. Linear + nonlinear = a network" } },
+      { slug: "nonlinear-network", toy: "/playground/neural-layer/", published: true, title: { ko: "3. 선형 + 비선형 = 신경망", en: "3. Linear + nonlinear = a network" } },
     ],
   },
   transformer: {
