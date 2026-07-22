@@ -1,0 +1,56 @@
+---
+// Bottom-of-post CTA: after finishing a part, the reader gets the next part
+// (or the series recap if this was the finale) plus this part's toy — without
+// scrolling back to the top nav.
+import { SERIES } from "../data/series";
+import { type Locale as SiteLocale } from "../consts";
+
+interface Props { id: string; current: string; lang?: SiteLocale }
+const { id, current, lang = "ko" } = Astro.props;
+const s = SERIES[id];
+const base = lang === "ko" ? "" : "/en";
+const idx = s ? s.parts.findIndex((p) => p.slug === current) : -1;
+const cur = idx >= 0 ? s.parts[idx] : null;
+const next = idx >= 0 ? s.parts.slice(idx + 1).find((p) => p.published) : null;
+const t = (o: { ko: string; en: string }) => (lang === "en" ? o.en : o.ko);
+---
+
+{s && cur && (
+  <nav class="series-next">
+    {next ? (
+      <a class="sn-main" href={`${base}/blog/${next.slug}/`}>
+        <span class="sn-k">{lang === "en" ? "Next part" : "다음 편"}</span>
+        <span class="sn-t">{t(next.title)} →</span>
+      </a>
+    ) : (
+      <a class="sn-main sn-done" href={`${base}/series/`}>
+        <span class="sn-k">{lang === "en" ? "Series complete" : "시리즈 완결"}</span>
+        <span class="sn-t">{lang === "en" ? `${t(s.title)} — view the whole series →` : `${t(s.title)} — 전체 다시 보기 →`}</span>
+      </a>
+    )}
+    {cur.toy && (
+      <a class="sn-toy" href={cur.toy}>
+        🧪 {lang === "en" ? "Try this part in the lab" : "이번 편 실험실에서 만져보기"} →
+      </a>
+    )}
+  </nav>
+)}
+
+<style>
+  .series-next { display: grid; gap: 10px; margin: 2.4em 0 0.6em; }
+  .sn-main {
+    display: block; text-decoration: none; border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 4px 12px 12px 4px;
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+    padding: 14px 18px; transition: border-color .15s, transform .12s;
+  }
+  .sn-main:hover { border-color: var(--accent); transform: translateX(2px); }
+  .sn-k { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+  .sn-t { display: block; margin-top: 3px; font-weight: 700; color: var(--accent); font-size: 1.02rem; }
+  .sn-done .sn-t { color: var(--fg); }
+  .sn-toy {
+    display: block; text-decoration: none; font-family: var(--font-mono); font-size: 0.85rem;
+    color: var(--accent); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 16px;
+  }
+  .sn-toy:hover { border-color: var(--accent); }
+</style>

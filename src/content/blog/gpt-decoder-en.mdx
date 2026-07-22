@@ -9,8 +9,11 @@ tags: ["AI", "Transformer", "GPT", "Deep Learning"]
 
 import BilingualArticle from "../../components/BilingualArticle.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
 import { blocks } from "../../data/gptDecoder";
 
 <SeriesNav id="transformer" current="gpt-decoder" lang="en" />
 
 <BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="transformer" current="gpt-decoder" lang="en" />

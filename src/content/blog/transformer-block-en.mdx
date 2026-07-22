@@ -9,8 +9,11 @@ tags: ["AI", "Transformer", "Deep Learning", "LLM"]
 
 import BilingualArticle from "../../components/BilingualArticle.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
 import { blocks } from "../../data/transformerBlock";
 
 <SeriesNav id="transformer" current="transformer-block" lang="en" />
 
 <BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="transformer" current="transformer-block" lang="en" />

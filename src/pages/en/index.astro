@@ -2,11 +2,16 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import { T } from "../../consts";
+import { SERIES } from "../../data/series";
 const s = T.en;
 
 const latest = (await getCollection("blog", (p) => p.data.lang === "en" && !p.data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 3);
+
+const featured = ["linalg", "transformer"]
+  .map((id) => ({ id, se: SERIES[id] }))
+  .filter((x) => x.se);
 ---
 
 <BaseLayout title={s.title} description={s.description} locale="en" path="/">
@@ -19,6 +24,29 @@ const latest = (await getCollection("blog", (p) => p.data.lang === "en" && !p.da
       {s.description}
     </p>
   </section>
+
+  {
+    featured.length > 0 && (
+      <section class="mt-14">
+        <div class="flex items-baseline justify-between">
+          <h2 class="text-lg font-semibold">Series — post + lab bundles</h2>
+          <a href="/en/series/" class="text-sm text-muted hover:text-accent">View all →</a>
+        </div>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          {featured.map(({ se }, i) => (
+            <a href="/en/series/" class="group rounded-xl border border-border bg-surface p-5 transition hover:border-accent">
+              <div class="flex items-center gap-2">
+                <h3 class="font-semibold group-hover:text-accent">📚 {se.title.en}</h3>
+                {i === 0 && <span class="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-fg">start here</span>}
+              </div>
+              <p class="mt-2 text-sm leading-relaxed text-muted">{se.blurb.en}</p>
+              <p class="mt-3 font-mono text-xs text-accent">{se.parts.length} parts, complete · every part has an interactive 🧪</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   {
     latest.length > 0 ? (

@@ -9,8 +9,11 @@ tags: ["AI", "Transformer", "BERT", "Deep Learning"]
 
 import BilingualArticle from "../../components/BilingualArticle.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
 import { blocks } from "../../data/bertEncoder";
 
 <SeriesNav id="transformer" current="bert-encoder" lang="en" />
 
 <BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="transformer" current="bert-encoder" lang="en" />

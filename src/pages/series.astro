@@ -1,0 +1,64 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE } from "../consts";
+import { SERIES } from "../data/series";
+
+// Curated order: the linalg prequel first (start here), then the transformer series.
+const ORDER = ["linalg", "transformer"];
+const list = ORDER.map((id) => ({ id, s: SERIES[id] })).filter((x) => x.s);
+---
+
+<BaseLayout
+  title={`시리즈 — ${SITE.authorKo}`}
+  description="글 + 인터랙티브 실험실을 세트로 묶은 시리즈들. 선형대수 기초부터 트랜스포머 내부까지, 순서대로 읽으면 LLM이 어떻게 동작하는지 바닥부터 이해할 수 있습니다."
+  locale="ko"
+  path="/series/"
+>
+  <header class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">시리즈</h1>
+    <p class="mt-3 text-muted">
+      글 하나 + 실험실 토이 하나가 한 세트입니다. <strong>행렬로 생각하기 → 트랜스포머 뜯어보기</strong> 순서로 읽으면
+      벡터부터 GPT까지 바닥부터 이어집니다.
+    </p>
+  </header>
+
+  {
+    list.map(({ id, s }, si) => (
+      <section class="sr-series">
+        <div class="sr-head">
+          <h2>📚 {s.title.ko}</h2>
+          {si === 0 && <span class="sr-start">여기서 시작</span>}
+        </div>
+        <p class="sr-blurb">{s.blurb.ko}</p>
+        <ol class="sr-parts">
+          {s.parts.map((p) => (
+            <li>
+              <a class="sr-post" href={`/blog/${p.slug}/`}>{p.title.ko}</a>
+              {p.toy && <a class="sr-toy" href={p.toy}>🧪 실험실</a>}
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))
+  }
+
+  <p class="sr-foot">
+    시리즈 밖의 글은 <a href="/blog/">블로그 전체 목록</a>에, 토이는 <a href="/playground/">실험실</a>에 있습니다.
+  </p>
+</BaseLayout>
+
+<style>
+  .sr-series { margin-bottom: 40px; border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; background: var(--surface); }
+  .sr-head { display: flex; align-items: center; gap: 10px; }
+  .sr-head h2 { font-size: 1.25rem; font-weight: 700; }
+  .sr-start { font-size: 0.68rem; font-weight: 700; font-family: var(--font-mono); color: var(--accent-fg); background: var(--accent); border-radius: 999px; padding: 2px 10px; }
+  .sr-blurb { margin-top: 6px; font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+  .sr-parts { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; }
+  .sr-parts li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 9px 2px; border-top: 1px solid var(--border); }
+  .sr-post { font-family: var(--font-mono); font-size: 0.95rem; color: var(--fg); text-decoration: none; }
+  .sr-post:hover { color: var(--accent); text-decoration: underline; }
+  .sr-toy { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); text-decoration: none; }
+  .sr-toy:hover { text-decoration: underline; }
+  .sr-foot { font-size: 0.88rem; color: var(--muted); }
+  .sr-foot a { color: var(--accent); }
+</style>

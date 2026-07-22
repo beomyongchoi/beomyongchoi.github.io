@@ -3,10 +3,18 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostList from "../../components/PostList.astro";
 import { SITE } from "../../consts";
+import { seriesOf } from "../../data/series";
 
 const posts = (
   await getCollection("blog", (p) => p.data.lang === "ko" && !p.data.draft)
 ).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const badge = (slug: string) => {
+  const hit = seriesOf(slug);
+  if (!hit) return undefined;
+  const i = hit.series.parts.findIndex((pt) => pt.slug === slug);
+  return `${hit.series.title.ko} · ${i}편`;
+};
 
 const items = posts.map((p) => ({
   href: `/blog/${p.id}/`,
@@ -14,6 +22,7 @@ const items = posts.map((p) => ({
   description: p.data.description,
   pubDate: p.data.pubDate,
   tags: p.data.tags,
+  seriesBadge: badge(p.id),
 }));
 ---
 

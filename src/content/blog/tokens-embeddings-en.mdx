@@ -9,8 +9,11 @@ tags: ["AI", "Embeddings", "Tokenization", "Deep Learning"]
 
 import BilingualArticle from "../../components/BilingualArticle.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
 import { blocks } from "../../data/tokensEmbeddings";
 
 <SeriesNav id="transformer" current="tokens-embeddings" lang="en" />
 
 <BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="transformer" current="tokens-embeddings" lang="en" />

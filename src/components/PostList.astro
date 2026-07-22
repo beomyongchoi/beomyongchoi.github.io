@@ -7,6 +7,8 @@ interface PostItem {
   description: string;
   pubDate: Date;
   tags: string[];
+  /** e.g. "행렬로 생각하기 · 2편" — rendered as a small series badge above the title */
+  seriesBadge?: string;
 }
 interface Props {
   posts: PostItem[];
@@ -41,6 +43,9 @@ const allLabel = locale === "ko" ? "전체" : "All";
         {posts.map((post) => (
           <li class="py-6 first:pt-0" data-postitem data-tags={post.tags.join("|")}>
             <a href={post.href} class="group block">
+              {post.seriesBadge && (
+                <span class="series-badge">📚 {post.seriesBadge}</span>
+              )}
               <div class="flex items-baseline justify-between gap-4">
                 <h2 class="text-lg font-semibold tracking-tight group-hover:text-accent">
                   {post.title}
@@ -75,6 +80,14 @@ const allLabel = locale === "ko" ? "전체" : "All";
   }
   .tagchip:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
   .tagchip.on { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); }
+
+  .series-badge {
+    display: inline-block; margin-bottom: 5px; font-size: 0.72rem; font-weight: 700;
+    font-family: var(--font-mono); color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+    border-radius: 999px; padding: 2px 10px;
+  }
 </style>
 
 <script>

@@ -2,11 +2,17 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import { T } from "../consts";
+import { SERIES } from "../data/series";
 const s = T.ko;
 
 const latest = (await getCollection("blog", (p) => p.data.lang === "ko" && !p.data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 3);
+
+// Flagship content: the two series, in reading order (prequel first).
+const featured = ["linalg", "transformer"]
+  .map((id) => ({ id, se: SERIES[id] }))
+  .filter((x) => x.se);
 ---
 
 <BaseLayout title={s.title} description={s.description} locale="ko" path="/">
@@ -19,6 +25,29 @@ const latest = (await getCollection("blog", (p) => p.data.lang === "ko" && !p.da
       {s.description}
     </p>
   </section>
+
+  {
+    featured.length > 0 && (
+      <section class="mt-14">
+        <div class="flex items-baseline justify-between">
+          <h2 class="text-lg font-semibold">시리즈 — 글 + 실험실 세트</h2>
+          <a href="/series/" class="text-sm text-muted hover:text-accent">전체 보기 →</a>
+        </div>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          {featured.map(({ se }, i) => (
+            <a href="/series/" class="group rounded-xl border border-border bg-surface p-5 transition hover:border-accent">
+              <div class="flex items-center gap-2">
+                <h3 class="font-semibold group-hover:text-accent">📚 {se.title.ko}</h3>
+                {i === 0 && <span class="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-fg">여기서 시작</span>}
+              </div>
+              <p class="mt-2 text-sm leading-relaxed text-muted">{se.blurb.ko}</p>
+              <p class="mt-3 font-mono text-xs text-accent">{se.parts.length}편 완결 · 편마다 인터랙티브 🧪</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   {
     latest.length > 0 && (
