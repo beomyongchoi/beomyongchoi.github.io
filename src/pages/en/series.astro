@@ -3,7 +3,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { SITE } from "../../consts";
 import { SERIES } from "../../data/series";
 
-const ORDER = ["linalg", "transformer"];
+const ORDER = ["linalg", "transformer", "training"];
 const list = ORDER.map((id) => ({ id, s: SERIES[id] })).filter((x) => x.s);
 ---
 
@@ -32,8 +32,12 @@ const list = ORDER.map((id) => ({ id, s: SERIES[id] })).filter((x) => x.s);
         <ol class="sr-parts">
           {s.parts.map((p) => (
             <li>
-              <a class="sr-post" href={`/en/blog/${p.slug}/`}>{p.title.en}</a>
-              {p.toy && <a class="sr-toy" href={p.toy}>🧪 lab</a>}
+              {p.published ? (
+                <a class="sr-post" href={`/en/blog/${p.slug}/`}>{p.title.en}</a>
+              ) : (
+                <span class="sr-post sr-soon">{p.title.en} <em>soon</em></span>
+              )}
+              {p.published && p.toy && <a class="sr-toy" href={p.toy}>🧪 lab</a>}
             </li>
           ))}
         </ol>
@@ -56,6 +60,9 @@ const list = ORDER.map((id) => ({ id, s: SERIES[id] })).filter((x) => x.s);
   .sr-parts li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 9px 2px; border-top: 1px solid var(--border); }
   .sr-post { font-family: var(--font-mono); font-size: 0.95rem; color: var(--fg); text-decoration: none; }
   .sr-post:hover { color: var(--accent); text-decoration: underline; }
+  .sr-soon { color: var(--muted); }
+  .sr-soon:hover { color: var(--muted); text-decoration: none; }
+  .sr-soon em { font-style: normal; font-size: 0.7rem; border: 1px solid var(--border); border-radius: 999px; padding: 0 6px; margin-left: 4px; }
   .sr-toy { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); text-decoration: none; }
   .sr-toy:hover { text-decoration: underline; }
   .sr-foot { font-size: 0.88rem; color: var(--muted); }

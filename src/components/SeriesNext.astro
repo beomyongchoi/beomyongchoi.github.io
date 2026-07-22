@@ -12,6 +12,8 @@ const base = lang === "ko" ? "" : "/en";
 const idx = s ? s.parts.findIndex((p) => p.slug === current) : -1;
 const cur = idx >= 0 ? s.parts[idx] : null;
 const next = idx >= 0 ? s.parts.slice(idx + 1).find((p) => p.published) : null;
+// distinguish "series finished" from "next part not out yet"
+const upcoming = !next && idx >= 0 ? s.parts.slice(idx + 1).find((p) => !p.published) : null;
 const t = (o: { ko: string; en: string }) => (lang === "en" ? o.en : o.ko);
 ---
 
@@ -22,6 +24,11 @@ const t = (o: { ko: string; en: string }) => (lang === "en" ? o.en : o.ko);
         <span class="sn-k">{lang === "en" ? "Next part" : "다음 편"}</span>
         <span class="sn-t">{t(next.title)} →</span>
       </a>
+    ) : upcoming ? (
+      <div class="sn-main sn-soon">
+        <span class="sn-k">{lang === "en" ? "Next part" : "다음 편"}</span>
+        <span class="sn-t">{t(upcoming.title)} — {lang === "en" ? "coming soon" : "곧 올라옵니다"}</span>
+      </div>
     ) : (
       <a class="sn-main sn-done" href={`${base}/series/`}>
         <span class="sn-k">{lang === "en" ? "Series complete" : "시리즈 완결"}</span>
@@ -48,6 +55,8 @@ const t = (o: { ko: string; en: string }) => (lang === "en" ? o.en : o.ko);
   .sn-k { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
   .sn-t { display: block; margin-top: 3px; font-weight: 700; color: var(--accent); font-size: 1.02rem; }
   .sn-done .sn-t { color: var(--fg); }
+  .sn-soon { cursor: default; }
+  .sn-soon .sn-t { color: var(--muted); }
   .sn-toy {
     display: block; text-decoration: none; font-family: var(--font-mono); font-size: 0.85rem;
     color: var(--accent); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 16px;

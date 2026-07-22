@@ -6,6 +6,19 @@ export type SeriesPart = { slug: string; title: L; toy?: string; published: bool
 export type Series = { title: L; blurb: L; parts: SeriesPart[] };
 
 export const SERIES: Record<string, Series> = {
+  training: {
+    title: { ko: "모델은 어떻게 배우나", en: "How Models Learn" },
+    blurb: {
+      ko: "손실부터 역전파, 라이브 학습까지 — W가 실제로 어떻게 정해지는지 글 + 인터랙티브로 한 편씩. (선형대수·트랜스포머 시리즈의 마지막 조각)",
+      en: "From loss to backprop to watching a live run — how the weights actually get set, one post + interactive at a time. (The final piece after the linear-algebra and Transformer series.)",
+    },
+    parts: [
+      { slug: "loss-function", toy: "/playground/loss/", published: true, title: { ko: "0. 손실 — 틀림을 숫자로", en: "0. Loss — error as a number" } },
+      { slug: "gradient-descent", toy: "/playground/gradient/", published: false, title: { ko: "1. 경사하강 — 내리막 한 걸음", en: "1. Gradient descent — one step downhill" } },
+      { slug: "backprop", toy: "/playground/backprop/", published: false, title: { ko: "2. 역전파 — 책임을 거꾸로", en: "2. Backprop — blame flows backward" } },
+      { slug: "training-live", toy: "/playground/train/", published: false, title: { ko: "3. 실전 — 학습을 지켜보기", en: "3. Watching a network learn" } },
+    ],
+  },
   linalg: {
     title: { ko: "행렬로 생각하기", en: "Thinking in Matrices" },
     blurb: {

@@ -1,0 +1,19 @@
+---
+title: "Loss — Turning Wrongness into a Single Number"
+description: "To learn, you need a score. The loss turns 'how wrong' into one number — squared error (prediction−answer)² for values, −log p (cross-entropy) for probabilities. Fix the data and the loss becomes a landscape over the weights; learning is finding a low point. GPT's pre-training loss is exactly next-token cross-entropy. Part 0 of the How Models Learn series, with an interactive. Click any sentence to flip between English and Korean."
+pubDate: 2026-07-22T15:00:00
+lang: en
+translationKey: loss-function
+tags: ["AI", "Deep Learning", "Loss Functions", "LLM"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/lossFunction";
+
+<SeriesNav id="training" current="loss-function" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="training" current="loss-function" lang="en" />

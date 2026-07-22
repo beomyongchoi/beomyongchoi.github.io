@@ -25,6 +25,13 @@ const groups = [
     ],
   },
   {
+    label: "🎓 모델은 어떻게 배우나 (학습)",
+    desc: "손실부터 역전파, 라이브 학습까지 — W가 실제로 어떻게 정해지는지.",
+    toys: [
+      { href: "/playground/loss/", toy: "loss", title: "손실 — 틀림을 숫자로", tag: "0편 · 손실", desc: "예측 슬라이더로 제곱 오차 포물선 위를 움직이고, −log p가 폭발하는 걸 눈으로." },
+    ],
+  },
+  {
     label: "🔎 그 외 AI 실험",
     desc: "",
     toys: [
@@ -351,7 +358,32 @@ const groups = [
     ring.forEach(([x, y]) => { const p = P(x, y); ctx.fillStyle = grn; ctx.beginPath(); ctx.arc(p[0], p[1], 3.2, 0, 7); ctx.fill(); });
   }
 
-  const FN = { vectors, matmul, linearmap, neurallayer, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
+  // squared-error parabola with a dot sliding down toward the minimum —
+  // "loss is a landscape and learning walks downhill" at a glance.
+  function loss(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const border = cs.getPropertyValue("--border").trim() || "#e5e6e9";
+    const x0 = 24, x1 = W - 24, ymin = H - 26, ytop = 18, mid = (x0 + x1) / 2;
+    // axis
+    ctx.strokeStyle = border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0 - 6, ymin + 6); ctx.lineTo(x1 + 4, ymin + 6); ctx.stroke();
+    // parabola
+    ctx.strokeStyle = acc; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (let x = x0; x <= x1; x += 3) { const y = ymin - (ymin - ytop) * ((x - mid) / (x1 - mid)) ** 2; x === x0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+    ctx.stroke();
+    // minimum marker
+    ctx.fillStyle = grn; ctx.beginPath(); ctx.arc(mid, ymin, 3, 0, 7); ctx.fill();
+    // dot oscillating toward the bottom (damped)
+    const t = (f % 160) / 160;
+    const amp = Math.exp(-2.2 * t), xd = mid + amp * Math.cos(t * 6.28 * 1.5) * (x1 - mid) * 0.8;
+    const yd = ymin - (ymin - ytop) * ((xd - mid) / (x1 - mid)) ** 2;
+    ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(xd, yd, 5, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  const FN = { vectors, matmul, linearmap, neurallayer, loss, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
   let f = 0;
   function loop() {
     f++;
