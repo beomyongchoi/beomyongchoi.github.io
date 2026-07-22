@@ -146,9 +146,11 @@ import { SITE } from "../../consts";
   function arrow(v, color, key) {
     const x2 = MX(v.x), y2 = MY(v.y);
     return `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="3" marker-end="url(#ah-${key})"/>` +
-      `<circle class="vt-handle" data-k="${key}" cx="${x2}" cy="${y2}" r="11" fill="${color}" fill-opacity="0.001" stroke="${color}" stroke-width="2" style="cursor:grab"/>` +
-      `<circle cx="${x2}" cy="${y2}" r="4.5" fill="${color}"/>` +
-      `<text x="${x2 + (v.x >= 0 ? 12 : -12)}" y="${y2 + (v.y >= 0 ? -10 : 20)}" font-family="ui-monospace,monospace" font-size="15" font-weight="700" fill="${color}" text-anchor="${v.x >= 0 ? "start" : "end"}">${key}</text>`;
+      // large invisible hit target (easy to grab) + a visible grab ring
+      `<circle class="vt-handle" data-k="${key}" cx="${x2}" cy="${y2}" r="24" fill="${color}" fill-opacity="0.001" style="cursor:grab"/>` +
+      `<circle cx="${x2}" cy="${y2}" r="11" fill="${color}" fill-opacity="0.14" stroke="${color}" stroke-width="2" style="pointer-events:none"/>` +
+      `<circle cx="${x2}" cy="${y2}" r="5" fill="${color}" style="pointer-events:none"/>` +
+      `<text x="${x2 + (v.x >= 0 ? 14 : -14)}" y="${y2 + (v.y >= 0 ? -12 : 22)}" font-family="ui-monospace,monospace" font-size="15" font-weight="700" fill="${color}" text-anchor="${v.x >= 0 ? "start" : "end"}" style="pointer-events:none">${key}</text>`;
   }
 
   function draw() {
