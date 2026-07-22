@@ -79,6 +79,10 @@ const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip
   }
   .bi-toggle button.on { background: var(--accent); color: var(--accent-fg); }
 
+  /* roomier body leading (Korean serif reads cramped at prose default) */
+  .bi-article p { line-height: 2.0; margin: 0 0 1.5em; }
+  .bi-article li { line-height: 1.95; }
+
   /* sentence targets */
   .bi { cursor: pointer; border-radius: 4px; transition: background .12s; }
   .bi:hover {
