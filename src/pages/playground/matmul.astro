@@ -90,10 +90,10 @@ import { SITE } from "../../consts";
 
   // layout: step grid; B sits above C, A sits left of C (schoolbook alignment)
   const step = 44, cell = 40, pad = 16;
-  const Ax = pad, By = pad;
+  const Ax = pad, By = pad + 8;              // top room for the "B (3x2)" label
   const Cx = Ax + K * step + 26;
   const Cy = By + K * step + 26;
-  const Wd = Cx + N * step + pad - 4;
+  const Wd = Cx + N * step + pad + 12;       // right room for the column highlight band
   const Ht = Cy + M * step + pad - 4;
 
   function cellRect(x, y, txt, opt) {
@@ -187,7 +187,7 @@ import { SITE } from "../../consts";
       pick(order[step_i].i, order[step_i].j); step_i++;
     };
     tick();
-    timer = setInterval(tick, 1100);
+    timer = setInterval(tick, 600);
   }
   $("mm-play").addEventListener("click", () => { if (playing) stopPlay(); else startPlay(); });
 
