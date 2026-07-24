@@ -61,13 +61,15 @@ const groups = [
 
 <BaseLayout
   title={`실험실 — ${SITE.authorKo}`}
-  description="블로그 곁에서 굴려보는 소소한 사이드 프로젝트들. Canvas·JS로 직접 만든 장난감과 시각화."
+  description="글로 읽은 개념을 직접 손과 눈으로 확인하는 인터랙티브 시각화 공간. 블로그 포스트와 1:1로 결합된 시뮬레이터와 샌드박스."
   locale="ko"
   path="/playground/"
 >
   <header class="mb-10">
     <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">실험실</h1>
-    <p class="mt-3 text-muted">블로그 곁에서 굴려보는 소소한 것들. Canvas·JS로 직접 만든 장난감과 시각화.</p>
+    <p class="mt-3 text-muted">
+      글로 읽은 개념을 직접 손과 눈으로 확인하는 인터랙티브 시각화 공간. 블로그 포스트와 1:1로 결합된 시뮬레이터와 샌드박스를 제공합니다.
+    </p>
   </header>
 
   {
@@ -82,7 +84,7 @@ const groups = [
             <a class="pg-card" href={t.href}>
               <div class="pg-thumb-wrap">
                 <canvas class="pg-thumb" data-toy={t.toy}></canvas>
-                <span class="pg-play">▶ PLAY</span>
+                <span class="pg-play">▶ RUN SIMULATOR</span>
               </div>
               <div class="pg-meta">
                 <div class="pg-title-row">
@@ -100,31 +102,32 @@ const groups = [
 </BaseLayout>
 
 <style>
-  .pg-grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
+  .pg-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
   @media (min-width: 640px) { .pg-grid { grid-template-columns: 1fr 1fr; } }
   .pg-card {
-    display: block; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface);
-    text-decoration: none; color: inherit; transition: transform .12s, box-shadow .12s, border-color .12s;
+    display: block; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface);
+    text-decoration: none; color: inherit; transition: all .2s ease;
   }
-  .pg-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); box-shadow: 0 10px 24px rgba(0,0,0,0.1); }
-  .pg-thumb-wrap { position: relative; border-bottom: 1px solid var(--border); background: #5c94fc; }
+  .pg-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+  .pg-thumb-wrap { position: relative; border-bottom: 1px solid var(--border); background: var(--bg); }
   .pg-thumb { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; }
   .pg-thumb[data-toy="lotto"] { image-rendering: pixelated; }
   .pg-play {
-    position: absolute; right: 10px; bottom: 10px; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700;
-    color: #fff; background: rgba(0,0,0,0.5); padding: 3px 9px; border-radius: 999px; opacity: 0; transition: opacity .15s;
+    position: absolute; right: 12px; bottom: 12px; font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700;
+    color: #fff; background: rgba(0,0,0,0.65); padding: 4px 10px; border-radius: 6px; opacity: 0; transition: opacity .2s ease;
+    letter-spacing: 0.05em; backdrop-filter: blur(4px);
   }
   .pg-card:hover .pg-play { opacity: 1; }
   .pg-meta { padding: 14px 16px 16px; }
-  .pg-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-  .pg-meta h3 { font-size: 1.05rem; font-weight: 700; }
-  .pg-tag { font-size: 0.68rem; color: var(--muted); font-family: var(--font-mono); white-space: nowrap; }
-  .pg-meta p { margin-top: 6px; font-size: 0.86rem; color: var(--muted); line-height: 1.5; }
+  .pg-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .pg-meta h3 { font-size: 1.0rem; font-weight: 700; color: var(--fg); }
+  .pg-tag { font-size: 0.68rem; color: var(--accent); font-family: var(--font-mono); white-space: nowrap; background: color-mix(in srgb, var(--accent) 10%, transparent); padding: 2px 8px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); }
+  .pg-meta p { margin-top: 8px; font-size: 0.84rem; color: var(--muted); line-height: 1.55; }
 
-  .pg-group { margin-bottom: 34px; }
-  .pg-grouphead { margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-  .pg-grouphead h2 { font-size: 1.15rem; font-weight: 700; }
-  .pg-grouphead p { margin-top: 3px; font-size: 0.85rem; color: var(--muted); }
+  .pg-group { margin-bottom: 38px; }
+  .pg-grouphead { margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .pg-grouphead h2 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+  .pg-grouphead p { margin-top: 4px; font-size: 0.85rem; color: var(--muted); }
 </style>
 
 <script>
