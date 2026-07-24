@@ -55,7 +55,7 @@ export const SERIES: Record<string, Series> = {
     parts: [
       { slug: "agent-thinking-effort", toy: "/playground/thinking-effort/", published: true, title: { ko: "0. 가변 추론 — 생각의 깊이를 조절하다", en: "0. Variable reasoning — tuning thinking effort" } },
       { slug: "agent-subagents-fanout", toy: "/playground/agent-topology/", published: true, title: { ko: "1. 병렬 오케스트레이션 — 동적 서브에이전트", en: "1. Parallel orchestration — dynamic subagents" } },
-      { slug: "agent-deep-reasoning", toy: "/playground/long-horizon/", published: false, title: { ko: "2. 심층 장기 추론 — Claude Fable 5", en: "2. Deep reasoning — Claude Fable 5" } },
+      { slug: "agent-deep-reasoning", toy: "/playground/long-horizon/", published: true, title: { ko: "2. 심층 장기 추론 — Claude Fable 5", en: "2. Deep reasoning — Claude Fable 5" } },
       { slug: "agent-architecture-compare", toy: "/playground/agent-compare/", published: false, title: { ko: "3. 아키텍처 비교 — 적재적소의 에이전트", en: "3. Architecture comparison — matching agents to tasks" } },
     ],
   },

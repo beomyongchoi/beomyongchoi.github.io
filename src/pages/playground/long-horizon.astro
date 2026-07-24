@@ -1,0 +1,200 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`장기 추론 맥락 보존 시뮬레이터 — ${SITE.authorKo}`}
+  description="Claude Fable 5 (Mythos Engine)의 초장기 작업(Long-horizon Tasks) 맥락 보존율과 128k 출력 토큰 시뮬레이션을 눈으로 확인합니다."
+  locale="ko"
+  path="/playground/long-horizon/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">장기 추론 맥락 보존 시뮬레이터</h1>
+    <p class="mt-3 text-muted">
+      에이전트 작업 턴(Turn) 수가 길어짐에 따라 기존 모델과 Claude Fable 5의 맥락 보존율 및 에러 누적 억제 효과를 비교해보세요.
+    </p>
+  </header>
+
+  <section class="lh-container" id="lh">
+    <div class="lh-top">
+      <a class="lh-crosslink" href="/blog/agent-deep-reasoning/">개념 더 읽기 → 2. 심층 장기 추론 — Claude Fable 5</a>
+    </div>
+
+    <!-- Controls -->
+    <div class="lh-controls">
+      <div class="lh-ctrl-group">
+        <span class="ctrl-label">추론 엔진:</span>
+        <button type="button" class="lh-engine-btn" data-engine="legacy">Standard LLM (기존 모델)</button>
+        <button type="button" class="lh-engine-btn active" data-engine="fable">Claude Fable 5 (Mythos Engine)</button>
+      </div>
+
+      <div class="lh-ctrl-group full-w">
+        <span class="ctrl-label">에이전트 수행 턴 수 (Turns): <strong id="turn-display">10 Turns</strong></span>
+        <input type="range" id="turn-slider" min="1" max="20" value="10" class="lh-slider" />
+      </div>
+    </div>
+
+    <!-- Tokyo Night Terminal Screen -->
+    <div class="lh-terminal">
+      <div class="lh-term-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="lh-term-title">claude-fable-5 --monitor-long-horizon</span>
+      </div>
+
+      <div class="lh-term-body">
+        <div class="lh-metrics">
+          <div class="lh-metric-card">
+            <span class="m-title">Context Retention Rate</span>
+            <span id="lh-retention" class="m-value green">99.4%</span>
+            <div class="m-bar-bg"><div id="bar-retention" class="m-bar green" style="width: 99.4%;"></div></div>
+          </div>
+
+          <div class="lh-metric-card">
+            <span class="m-title">Error Drift Rate (Propagation)</span>
+            <span id="lh-drift" class="m-value">0.6%</span>
+            <div class="m-bar-bg"><div id="bar-drift" class="m-bar red" style="width: 0.6%;"></div></div>
+          </div>
+
+          <div class="lh-metric-card">
+            <span class="m-title">Output Capacity (Max 128k)</span>
+            <span id="lh-output" class="m-value">64,000 / 128,000 Tokens</span>
+            <div class="m-bar-bg"><div id="bar-output" class="m-bar blue" style="width: 50%;"></div></div>
+          </div>
+        </div>
+
+        <div class="lh-log-box">
+          <p class="lh-log-line"><span class="prompt">$</span> claude-code run --long-horizon --turns=<span id="log-turns">10</span></p>
+          <p id="lh-log-out" class="lh-log-out">[INFO] Mythos Engine active. High causal consistency maintained across 10 turns. Zero hallucination detected.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .lh-container { margin-top: 24px; }
+  .lh-top { display: flex; justify-content: space-between; margin-bottom: 16px; }
+  .lh-crosslink { font-size: 0.85rem; color: var(--accent); text-decoration: none; }
+  .lh-crosslink:hover { text-decoration: underline; }
+
+  .lh-controls { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; background: var(--surface); padding: 16px; border-radius: 10px; border: 1px solid var(--border); }
+  .lh-ctrl-group { display: flex; align-items: center; gap: 12px; }
+  .lh-ctrl-group.full-w { flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; }
+  .ctrl-label { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); }
+  .ctrl-label strong { color: var(--accent); }
+
+  .lh-engine-btn {
+    font-family: var(--font-mono); font-size: 0.8rem; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
+    color: var(--fg); cursor: pointer; transition: all 0.2s ease;
+  }
+  .lh-engine-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .lh-engine-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+
+  .lh-slider { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+  .lh-terminal {
+    background: #1a1b26; border: 1px solid #2a2e42; border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; font-family: var(--font-mono); color: #a9b1d6;
+  }
+  .lh-term-header {
+    background: #16161e; padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #2a2e42;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+  .lh-term-title { font-size: 0.75rem; color: #787c99; margin-left: 6px; }
+
+  .lh-term-body { padding: 20px; }
+  .lh-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .lh-metric-card { background: #16161e; border: 1px solid #2a2e42; border-radius: 8px; padding: 14px; }
+  .m-title { display: block; font-size: 0.72rem; color: #787c99; margin-bottom: 6px; }
+  .m-value { display: block; font-size: 1.2rem; font-weight: 700; color: #c0caf5; margin-bottom: 8px; }
+  .m-value.green { color: #9ece6a; }
+
+  .m-bar-bg { background: #292e42; height: 6px; border-radius: 3px; overflow: hidden; }
+  .m-bar { height: 100%; transition: width 0.3s ease; }
+  .m-bar.green { background: #9ece6a; }
+  .m-bar.red { background: #f7768e; }
+  .m-bar.blue { background: #7aa2f7; }
+
+  .lh-log-box { background: #16161e; border-radius: 8px; padding: 14px; font-size: 0.82rem; border-left: 3px solid #bb9af7; }
+  .lh-log-line { color: #c0caf5; margin-bottom: 6px; }
+  .prompt { color: #9ece6a; margin-right: 6px; }
+  .lh-log-out { color: #565f89; }
+</style>
+
+<script>
+  let currentEngine = "fable";
+  let currentTurns = 10;
+
+  const engineBtns = document.querySelectorAll('.lh-engine-btn');
+  const slider = document.getElementById('turn-slider');
+  const turnDisplay = document.getElementById('turn-display');
+
+  const retentionVal = document.getElementById('lh-retention');
+  const barRetention = document.getElementById('bar-retention');
+  const driftVal = document.getElementById('lh-drift');
+  const barDrift = document.getElementById('bar-drift');
+  const outputVal = document.getElementById('lh-output');
+  const barOutput = document.getElementById('bar-output');
+  const logTurns = document.getElementById('log-turns');
+  const logOutput = document.getElementById('lh-log-out');
+
+  function updateMetrics() {
+    turnDisplay.textContent = `${currentTurns} Turns`;
+    logTurns.textContent = currentTurns;
+
+    if (currentEngine === "fable") {
+      const retention = Math.max(90, (100 - (currentTurns * 0.4))).toFixed(1);
+      const drift = (currentTurns * 0.3).toFixed(1);
+      const tokensUsed = Math.min(128000, currentTurns * 6400);
+
+      retentionVal.textContent = `${retention}%`;
+      barRetention.style.width = `${retention}%`;
+      driftVal.textContent = `${drift}%`;
+      barDrift.style.width = `${drift}%`;
+
+      outputVal.textContent = `${tokensUsed.toLocaleString()} / 128,000 Tokens`;
+      barOutput.style.width = `${(tokensUsed / 128000) * 100}%`;
+
+      logOutput.textContent = `[INFO] Mythos Engine active. High causal consistency maintained across ${currentTurns} turns. Zero hallucination detected.`;
+    } else {
+      const retention = Math.max(30, (100 - (currentTurns * 3.5))).toFixed(1);
+      const drift = Math.min(70, (currentTurns * 3.2)).toFixed(1);
+      const tokensUsed = Math.min(16000, currentTurns * 800);
+
+      retentionVal.textContent = `${retention}%`;
+      barRetention.style.width = `${retention}%`;
+      driftVal.textContent = `${drift}%`;
+      barDrift.style.width = `${drift}%`;
+
+      outputVal.textContent = `${tokensUsed.toLocaleString()} / 16,000 Tokens (Capped)`;
+      barOutput.style.width = `${(tokensUsed / 16000) * 100}%`;
+
+      logOutput.textContent = `[WARN] Legacy engine context limit reached at turn ${currentTurns}. Significant error propagation detected.`;
+    }
+  }
+
+  engineBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      engineBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentEngine = btn.getAttribute('data-engine');
+      updateMetrics();
+    });
+  });
+
+  slider.addEventListener('input', (e) => {
+    currentTurns = parseInt(e.target.value, 10);
+    updateMetrics();
+  });
+
+  updateMetrics();
+</script>
