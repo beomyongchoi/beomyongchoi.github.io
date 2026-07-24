@@ -4,16 +4,16 @@ import { SITE } from "../../consts";
 ---
 
 <BaseLayout
-  title={`동적 서브에이전트 위상 시각화 — ${SITE.authorKo}`}
-  description="Google Antigravity의 동적 서브에이전트(Dynamic Subagents) 병렬 오케스트레이션을 시각적으로 확인합니다. 서브에이전트 개수와 실행 모드에 따른 처리 속도 및 작업 격리율 비교."
+  title={`동적 서브에이전트 타임라인 시뮬레이터 — ${SITE.authorKo}`}
+  description="Google Antigravity의 동적 서브에이전트(Dynamic Subagents) 병렬 오케스트레이션 타임라인을 시각적으로 시뮬레이션합니다. 파일 분할 처리 시 단일 스레드 대비 병렬 Gantt 차트 비교."
   locale="ko"
   path="/playground/agent-topology/"
 >
   <header class="mb-5">
     <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
-    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">동적 서브에이전트 위상 (Topology) 시각화</h1>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">서브에이전트 병렬 타임라인 시뮬레이터</h1>
     <p class="mt-3 text-muted">
-      메인 에이전트가 역학별 서브에이전트를 병렬 생성해 작업을 분산 처리하는 과정을 눈으로 확인해보세요.
+      프로젝트 코드 파일 수와 서브에이전트 개수를 조절하고 [▶ Run Orchestration]을 누르면, 단일 스레드(Sequential) 대비 Antigravity 병렬 오케스트레이션의 **타임라인 Gantt 차트**가 실시간으로 비교 시각화됩니다.
     </p>
   </header>
 
@@ -23,58 +23,57 @@ import { SITE } from "../../consts";
     </div>
 
     <!-- Controls -->
-    <div class="at-controls">
-      <div class="at-ctrl-group">
-        <span class="ctrl-label">실행 모드:</span>
-        <button type="button" class="at-mode-btn" data-mode="seq">Sequential (순차 실행)</button>
-        <button type="button" class="at-mode-btn active" data-mode="parallel">Antigravity Parallel (병렬 분생)</button>
+    <div class="at-controls-card">
+      <div class="ctrl-group">
+        <label class="ctrl-label">1. 처리 대상 코드 파일 수: <strong id="files-val">40 Files</strong></label>
+        <input type="range" id="slider-files" min="10" max="100" value="40" step="10" class="at-slider" />
       </div>
 
-      <div class="at-ctrl-group">
-        <span class="ctrl-label">서브에이전트 수:</span>
-        <button type="button" class="at-count-btn" data-count="1">1개</button>
-        <button type="button" class="at-count-btn" data-count="2">2개</button>
-        <button type="button" class="at-count-btn active" data-count="3">3개</button>
-        <button type="button" class="at-count-btn" data-count="4">4개</button>
+      <div class="ctrl-group mt-4">
+        <label class="ctrl-label">2. 동적 서브에이전트 (Subagents) 개수</label>
+        <div class="btn-grid">
+          <button type="button" class="at-cnt-btn" data-cnt="1">1개 (단일 스레드)</button>
+          <button type="button" class="at-cnt-btn" data-cnt="2">2개 병렬</button>
+          <button type="button" class="at-cnt-btn active" data-cnt="4">4개 병렬 (추천)</button>
+        </div>
+      </div>
+
+      <div class="action-row mt-4">
+        <button type="button" id="btn-run-at" class="execute-btn">▶ Run Multi-Agent Orchestration Simulation</button>
       </div>
     </div>
 
-    <!-- Tokyo Night Terminal Screen -->
+    <!-- Tokyo Night Terminal Screen & Gantt Canvas -->
     <div class="at-terminal">
       <div class="at-term-header">
         <span class="dot red"></span>
         <span class="dot yellow"></span>
         <span class="dot green"></span>
-        <span class="at-term-title">antigravity --orchestrate-subagents</span>
+        <span class="at-term-title">antigravity --gantt-orchestration-monitor</span>
       </div>
 
       <div class="at-term-body">
-        <div class="at-dag-tree" id="at-tree">
-          <!-- Main Orchestrator Node -->
-          <div class="dag-node main-node">
-            <span class="node-tag">Main Orchestrator Agent</span>
-            <span class="node-status">ACTIVE</span>
+        <div class="at-summary-row">
+          <div class="sum-card">
+            <span class="s-lbl">Sequential Total Time</span>
+            <span id="at-seq-time" class="s-val red">24.0s</span>
           </div>
-
-          <div class="dag-branches" id="dag-branches">
-            <!-- Dynamic subagent branch items rendered via JS -->
+          <div class="sum-card">
+            <span class="s-lbl">Antigravity Parallel Time</span>
+            <span id="at-par-time" class="s-val green">6.8s</span>
+          </div>
+          <div class="sum-card">
+            <span class="s-lbl">Orchestration Speedup</span>
+            <span id="at-speedup-val" class="s-val green">3.53x Faster</span>
           </div>
         </div>
 
-        <div class="at-metrics">
-          <div class="at-metric-card">
-            <span class="m-title">Total Turnaround Latency</span>
-            <span id="at-latency" class="m-value">1.8s</span>
-          </div>
-
-          <div class="at-metric-card">
-            <span class="m-title">Context Isolation Index</span>
-            <span id="at-isolation" class="m-value">100% (Branch Mode)</span>
-          </div>
-
-          <div class="at-metric-card">
-            <span class="m-title">Parallel Speedup Factor</span>
-            <span id="at-speedup" class="m-value">2.9x Fast</span>
+        <!-- Gantt Timeline Visualizer -->
+        <div class="gantt-box">
+          <div class="gantt-title">Execution Timeline (Gantt Chart Comparison)</div>
+          
+          <div class="gantt-stream" id="gantt-stream">
+            <!-- Dynamic Gantt bars injected via JS -->
           </div>
         </div>
       </div>
@@ -88,25 +87,33 @@ import { SITE } from "../../consts";
   .at-crosslink { font-size: 0.85rem; color: var(--accent); text-decoration: none; }
   .at-crosslink:hover { text-decoration: underline; }
 
-  .at-controls { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; background: var(--surface); padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border); }
-  .at-ctrl-group { display: flex; align-items: center; gap: 8px; }
-  .ctrl-label { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
-
-  .at-mode-btn, .at-count-btn {
-    font-family: var(--font-mono); font-size: 0.8rem; padding: 6px 12px;
-    border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
-    color: var(--fg); cursor: pointer; transition: all 0.2s ease;
+  .at-controls-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px;
   }
-  .at-mode-btn:hover, .at-count-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .at-mode-btn.active, .at-count-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  .ctrl-label { display: block; font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+  .ctrl-label strong { color: var(--accent); }
+  .at-slider { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+  .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .at-cnt-btn {
+    font-family: var(--font-mono); font-size: 0.82rem; padding: 8px 12px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); cursor: pointer; transition: all 0.2s ease;
+  }
+  .at-cnt-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .at-cnt-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+
+  .execute-btn {
+    width: 100%; font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; padding: 12px;
+    background: #7aa2f7; color: #1a1b26; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s ease;
+  }
+  .execute-btn:hover { background: #9ece6a; }
 
   .at-terminal {
     background: #1a1b26; border: 1px solid #2a2e42; border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; font-family: var(--font-mono); color: #a9b1d6;
   }
   .at-term-header {
-    background: #16161e; padding: 10px 14px; display: flex; align-items: center; gap: 8px;
-    border-bottom: 1px solid #2a2e42;
+    background: #16161e; padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2a2e42;
   }
   .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .dot.red { background: #ff5f56; }
@@ -114,102 +121,106 @@ import { SITE } from "../../consts";
   .dot.green { background: #27c93f; }
   .at-term-title { font-size: 0.75rem; color: #787c99; margin-left: 6px; }
 
-  .at-term-body { padding: 24px; }
-  .at-dag-tree { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .at-term-body { padding: 20px; }
+  .at-summary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .sum-card { background: #16161e; border: 1px solid #2a2e42; border-radius: 8px; padding: 12px; }
+  .s-lbl { display: block; font-size: 0.72rem; color: #787c99; margin-bottom: 4px; }
+  .s-val { display: block; font-size: 1.2rem; font-weight: 700; }
+  .s-val.green { color: #9ece6a; }
+  .s-val.red { color: #f7768e; }
 
-  .dag-node {
-    background: #16161e; border: 1px solid #7aa2f7; border-radius: 8px; padding: 10px 16px;
-    display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 500px;
-  }
-  .dag-node.main-node { border-color: #bb9af7; background: #1f1d2e; }
-  .node-tag { font-size: 0.85rem; font-weight: 600; color: #c0caf5; }
-  .node-status { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #27c93f22; color: #9ece6a; }
+  .gantt-box { background: #16161e; border-radius: 8px; padding: 16px; border: 1px solid #2a2e42; }
+  .gantt-title { font-size: 0.75rem; color: #787c99; margin-bottom: 14px; text-transform: uppercase; border-bottom: 1px dashed #2a2e42; padding-bottom: 6px; }
+  .gantt-stream { display: flex; flex-direction: column; gap: 14px; }
 
-  .dag-branches { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; }
-  .branch-card {
-    background: #16161e; border: 1px dashed #2a2e42; border-radius: 8px; padding: 10px 14px;
-    font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px; transition: all 0.3s ease;
-  }
-  .branch-card.active { border-style: solid; border-color: #7aa2f7; background: #181926; }
-  .branch-header { display: flex; justify-content: space-between; }
-  .branch-name { color: #7aa2f7; font-weight: 600; }
-  .branch-ws { color: #787c99; font-size: 0.72rem; }
-  .branch-progress-bg { background: #292e42; height: 5px; border-radius: 3px; overflow: hidden; }
-  .branch-progress { height: 100%; background: #9ece6a; width: 100%; transition: width 0.4s ease; }
-
-  .at-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
-  .at-metric-card { background: #16161e; border: 1px solid #2a2e42; border-radius: 8px; padding: 12px; }
-  .m-title { display: block; font-size: 0.72rem; color: #787c99; margin-bottom: 4px; }
-  .m-value { display: block; font-size: 1.1rem; font-weight: 700; color: #9ece6a; }
+  .gantt-track { display: flex; flex-direction: column; gap: 4px; }
+  .track-label { font-size: 0.78rem; color: #c0caf5; display: flex; justify-content: space-between; }
+  .track-bar-bg { background: #292e42; height: 16px; border-radius: 4px; overflow: hidden; position: relative; }
+  .track-bar { height: 100%; background: #7aa2f7; width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+  .track-bar.seq { background: #f7768e; }
+  .track-bar.sub { background: #9ece6a; }
 </style>
 
 <script>
-  const subagentPresets = [
-    { name: "Subagent 1: Code Explorer", ws: "branch/explorer-workspace" },
-    { name: "Subagent 2: Test Suite Writer", ws: "branch/test-workspace" },
-    { name: "Subagent 3: Core Refactor Engine", ws: "branch/refactor-workspace" },
-    { name: "Subagent 4: Security Auditor", ws: "branch/security-workspace" }
-  ];
+  let filesCount = 40;
+  let subagentsCount = 4;
 
-  let currentMode = "parallel";
-  let currentCount = 3;
+  const sliderFiles = document.getElementById('slider-files');
+  const filesVal = document.getElementById('files-val');
+  const cntBtns = document.querySelectorAll('.at-cnt-btn');
+  const btnRun = document.getElementById('btn-run-at');
 
-  const modeBtns = document.querySelectorAll('.at-mode-btn');
-  const countBtns = document.querySelectorAll('.at-count-btn');
-  const branchesContainer = document.getElementById('dag-branches');
-  const latencyEl = document.getElementById('at-latency');
-  const isolationEl = document.getElementById('at-isolation');
-  const speedupEl = document.getElementById('at-speedup');
+  const seqTimeEl = document.getElementById('at-seq-time');
+  const parTimeEl = document.getElementById('at-par-time');
+  const speedupValEl = document.getElementById('at-speedup-val');
+  const ganttStream = document.getElementById('gantt-stream');
 
-  function renderTopology() {
-    branchesContainer.innerHTML = '';
-    const selected = subagentPresets.slice(0, currentCount);
+  sliderFiles.addEventListener('input', (e) => {
+    filesCount = parseInt(e.target.value, 10);
+    filesVal.textContent = `${filesCount} Files`;
+  });
 
-    selected.forEach((sub, idx) => {
-      const card = document.createElement('div');
-      card.className = 'branch-card active';
-      card.innerHTML = `
-        <div class="branch-header">
-          <span class="branch-name">${sub.name}</span>
-          <span class="branch-ws">${sub.ws}</span>
+  cntBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      cntBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      subagentsCount = parseInt(btn.getAttribute('data-cnt'), 10);
+    });
+  });
+
+  function runGanttSimulation() {
+    ganttStream.innerHTML = '';
+
+    const seqSec = (filesCount * 0.6).toFixed(1);
+    const parSec = ((filesCount * 0.6) / subagentsCount + 0.8).toFixed(1);
+    const speedup = (seqSec / parSec).toFixed(2);
+
+    seqTimeEl.textContent = `${seqSec}s`;
+    parTimeEl.textContent = `${parSec}s`;
+    speedupValEl.textContent = `${speedup}x Faster`;
+
+    // 1. Single Thread Sequential Bar
+    const seqTrack = document.createElement('div');
+    seqTrack.className = 'gantt-track';
+    seqTrack.innerHTML = `
+      <div class="track-label">
+        <span>Single Agent (Sequential Execution)</span>
+        <span>${seqSec}s total</span>
+      </div>
+      <div class="track-bar-bg">
+        <div id="bar-seq" class="track-bar seq"></div>
+      </div>
+    `;
+    ganttStream.appendChild(seqTrack);
+
+    // 2. Multi-Agent Parallel Bars
+    for (let i = 1; i <= subagentsCount; i++) {
+      const track = document.createElement('div');
+      track.className = 'gantt-track';
+      track.innerHTML = `
+        <div class="track-label">
+          <span>Subagent ${i} (Branch Workspace #${i})</span>
+          <span>${(parSec - 0.4).toFixed(1)}s</span>
         </div>
-        <div class="branch-progress-bg">
-          <div class="branch-progress" style="width: ${currentMode === 'parallel' ? '100%' : ((idx + 1) * (100 / currentCount)) + '%'};"></div>
+        <div class="track-bar-bg">
+          <div id="bar-sub-${i}" class="track-bar sub"></div>
         </div>
       `;
-      branchesContainer.appendChild(card);
-    });
-
-    if (currentMode === 'parallel') {
-      const baseLat = (1.2 + (currentCount * 0.2)).toFixed(1);
-      latencyEl.textContent = `${baseLat}s`;
-      isolationEl.textContent = "100% (Isolated Branches)";
-      speedupEl.textContent = `${(currentCount * 0.95).toFixed(1)}x Speedup`;
-    } else {
-      const seqLat = (1.5 * currentCount).toFixed(1);
-      latencyEl.textContent = `${seqLat}s`;
-      isolationEl.textContent = "25% (Shared Thread Risk)";
-      speedupEl.textContent = "1.0x (Sequential)";
+      ganttStream.appendChild(track);
     }
+
+    // Animate Progress Bars
+    setTimeout(() => {
+      const barSeq = document.getElementById('bar-seq');
+      if (barSeq) barSeq.style.width = '100%';
+
+      for (let i = 1; i <= subagentsCount; i++) {
+        const barSub = document.getElementById(`bar-sub-${i}`);
+        if (barSub) barSub.style.width = `${(100 / subagentsCount) * (1 + (i % 2) * 0.1)}%`;
+      }
+    }, 100);
   }
 
-  modeBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      modeBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentMode = btn.getAttribute('data-mode');
-      renderTopology();
-    });
-  });
-
-  countBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      countBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentCount = parseInt(btn.getAttribute('data-count'), 10);
-      renderTopology();
-    });
-  });
-
-  renderTopology();
+  btnRun.addEventListener('click', runGanttSimulation);
+  runGanttSimulation();
 </script>

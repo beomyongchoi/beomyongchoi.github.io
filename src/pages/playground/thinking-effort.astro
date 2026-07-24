@@ -5,15 +5,15 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`Thinking Effort 시각화 — ${SITE.authorKo}`}
-  description="Gemini 3.6 Flash의 가변 추론(Thinking Effort) 메커니즘을 눈으로 확인합니다. Low, Medium, High 추론 예산에 따른 지연 시간, 토큰 소모량, 정밀도 지표 변화 시뮬레이션."
+  description="Gemini 3.6 Flash의 가변 추론(Thinking Effort) 메커니즘을 샌드박스로 체험합니다. 작업 난이도와 추론 깊이 조합에 따른 체인오브소트(CoT) 단계, 지연 시간, 토큰 효율 실시간 비교."
   locale="ko"
   path="/playground/thinking-effort/"
 >
   <header class="mb-5">
     <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
-    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">가변 추론 (Thinking Effort) 시뮬레이터</h1>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">가변 추론 (Thinking Effort) 샌드박스</h1>
     <p class="mt-3 text-muted">
-      작업 난이도에 따라 생각의 깊이를 조절합니다. 추론 단계(Effort Tier)를 선택해 지연 시간과 토큰 소모량의 변화를 확인해보세요.
+      작업 난이도와 추론 깊이(Effort Tier)를 직접 조합하고 [Execute Task]를 실행해보세요. 생각의 깊이가 부족할 때 발생하는 에러 위험과, 과도할 때 발생하는 토큰 낭비를 체감할 수 있습니다.
     </p>
   </header>
 
@@ -22,51 +22,74 @@ import { SITE } from "../../consts";
       <a class="te-crosslink" href="/blog/agent-thinking-effort/">개념 더 읽기 → 0. 가변 추론 — 생각의 깊이를 조절하다</a>
     </div>
 
-    <!-- Mode Selector Buttons -->
-    <div class="te-controls">
-      <button type="button" class="te-btn active" data-effort="low">Low Effort (경량·즉각 응답)</button>
-      <button type="button" class="te-btn" data-effort="medium">Medium Effort (표준 코딩·질의)</button>
-      <button type="button" class="te-btn" data-effort="high">High Effort (심층 에이전트 루프)</button>
+    <!-- Controls -->
+    <div class="te-controls-card">
+      <div class="ctrl-group">
+        <label class="ctrl-label">1. 작업 난이도 (Task Complexity)</label>
+        <div class="btn-grid">
+          <button type="button" class="te-task-btn active" data-task="easy">Easy (단순 JSON 추출)</button>
+          <button type="button" class="te-task-btn" data-task="med">Medium (단위 테스트 생성)</button>
+          <button type="button" class="te-task-btn" data-task="hard">Hard (대규모 알고리즘 리팩토링)</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group mt-4">
+        <label class="ctrl-label">2. Gemini Thinking Effort 설정</label>
+        <div class="btn-grid">
+          <button type="button" class="te-effort-btn active" data-effort="low">Low Effort (80ms)</button>
+          <button type="button" class="te-effort-btn" data-effort="medium">Medium Effort (240ms)</button>
+          <button type="button" class="te-effort-btn" data-effort="high">High Effort (650ms)</button>
+        </div>
+      </div>
+
+      <div class="action-row mt-4">
+        <button type="button" id="btn-execute" class="execute-btn">▶ Execute Task Simulation</button>
+      </div>
     </div>
 
-    <!-- Tokyo Night Terminal Screen -->
+    <!-- Live Status Banner -->
+    <div id="te-status-banner" class="status-banner ideal">
+      <span id="status-title" class="status-title">✔ Ideal Combination</span>
+      <span id="status-desc" class="status-desc">작업 난이도에 적합한 추론 예산이 할당되었습니다.</span>
+    </div>
+
+    <!-- Tokyo Night Terminal Sandbox -->
     <div class="te-terminal">
       <div class="te-term-header">
         <span class="dot red"></span>
         <span class="dot yellow"></span>
         <span class="dot green"></span>
-        <span class="te-term-title">gemini-3.6-flash --thinking-effort</span>
+        <span class="te-term-title">gemini-3.6-flash --execution-sandbox</span>
       </div>
 
       <div class="te-term-body">
-        <div class="te-row">
-          <span class="te-label">Task Preset:</span>
-          <span id="te-task-desc" class="te-val">단순 데이터 구조 추출 및 소형 스크립트 작성</span>
-        </div>
-
-        <div class="te-metrics">
-          <div class="te-metric-card">
-            <span class="m-title">Latency</span>
-            <span id="te-latency" class="m-value">80 ms</span>
-            <div class="m-bar-bg"><div id="bar-latency" class="m-bar" style="width: 12%;"></div></div>
+        <div class="te-metrics-row">
+          <div class="metric-box">
+            <span class="m-lbl">Latency</span>
+            <span id="m-latency" class="m-val">80 ms</span>
           </div>
-
-          <div class="te-metric-card">
-            <span class="m-title">Token Consumption</span>
-            <span id="te-tokens" class="m-value">120 tokens</span>
-            <div class="m-bar-bg"><div id="bar-tokens" class="m-bar" style="width: 10%;"></div></div>
+          <div class="metric-box">
+            <span class="m-lbl">Token Usage</span>
+            <span id="m-tokens" class="m-val">120 Tokens</span>
           </div>
-
-          <div class="te-metric-card">
-            <span class="m-title">Reasoning Quality</span>
-            <span id="te-accuracy" class="m-value">91.2%</span>
-            <div class="m-bar-bg"><div id="bar-accuracy" class="m-bar green" style="width: 91.2%;"></div></div>
+          <div class="metric-box">
+            <span class="m-lbl">Execution Accuracy</span>
+            <span id="m-accuracy" class="m-val green">95.0%</span>
+          </div>
+          <div class="metric-box">
+            <span class="m-lbl">Cost Efficiency</span>
+            <span id="m-efficiency" class="m-val green">Optimal</span>
           </div>
         </div>
 
-        <div class="te-log-box">
-          <p class="te-log-line"><span class="prompt">$</span> agy execute --effort=<span id="log-effort">low</span></p>
-          <p id="te-log-output" class="te-log-out">[INFO] Allocating low reasoning budget. Immediate execution path selected.</p>
+        <div class="console-box">
+          <div class="console-header">Chain-of-Thought (CoT) Execution Stream</div>
+          <div id="console-stream" class="console-stream">
+            <p class="c-line"><span class="prompt">$</span> agy execute --task=easy --effort=low</p>
+            <p class="c-line out">[STAGE 1] Quick Tokenizer Pass...</p>
+            <p class="c-line out">[STAGE 2] Direct Generation (Single-pass)...</p>
+            <p class="c-line out success">[SUCCESS] Task completed in 80ms without reasoning overhead.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -79,22 +102,40 @@ import { SITE } from "../../consts";
   .te-crosslink { font-size: 0.85rem; color: var(--accent); text-decoration: none; }
   .te-crosslink:hover { text-decoration: underline; }
 
-  .te-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-  .te-btn {
-    font-family: var(--font-mono); font-size: 0.85rem; padding: 8px 16px;
-    border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
-    color: var(--fg); cursor: pointer; transition: all 0.2s ease;
+  .te-controls-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px;
   }
-  .te-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .te-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  .ctrl-label { display: block; font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+  .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+
+  .te-task-btn, .te-effort-btn {
+    font-family: var(--font-mono); font-size: 0.82rem; padding: 8px 12px; text-align: left;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); cursor: pointer; transition: all 0.2s ease;
+  }
+  .te-task-btn:hover, .te-effort-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .te-task-btn.active, .te-effort-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+
+  .execute-btn {
+    width: 100%; font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; padding: 12px;
+    background: #7aa2f7; color: #1a1b26; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s ease;
+  }
+  .execute-btn:hover { background: #9ece6a; }
+
+  .status-banner {
+    padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 4px;
+    font-family: var(--font-mono); font-size: 0.85rem; transition: all 0.3s ease;
+  }
+  .status-banner.ideal { background: #9ece6a1a; border: 1px solid #9ece6a; color: #9ece6a; }
+  .status-banner.warning { background: #ff9e641a; border: 1px solid #ff9e64; color: #ff9e64; }
+  .status-banner.error { background: #f7768e1a; border: 1px solid #f7768e; color: #f7768e; }
+  .status-title { font-weight: 700; }
 
   .te-terminal {
     background: #1a1b26; border: 1px solid #2a2e42; border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; font-family: var(--font-mono); color: #a9b1d6;
   }
   .te-term-header {
-    background: #16161e; padding: 10px 14px; display: flex; align-items: center; gap: 8px;
-    border-bottom: 1px solid #2a2e42;
+    background: #16161e; padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2a2e42;
   }
   .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .dot.red { background: #ff5f56; }
@@ -103,88 +144,142 @@ import { SITE } from "../../consts";
   .te-term-title { font-size: 0.75rem; color: #787c99; margin-left: 6px; }
 
   .te-term-body { padding: 20px; }
-  .te-row { display: flex; gap: 12px; font-size: 0.9rem; margin-bottom: 20px; }
-  .te-label { color: #787c99; }
-  .te-val { color: #7aa2f7; font-weight: 600; }
+  .te-metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .metric-box { background: #16161e; border: 1px solid #2a2e42; border-radius: 8px; padding: 10px 12px; }
+  .m-lbl { display: block; font-size: 0.7rem; color: #787c99; margin-bottom: 4px; }
+  .m-val { display: block; font-size: 1.1rem; font-weight: 700; color: #c0caf5; }
+  .m-val.green { color: #9ece6a; }
+  .m-val.red { color: #f7768e; }
+  .m-val.yellow { color: #ff9e64; }
 
-  .te-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .te-metric-card { background: #16161e; border: 1px solid #2a2e42; border-radius: 8px; padding: 14px; }
-  .m-title { display: block; font-size: 0.75rem; color: #787c99; margin-bottom: 6px; }
-  .m-value { display: block; font-size: 1.25rem; font-weight: 700; color: #c0caf5; margin-bottom: 10px; }
-  .m-bar-bg { background: #292e42; height: 6px; border-radius: 3px; overflow: hidden; }
-  .m-bar { height: 100%; background: #7aa2f7; transition: width 0.4s ease; }
-  .m-bar.green { background: #9ece6a; }
-
-  .te-log-box { background: #16161e; border-radius: 8px; padding: 14px; font-size: 0.82rem; border-left: 3px solid #7aa2f7; }
-  .te-log-line { color: #c0caf5; margin-bottom: 6px; }
+  .console-box { background: #16161e; border-radius: 8px; padding: 14px; border: 1px solid #2a2e42; }
+  .console-header { font-size: 0.72rem; color: #787c99; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px dashed #2a2e42; padding-bottom: 6px; }
+  .console-stream { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; min-height: 120px; }
+  .c-line { margin: 0; }
+  .c-line.out { color: #7aa2f7; }
+  .c-line.out.success { color: #9ece6a; font-weight: 600; }
+  .c-line.out.warn { color: #ff9e64; font-weight: 600; }
+  .c-line.out.err { color: #f7768e; font-weight: 600; }
   .prompt { color: #9ece6a; margin-right: 6px; }
-  .te-log-out { color: #565f89; }
 </style>
 
 <script>
-  const data = {
-    low: {
-      desc: "단순 데이터 구조 추출 및 소형 스크립트 작성",
-      latency: "80 ms",
-      latencyWidth: "12%",
-      tokens: "120 tokens",
-      tokensWidth: "10%",
-      accuracy: "91.2%",
-      accuracyWidth: "91.2%",
-      log: "[INFO] Allocating low reasoning budget. Immediate execution path selected."
-    },
-    medium: {
-      desc: "표준 모듈 작성, 단위 테스트 생성 및 일반 질의",
-      latency: "240 ms",
-      latencyWidth: "36%",
-      tokens: "450 tokens",
-      tokensWidth: "37%",
-      accuracy: "95.8%",
-      accuracyWidth: "95.8%",
-      log: "[INFO] Allocating medium reasoning budget. Standard evaluation & code synthesis."
-    },
-    high: {
-      desc: "복잡한 알고리즘 연산, 대규모 리팩토링 및 다단계 에이전트 루프",
-      latency: "650 ms",
-      latencyWidth: "100%",
-      tokens: "1200 tokens",
-      tokensWidth: "100%",
-      accuracy: "98.4%",
-      accuracyWidth: "98.4%",
-      log: "[INFO] Allocating high reasoning budget. Deep multi-step verification active."
-    }
-  };
+  let currentTask = "easy";
+  let currentEffort = "low";
 
-  const buttons = document.querySelectorAll('.te-btn');
-  const taskDesc = document.getElementById('te-task-desc');
-  const latencyVal = document.getElementById('te-latency');
-  const barLatency = document.getElementById('bar-latency');
-  const tokensVal = document.getElementById('te-tokens');
-  const barTokens = document.getElementById('bar-tokens');
-  const accuracyVal = document.getElementById('te-accuracy');
-  const barAccuracy = document.getElementById('bar-accuracy');
-  const logEffort = document.getElementById('log-effort');
-  const logOutput = document.getElementById('te-log-output');
+  const taskBtns = document.querySelectorAll('.te-task-btn');
+  const effortBtns = document.querySelectorAll('.te-effort-btn');
+  const executeBtn = document.getElementById('btn-execute');
 
-  buttons.forEach(btn => {
+  const banner = document.getElementById('te-status-banner');
+  const statusTitle = document.getElementById('status-title');
+  const statusDesc = document.getElementById('status-desc');
+
+  const mLatency = document.getElementById('m-latency');
+  const mTokens = document.getElementById('m-tokens');
+  const mAccuracy = document.getElementById('m-accuracy');
+  const mEfficiency = document.getElementById('m-efficiency');
+  const consoleStream = document.getElementById('console-stream');
+
+  taskBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      buttons.forEach(b => b.classList.remove('active'));
+      taskBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
-      const effort = btn.getAttribute('data-effort');
-      const item = data[effort];
-
-      if (item) {
-        taskDesc.textContent = item.desc;
-        latencyVal.textContent = item.latency;
-        barLatency.style.width = item.latencyWidth;
-        tokensVal.textContent = item.tokens;
-        barTokens.style.width = item.tokensWidth;
-        accuracyVal.textContent = item.accuracy;
-        barAccuracy.style.width = item.accuracyWidth;
-        logEffort.textContent = effort;
-        logOutput.textContent = item.log;
-      }
+      currentTask = btn.getAttribute('data-task');
     });
   });
+
+  effortBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      effortBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentEffort = btn.getAttribute('data-effort');
+    });
+  });
+
+  function runSimulation() {
+    consoleStream.innerHTML = `<p class="c-line"><span class="prompt">$</span> agy execute --task=${currentTask} --effort=${currentEffort}</p>`;
+    
+    // Evaluation Logic
+    if (currentTask === "easy" && currentEffort === "low") {
+      banner.className = "status-banner ideal";
+      statusTitle.textContent = "✔ Ideal Combination";
+      statusDesc.textContent = "단순 작업에 저지연 Low Effort를 적용하여 최고의 토큰 효율(80ms)을 달성했습니다.";
+
+      mLatency.textContent = "80 ms";
+      mTokens.textContent = "120 Tokens";
+      mAccuracy.textContent = "98.5%"; mAccuracy.className = "m-val green";
+      mEfficiency.textContent = "Optimal"; mEfficiency.className = "m-val green";
+
+      setTimeout(() => appendLog("[STAGE 1] Quick Tokenizer Pass..."), 100);
+      setTimeout(() => appendLog("[STAGE 2] Direct Generation (Single-pass)..."), 300);
+      setTimeout(() => appendLog("[SUCCESS] Completed in 80ms without reasoning overhead.", "success"), 500);
+    } 
+    else if (currentTask === "hard" && currentEffort === "low") {
+      banner.className = "status-banner error";
+      statusTitle.textContent = "✖ Critical Mismatch: Insufficient Reasoning";
+      statusDesc.textContent = "복잡한 알고리즘 리팩토링에 Low Effort를 적용하여 추론 예산 부족으로 오류가 발생했습니다!";
+
+      mLatency.textContent = "85 ms";
+      mTokens.textContent = "150 Tokens";
+      mAccuracy.textContent = "42.0%"; mAccuracy.className = "m-val red";
+      mEfficiency.textContent = "Poor (Failed)"; mEfficiency.className = "m-val red";
+
+      setTimeout(() => appendLog("[STAGE 1] Quick Tokenizer Pass..."), 100);
+      setTimeout(() => appendLog("[STAGE 2] Skipping Deep Verification..."), 300);
+      setTimeout(() => appendLog("[ERROR] Edge-case verification failed! Syntax & logic mismatch detected.", "err"), 500);
+    }
+    else if (currentTask === "easy" && currentEffort === "high") {
+      banner.className = "status-banner warning";
+      statusTitle.textContent = "⚠️ Over-Engineering Warning: Resource Waste";
+      statusDesc.textContent = "단순 작업에 과도한 High Effort가 적용되어 불필요한 레이턴시(650ms)와 토큰 소모가 발생했습니다.";
+
+      mLatency.textContent = "650 ms";
+      mTokens.textContent = "1,200 Tokens";
+      mAccuracy.textContent = "99.8%"; mAccuracy.className = "m-val green";
+      mEfficiency.textContent = "Wasteful"; mEfficiency.className = "m-val yellow";
+
+      setTimeout(() => appendLog("[STAGE 1] Initializing Deep Reasoning Chain..."), 100);
+      setTimeout(() => appendLog("[STAGE 2] Redundant Proofing & Multi-pass Check..."), 400);
+      setTimeout(() => appendLog("[WARN] Task completed, but cost 10x more tokens than necessary.", "warn"), 700);
+    }
+    else if (currentTask === "hard" && currentEffort === "high") {
+      banner.className = "status-banner ideal";
+      statusTitle.textContent = "✔ Ideal Combination for Complex Task";
+      statusDesc.textContent = "복잡한 난이도에 High Effort를 적용하여 다단계 자가 검증(CoT)으로 99.4% 정밀도를 달성했습니다.";
+
+      mLatency.textContent = "650 ms";
+      mTokens.textContent = "1,200 Tokens";
+      mAccuracy.textContent = "99.4%"; mAccuracy.className = "m-val green";
+      mEfficiency.textContent = "Optimal"; mEfficiency.className = "m-val green";
+
+      setTimeout(() => appendLog("[STAGE 1] Allocating High Reasoning Budget (CoT)..."), 100);
+      setTimeout(() => appendLog("[STAGE 2] Edge-case Analysis & Self-Correction Active..."), 400);
+      setTimeout(() => appendLog("[SUCCESS] Complex refactoring verified with zero edge-case errors.", "success"), 700);
+    }
+    else {
+      banner.className = "status-banner ideal";
+      statusTitle.textContent = "✔ Standard Balanced Execution";
+      statusDesc.textContent = "적절한 추론 예산과 지연 시간 균형을 이뤘습니다.";
+
+      mLatency.textContent = "240 ms";
+      mTokens.textContent = "450 Tokens";
+      mAccuracy.textContent = "96.2%"; mAccuracy.className = "m-val green";
+      mEfficiency.textContent = "Good"; mEfficiency.className = "m-val green";
+
+      setTimeout(() => appendLog("[STAGE 1] Standard Reasoning Pass..."), 100);
+      setTimeout(() => appendLog("[STAGE 2] Unit Test Verification Pass..."), 300);
+      setTimeout(() => appendLog("[SUCCESS] Execution complete with balanced latency and tokens.", "success"), 500);
+    }
+  }
+
+  function appendLog(text, cls = "out") {
+    const p = document.createElement('p');
+    p.className = `c-line ${cls}`;
+    p.textContent = text;
+    consoleStream.appendChild(p);
+  }
+
+  executeBtn.addEventListener('click', runSimulation);
+  runSimulation();
 </script>
