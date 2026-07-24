@@ -429,11 +429,63 @@ const groups = [
     }
   }
 
-  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings };
+  function thinkingeffort(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const bars = [0.3, 0.6, 0.95];
+    const active = Math.floor(f / 40) % 3;
+    bars.forEach((b, i) => {
+      const y = 24 + i * 28;
+      ctx.fillStyle = i === active ? grn : acc;
+      ctx.globalAlpha = i === active ? 0.9 : 0.3;
+      ctx.beginPath(); ctx.roundRect(30, y, (W - 60) * b, 14, 4); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function agenttopology(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const mx = 30, my = H / 2;
+    const subs = [{ x: W - 40, y: 22 }, { x: W - 40, y: H / 2 }, { x: W - 40, y: H - 22 }];
+    const pulse = 0.5 + 0.5 * Math.sin(f * 0.08);
+    subs.forEach(s => {
+      ctx.strokeStyle = acc; ctx.lineWidth = 1.8; ctx.globalAlpha = 0.4 + 0.4 * pulse;
+      ctx.beginPath(); ctx.moveTo(mx, my); ctx.bezierCurveTo((mx + s.x) / 2, my, (mx + s.x) / 2, s.y, s.x, s.y); ctx.stroke();
+      ctx.fillStyle = grn; ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, 7); ctx.fill();
+    });
+    ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(mx, my, 7, 0, 7); ctx.fill();
+  }
+
+  function longhorizon(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const progress = (f % 120) / 120;
+    ctx.fillStyle = "#292e42"; ctx.fillRect(20, H / 2 - 8, W - 40, 16);
+    ctx.fillStyle = grn; ctx.fillRect(20, H / 2 - 8, (W - 40) * progress, 16);
+    ctx.strokeStyle = acc; ctx.lineWidth = 2; ctx.strokeRect(20, H / 2 - 8, W - 40, 16);
+  }
+
+  function agentcompare(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", grn = "#22a06b";
+    const toggle = Math.floor(f / 60) % 2;
+    ctx.fillStyle = toggle === 0 ? acc : grn;
+    ctx.beginPath(); ctx.roundRect(W / 4 - 20, H / 2 - 15, 40, 30, 6); ctx.fill();
+    ctx.fillStyle = toggle === 1 ? acc : grn;
+    ctx.beginPath(); ctx.roundRect((W * 3) / 4 - 20, H / 2 - 15, 40, 30, 6); ctx.fill();
+  }
+
+  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, lotto, transformer, fanout, transformerblock, bert, gpt, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
   let f = 0;
   function loop() {
     f++;
-    for (const t of thumbs) FN[t.toy](t.ctx, t.W, t.H, f);
+    for (const t of thumbs) if (FN[t.toy]) FN[t.toy](t.ctx, t.W, t.H, f);
     requestAnimationFrame(loop);
   }
   loop();
