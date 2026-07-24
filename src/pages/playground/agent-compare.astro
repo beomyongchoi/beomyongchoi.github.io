@@ -1,0 +1,194 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`에이전트 아키텍처 셀렉터 — ${SITE.authorKo}`}
+  description="프로젝트 위상 구조에 따른 최적의 에이전트 아키텍처(AGY vs Claude Code) 추천과 Ponytail 과잉 엔지니어링 점수 시뮬레이터."
+  locale="ko"
+  path="/playground/agent-compare/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">에이전트 아키텍처 셀렉터</h1>
+    <p class="mt-3 text-muted">
+      프로젝트 위상 구조와 Ponytail 플러그인 적용 여부를 선택하면, 최적의 에이전트 파이프라인과 과잉 엔지니어링 억제 지표를 확인받을 수 있습니다.
+    </p>
+  </header>
+
+  <section class="ac-container" id="ac">
+    <div class="ac-top">
+      <a class="ac-crosslink" href="/blog/agent-architecture-compare/">개념 더 읽기 → 3. 아키텍처 비교 — 적재적소의 에이전트</a>
+    </div>
+
+    <!-- Controls -->
+    <div class="ac-controls-card">
+      <div class="ctrl-group">
+        <label class="ctrl-label">1. 프로젝트 위상 프로필 (Project Profile)</label>
+        <div class="btn-grid">
+          <button type="button" class="ac-prof-btn active" data-prof="parallel">다중 모듈 병렬 탐색 & 스크립팅</button>
+          <button type="button" class="ac-prof-btn" data-prof="deep">단일 대형 모듈 심층 리팩토링</button>
+          <button type="button" class="ac-prof-btn" data-prof="full">전체 코드베이스 통합 감사</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group mt-4">
+        <label class="ctrl-label">2. Ponytail 플러그인 (Anti-Overengineering Audit)</label>
+        <div class="btn-grid">
+          <button type="button" class="ac-pony-btn" data-pony="off">Ponytail OFF (기본 생성)</button>
+          <button type="button" class="ac-pony-btn active" data-pony="full">Ponytail FULL (과잉 추상화 차단)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tokyo Night Terminal Screen -->
+    <div class="ac-terminal">
+      <div class="ac-term-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="ac-term-title">agent-selector --evaluate-architecture</span>
+      </div>
+
+      <div class="ac-term-body">
+        <div class="ac-recommend-banner">
+          <span class="rec-lbl">RECOMMENDED AGENT PIPELINE</span>
+          <span id="rec-engine" class="rec-val">Gemini 3.6 Flash + Antigravity (AGY Multi-Agent)</span>
+        </div>
+
+        <div class="ac-metrics">
+          <div class="ac-metric-card">
+            <span class="m-title">Architecture Fit Index</span>
+            <span id="ac-fit" class="m-value green">98.5% Match</span>
+          </div>
+
+          <div class="ac-metric-card">
+            <span class="m-title">Ponytail Code Health Score</span>
+            <span id="ac-score" class="m-value green">95 / 100 (Clean)</span>
+          </div>
+
+          <div class="ac-metric-card">
+            <span class="m-title">Over-Engineering Risk</span>
+            <span id="ac-risk" class="m-value green">Low (0.5%)</span>
+          </div>
+        </div>
+
+        <div class="ac-log-box">
+          <p class="ac-log-line"><span class="prompt">$</span> ponytail audit --target=agent-code</p>
+          <p id="ac-log-out" class="ac-log-out">[PASS] Ponytail active: Pruned 4 redundant abstraction interfaces. Pure functional code maintained.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .ac-container { margin-top: 24px; }
+  .ac-top { display: flex; justify-content: space-between; margin-bottom: 16px; }
+  .ac-crosslink { font-size: 0.85rem; color: var(--accent); text-decoration: none; }
+  .ac-crosslink:hover { text-decoration: underline; }
+
+  .ac-controls-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px;
+  }
+  .ctrl-label { display: block; font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+  .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+
+  .ac-prof-btn, .ac-pony-btn {
+    font-family: var(--font-mono); font-size: 0.82rem; padding: 8px 12px; text-align: left;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); cursor: pointer; transition: all 0.2s ease;
+  }
+  .ac-prof-btn:hover, .ac-pony-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ac-prof-btn.active, .ac-pony-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+
+  .ac-terminal {
+    background: #1a1b26; border: 1px solid #2a2e42; border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; font-family: var(--font-mono); color: #a9b1d6;
+  }
+  .ac-term-header {
+    background: #16161e; padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2a2e42;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+  .ac-term-title { font-size: 0.75rem; color: #787c99; margin-left: 6px; }
+
+  .ac-term-body { padding: 24px; }
+  .ac-recommend-banner {
+    background: #1f1d2e; border: 1px solid #bb9af7; border-radius: 8px; padding: 14px 18px;
+    display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px;
+  }
+  .rec-lbl { font-size: 0.7rem; color: #787c99; font-weight: 700; letter-spacing: 0.05em; }
+  .rec-val { font-size: 1.15rem; font-weight: 700; color: #bb9af7; }
+
+  .ac-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .ac-metric-card { background: #16161e; border: 1px solid #2a2e42; border-radius: 8px; padding: 12px; }
+  .m-title { display: block; font-size: 0.72rem; color: #787c99; margin-bottom: 4px; }
+  .m-value { display: block; font-size: 1.1rem; font-weight: 700; }
+  .m-value.green { color: #9ece6a; }
+  .m-value.yellow { color: #ff9e64; }
+
+  .ac-log-box { background: #16161e; border-radius: 8px; padding: 14px; font-size: 0.82rem; border-left: 3px solid #9ece6a; }
+  .ac-log-line { color: #c0caf5; margin-bottom: 6px; }
+  .prompt { color: #9ece6a; margin-right: 6px; }
+  .ac-log-out { color: #565f89; }
+</style>
+
+<script>
+  let currentProf = "parallel";
+  let currentPony = "full";
+
+  const profBtns = document.querySelectorAll('.ac-prof-btn');
+  const ponyBtns = document.querySelectorAll('.ac-pony-btn');
+
+  const recEngine = document.getElementById('rec-engine');
+  const fitEl = document.getElementById('ac-fit');
+  const scoreEl = document.getElementById('ac-score');
+  const riskEl = document.getElementById('ac-risk');
+  const logOut = document.getElementById('ac-log-out');
+
+  function evaluate() {
+    if (currentProf === "parallel") {
+      recEngine.textContent = "Gemini 3.6 Flash + Antigravity (AGY Multi-Agent)";
+      fitEl.textContent = "98.5% Match";
+    } else if (currentProf === "deep") {
+      recEngine.textContent = "Claude Fable 5 + Claude Code (Mythos Engine)";
+      fitEl.textContent = "99.1% Match";
+    } else {
+      recEngine.textContent = "Hybrid: AGY Multi-Agent (Parallel) + Claude Fable 5 (Deep Core)";
+      fitEl.textContent = "96.4% Match";
+    }
+
+    if (currentPony === "full") {
+      scoreEl.textContent = "96 / 100 (Clean)"; scoreEl.className = "m-value green";
+      riskEl.textContent = "Low (0.3%)"; riskEl.className = "m-value green";
+      logOut.textContent = "[PASS] Ponytail active: Pruned redundant abstraction interfaces & unused helper classes. Pure functional code maintained.";
+    } else {
+      scoreEl.textContent = "62 / 100 (Over-engineered)"; scoreEl.className = "m-value yellow";
+      riskEl.textContent = "High (18.4%)"; riskEl.className = "m-value yellow";
+      logOut.textContent = "[WARN] Ponytail disabled: Detected 5 unneeded abstraction layers and duplicate factory patterns inserted by raw LLM.";
+    }
+  }
+
+  profBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      profBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentProf = btn.getAttribute('data-prof');
+      evaluate();
+    });
+  });
+
+  ponyBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      ponyBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPony = btn.getAttribute('data-pony');
+      evaluate();
+    });
+  });
+
+  evaluate();
+</script>
