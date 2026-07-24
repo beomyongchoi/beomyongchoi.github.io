@@ -46,6 +46,19 @@ export const SERIES: Record<string, Series> = {
       { slug: "gpt-decoder", toy: "/playground/gpt/", published: true, title: { ko: "4. 디코더 온리 — GPT", en: "4. Decoder-only — GPT" } },
     ],
   },
+  agents: {
+    title: { ko: "에이전틱 AI 아키텍처", en: "Agentic AI Architecture" },
+    blurb: {
+      ko: "가변 추론부터 서브에이전트 오케스트레이션까지 — 에이전트 시스템이 실제로 어떻게 동작하는지 글 + 인터랙티브로 한 편씩.",
+      en: "From variable reasoning to subagent orchestration — how agent systems actually operate, one post + interactive at a time.",
+    },
+    parts: [
+      { slug: "agent-thinking-effort", toy: "/playground/thinking-effort/", published: true, title: { ko: "0. 가변 추론 — 생각의 깊이를 조절하다", en: "0. Variable reasoning — tuning thinking effort" } },
+      { slug: "agent-subagents-fanout", toy: "/playground/agent-topology/", published: false, title: { ko: "1. 병렬 오케스트레이션 — 동적 서브에이전트", en: "1. Parallel orchestration — dynamic subagents" } },
+      { slug: "agent-deep-reasoning", toy: "/playground/long-horizon/", published: false, title: { ko: "2. 심층 장기 추론 — Claude Fable 5", en: "2. Deep reasoning — Claude Fable 5" } },
+      { slug: "agent-architecture-compare", toy: "/playground/agent-compare/", published: false, title: { ko: "3. 아키텍처 비교 — 적재적소의 에이전트", en: "3. Architecture comparison — matching agents to tasks" } },
+    ],
+  },
 };
 
 /** Find which series (if any) a post slug belongs to. */

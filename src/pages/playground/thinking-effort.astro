@@ -1,0 +1,190 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`Thinking Effort 시각화 — ${SITE.authorKo}`}
+  description="Gemini 3.6 Flash의 가변 추론(Thinking Effort) 메커니즘을 눈으로 확인합니다. Low, Medium, High 추론 예산에 따른 지연 시간, 토큰 소모량, 정밀도 지표 변화 시뮬레이션."
+  locale="ko"
+  path="/playground/thinking-effort/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">가변 추론 (Thinking Effort) 시뮬레이터</h1>
+    <p class="mt-3 text-muted">
+      작업 난이도에 따라 생각의 깊이를 조절합니다. 추론 단계(Effort Tier)를 선택해 지연 시간과 토큰 소모량의 변화를 확인해보세요.
+    </p>
+  </header>
+
+  <section class="te-container" id="te">
+    <div class="te-top">
+      <a class="te-crosslink" href="/blog/agent-thinking-effort/">개념 더 읽기 → 0. 가변 추론 — 생각의 깊이를 조절하다</a>
+    </div>
+
+    <!-- Mode Selector Buttons -->
+    <div class="te-controls">
+      <button type="button" class="te-btn active" data-effort="low">Low Effort (경량·즉각 응답)</button>
+      <button type="button" class="te-btn" data-effort="medium">Medium Effort (표준 코딩·질의)</button>
+      <button type="button" class="te-btn" data-effort="high">High Effort (심층 에이전트 루프)</button>
+    </div>
+
+    <!-- Tokyo Night Terminal Screen -->
+    <div class="te-terminal">
+      <div class="te-term-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="te-term-title">gemini-3.6-flash --thinking-effort</span>
+      </div>
+
+      <div class="te-term-body">
+        <div class="te-row">
+          <span class="te-label">Task Preset:</span>
+          <span id="te-task-desc" class="te-val">단순 데이터 구조 추출 및 소형 스크립트 작성</span>
+        </div>
+
+        <div class="te-metrics">
+          <div class="te-metric-card">
+            <span class="m-title">Latency</span>
+            <span id="te-latency" class="m-value">80 ms</span>
+            <div class="m-bar-bg"><div id="bar-latency" class="m-bar" style="width: 12%;"></div></div>
+          </div>
+
+          <div class="te-metric-card">
+            <span class="m-title">Token Consumption</span>
+            <span id="te-tokens" class="m-value">120 tokens</span>
+            <div class="m-bar-bg"><div id="bar-tokens" class="m-bar" style="width: 10%;"></div></div>
+          </div>
+
+          <div class="te-metric-card">
+            <span class="m-title">Reasoning Quality</span>
+            <span id="te-accuracy" class="m-value">91.2%</span>
+            <div class="m-bar-bg"><div id="bar-accuracy" class="m-bar green" style="width: 91.2%;"></div></div>
+          </div>
+        </div>
+
+        <div class="te-log-box">
+          <p class="te-log-line"><span class="prompt">$</span> agy execute --effort=<span id="log-effort">low</span></p>
+          <p id="te-log-output" class="te-log-out">[INFO] Allocating low reasoning budget. Immediate execution path selected.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .te-container { margin-top: 24px; }
+  .te-top { display: flex; justify-content: space-between; margin-bottom: 16px; }
+  .te-crosslink { font-size: 0.85rem; color: var(--accent); text-decoration: none; }
+  .te-crosslink:hover { text-decoration: underline; }
+
+  .te-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .te-btn {
+    font-family: var(--font-mono); font-size: 0.85rem; padding: 8px 16px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+    color: var(--fg); cursor: pointer; transition: all 0.2s ease;
+  }
+  .te-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .te-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+
+  .te-terminal {
+    background: #1a1b26; border: 1px solid #2a2e42; border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; font-family: var(--font-mono); color: #a9b1d6;
+  }
+  .te-term-header {
+    background: #16161e; padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #2a2e42;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+  .te-term-title { font-size: 0.75rem; color: #787c99; margin-left: 6px; }
+
+  .te-term-body { padding: 20px; }
+  .te-row { display: flex; gap: 12px; font-size: 0.9rem; margin-bottom: 20px; }
+  .te-label { color: #787c99; }
+  .te-val { color: #7aa2f7; font-weight: 600; }
+
+  .te-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .te-metric-card { background: #16161e; border: 1px solid #2a2e42; border-radius: 8px; padding: 14px; }
+  .m-title { display: block; font-size: 0.75rem; color: #787c99; margin-bottom: 6px; }
+  .m-value { display: block; font-size: 1.25rem; font-weight: 700; color: #c0caf5; margin-bottom: 10px; }
+  .m-bar-bg { background: #292e42; height: 6px; border-radius: 3px; overflow: hidden; }
+  .m-bar { height: 100%; background: #7aa2f7; transition: width 0.4s ease; }
+  .m-bar.green { background: #9ece6a; }
+
+  .te-log-box { background: #16161e; border-radius: 8px; padding: 14px; font-size: 0.82rem; border-left: 3px solid #7aa2f7; }
+  .te-log-line { color: #c0caf5; margin-bottom: 6px; }
+  .prompt { color: #9ece6a; margin-right: 6px; }
+  .te-log-out { color: #565f89; }
+</style>
+
+<script>
+  const data = {
+    low: {
+      desc: "단순 데이터 구조 추출 및 소형 스크립트 작성",
+      latency: "80 ms",
+      latencyWidth: "12%",
+      tokens: "120 tokens",
+      tokensWidth: "10%",
+      accuracy: "91.2%",
+      accuracyWidth: "91.2%",
+      log: "[INFO] Allocating low reasoning budget. Immediate execution path selected."
+    },
+    medium: {
+      desc: "표준 모듈 작성, 단위 테스트 생성 및 일반 질의",
+      latency: "240 ms",
+      latencyWidth: "36%",
+      tokens: "450 tokens",
+      tokensWidth: "37%",
+      accuracy: "95.8%",
+      accuracyWidth: "95.8%",
+      log: "[INFO] Allocating medium reasoning budget. Standard evaluation & code synthesis."
+    },
+    high: {
+      desc: "복잡한 알고리즘 연산, 대규모 리팩토링 및 다단계 에이전트 루프",
+      latency: "650 ms",
+      latencyWidth: "100%",
+      tokens: "1200 tokens",
+      tokensWidth: "100%",
+      accuracy: "98.4%",
+      accuracyWidth: "98.4%",
+      log: "[INFO] Allocating high reasoning budget. Deep multi-step verification active."
+    }
+  };
+
+  const buttons = document.querySelectorAll('.te-btn');
+  const taskDesc = document.getElementById('te-task-desc');
+  const latencyVal = document.getElementById('te-latency');
+  const barLatency = document.getElementById('bar-latency');
+  const tokensVal = document.getElementById('te-tokens');
+  const barTokens = document.getElementById('bar-tokens');
+  const accuracyVal = document.getElementById('te-accuracy');
+  const barAccuracy = document.getElementById('bar-accuracy');
+  const logEffort = document.getElementById('log-effort');
+  const logOutput = document.getElementById('te-log-output');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const effort = btn.getAttribute('data-effort');
+      const item = data[effort];
+
+      if (item) {
+        taskDesc.textContent = item.desc;
+        latencyVal.textContent = item.latency;
+        barLatency.style.width = item.latencyWidth;
+        tokensVal.textContent = item.tokens;
+        barTokens.style.width = item.tokensWidth;
+        accuracyVal.textContent = item.accuracy;
+        barAccuracy.style.width = item.accuracyWidth;
+        logEffort.textContent = effort;
+        logOutput.textContent = item.log;
+      }
+    });
+  });
+</script>
