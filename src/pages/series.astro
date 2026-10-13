@@ -1,4 +1,5 @@
 ---
+import ArcTitle from "../components/ArcTitle.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { SITE } from "../consts";
 import { SERIES } from "../data/series";
@@ -14,9 +15,9 @@ const list = ORDER.map((id) => ({ id, s: SERIES[id] })).filter((x) => x.s);
   locale="ko"
   path="/series/"
 >
-  <header class="mb-10">
-    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">시리즈</h1>
-    <p class="mt-3 text-muted">
+  <header class="mb-10 text-center">
+    <ArcTitle text="시리즈" />
+    <p class="mx-auto mt-2 max-w-xl text-balance text-muted">
       글 하나 + 실험실 토이 하나가 한 세트입니다. <strong>행렬로 생각하기 → 트랜스포머 뜯어보기</strong> 순서로 읽으면
       벡터부터 GPT까지 바닥부터 이어집니다.
     </p>

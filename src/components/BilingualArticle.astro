@@ -8,6 +8,11 @@ const { blocks, lang = "ko" } = Astro.props;
 
 // One fixed icon per callout tone (house rule — keep it to a single icon).
 const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip: "💡" };
+
+// Section TOC from h2 blocks; leading "1. " numbering is dropped (the TOC adds its own).
+const unnum = (h: string) => h.replace(/^\s*\d+\.\s*/, "");
+const toc = blocks.flatMap((b) => (b.type === "h2" ? [{ ko: unnum(b.ko), en: unnum(b.en) }] : []));
+let h2i = 0;
 ---
 
 <div class="bi-article" id="bi-article" data-lang={lang}>
@@ -20,8 +25,26 @@ const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip
   </div>
 
   {
+    toc.length >= 3 && (
+      <nav class="bi-toc not-prose" aria-label={lang === "ko" ? "목차" : "Contents"}>
+        <ol>
+          {toc.map((t, i) => (
+            <li>
+              <a href={`#s-${i + 1}`}>
+                <span class="n">({i + 1})</span>
+                <span class="rule" />
+                <span class="bi-t t" data-ko={t.ko} data-en={t.en} set:html={t[lang]} />
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )
+  }
+
+  {
     blocks.map((b) => {
-      if (b.type === "h2") return <h2 class="bi" data-ko={b.ko} data-en={b.en} set:html={b[lang]} />;
+      if (b.type === "h2") return <h2 id={`s-${++h2i}`} class="bi" data-ko={b.ko} data-en={b.en} set:html={b[lang]} />;
       if (b.type === "p")
         return (
           <p>
@@ -108,6 +131,17 @@ const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip
     .bi-peek { background: rgba(37, 99, 235, 0.14); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14); }
   }
 
+  /* section TOC: (1) ──── Title */
+  .bi-toc { margin: 0 0 2.6em; padding-bottom: 1.2em; border-bottom: 1px solid var(--border); }
+  .bi-toc ol { list-style: none; margin: 0; padding: 0; }
+  .bi-toc a { display: flex; align-items: baseline; gap: 10px; padding: 4px 0; color: var(--fg); text-decoration: none; }
+  .bi-toc .n { font-family: var(--font-mono); font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .bi-toc .rule { flex: 1 1 2rem; min-width: 2rem; border-top: 1px solid var(--border); transform: translateY(-0.3em); transition: border-color .15s; }
+  .bi-toc .t { text-align: right; max-width: 80%; }
+  .bi-toc a:hover .t { color: var(--accent); }
+  .bi-toc a:hover .rule { border-color: var(--accent); }
+  .bi-article h2[id] { scroll-margin-top: 5rem; }
+
   .bi-sources h3 { font-size: 1.05rem; }
   .bi-fig img { width: 100%; }
 
@@ -153,7 +187,7 @@ const CALLOUT_ICON: Record<string, string> = { tldr: "📌", warn: "⚠️", tip
 
     const setLang = (lang: "ko" | "en") => {
       primary = lang;
-      article.querySelectorAll<HTMLElement>(".bi").forEach((el) => {
+      article.querySelectorAll<HTMLElement>(".bi, .bi-t").forEach((el) => {
         const html = el.dataset[lang];
         if (html != null) el.innerHTML = html;
       });

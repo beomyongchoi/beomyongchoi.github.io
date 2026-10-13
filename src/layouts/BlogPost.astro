@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import ArcTitle from "../components/ArcTitle.astro";
 import { SITE, LOCALE_TAG, type Locale } from "../consts";
 
 interface Props {
@@ -23,6 +24,11 @@ const fmt = (d: Date) =>
     month: "long",
     day: "numeric",
   });
+
+// "3. 아키텍처 비교 — 적재적소의 에이전트" → part 3, arc "아키텍처 비교", subtitle "적재적소의 에이전트".
+const [, part, rest] = title.match(/^(\d+)\.\s+(.*)$/) ?? [, undefined, title];
+const [main, ...subs] = rest.split(/\s+—\s+|:\s+/);
+const sub = subs.join(" — ");
 
 const authorName = locale === "ko" ? SITE.authorKo : SITE.author;
 
@@ -57,11 +63,13 @@ const articleLd = {
       <a href={locale === "ko" ? "/blog/" : "/en/blog/"} class="text-sm text-muted hover:text-accent">
         ← {locale === "ko" ? "블로그" : "Blog"}
       </a>
-      <h1 class="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-        {title}
-      </h1>
-      <div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+      <p class="mt-6 text-center text-xs uppercase tracking-[0.2em] text-muted">
+        {part && <span>{locale === "ko" ? `${part}편` : `Part ${part}`} · </span>}
         <time datetime={pubDate.toISOString()}>{fmt(pubDate)}</time>
+      </p>
+      <ArcTitle text={main} label={title} />
+      {sub && <p aria-hidden="true" class="mt-2 text-center text-xl text-balance">{sub}</p>}
+      <div class="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-muted">
         {
           tags.map((tag) => (
             <span class="text-accent">#{tag}</span>
