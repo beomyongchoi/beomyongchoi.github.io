@@ -16,6 +16,7 @@ import { SITE } from "../../consts";
       프로젝트 위상 구조와 Ponytail 플러그인 적용 여부를 선택하면, 최적의 에이전트 파이프라인과 과잉 엔지니어링 억제 지표를 확인받을 수 있습니다.
     </p>
   </header>
+  <p class="mb-4 text-xs text-muted">※ 화면의 수치(시간·토큰·점수)는 개념 설명용 가상 시뮬레이션 값입니다. 실측이 아닙니다.</p>
 
   <section class="ac-container" id="ac">
     <div class="ac-top">
@@ -54,7 +55,7 @@ import { SITE } from "../../consts";
       <div class="ac-term-body">
         <div class="ac-recommend-banner">
           <span class="rec-lbl">RECOMMENDED AGENT PIPELINE</span>
-          <span id="rec-engine" class="rec-val">Gemini 3.6 Flash + Antigravity (AGY Multi-Agent)</span>
+          <span id="rec-engine" class="rec-val">Gemini Flash + Antigravity (AGY Multi-Agent)</span>
         </div>
 
         <div class="ac-metrics">
@@ -151,13 +152,13 @@ import { SITE } from "../../consts";
 
   function evaluate() {
     if (currentProf === "parallel") {
-      recEngine.textContent = "Gemini 3.6 Flash + Antigravity (AGY Multi-Agent)";
+      recEngine.textContent = "Gemini Flash + Antigravity (AGY Multi-Agent)";
       fitEl.textContent = "98.5% Match";
     } else if (currentProf === "deep") {
-      recEngine.textContent = "Claude Fable 5 + Claude Code (Mythos Engine)";
+      recEngine.textContent = "Claude Fable + Claude Code (Mythos Engine)";
       fitEl.textContent = "99.1% Match";
     } else {
-      recEngine.textContent = "Hybrid: AGY Multi-Agent (Parallel) + Claude Fable 5 (Deep Core)";
+      recEngine.textContent = "Hybrid: AGY Multi-Agent (Parallel) + Claude Fable (Deep Core)";
       fitEl.textContent = "96.4% Match";
     }
 

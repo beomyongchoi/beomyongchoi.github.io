@@ -66,6 +66,7 @@ const articleLd = {
       <p class="mt-6 text-center text-xs uppercase tracking-[0.2em] text-muted">
         {part && <span>{locale === "ko" ? `${part}편` : `Part ${part}`} · </span>}
         <time datetime={pubDate.toISOString()}>{fmt(pubDate)}</time>
+        {updatedDate && <span> · {locale === "ko" ? `${fmt(updatedDate)} 수정` : `updated ${fmt(updatedDate)}`}</span>}
       </p>
       <ArcTitle text={main} label={title} />
       {sub && <p aria-hidden="true" class="mt-2 text-center text-xl text-balance">{sub}</p>}

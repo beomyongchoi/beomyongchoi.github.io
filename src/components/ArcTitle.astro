@@ -5,7 +5,7 @@ interface Props { text: string; label?: string }
 const { text, label = text } = Astro.props;
 // Rough advance width in em (CJK ≈ 1, Latin ≈ 0.55) → fit ~760 units of arc.
 const em = [...text].reduce((w, c) => w + (/[\u3000-\u9fff\uac00-\ud7af]/.test(c) ? 1 : 0.47), 0) * 1.06;
-const size = Math.round(Math.min(96, 720 / Math.max(em, 1)));
+const size = Math.round(Math.min(64, 720 / Math.max(em, 1)));
 // Arc apex sits at y=170; crop the empty sky above smaller text.
 const top = Math.max(0, 160 - size);
 const id = `arc-${text.replace(/\W/g, "") || "t"}-${Math.random().toString(36).slice(2, 7)}`;

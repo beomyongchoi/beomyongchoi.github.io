@@ -5,7 +5,7 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`장기 추론 맥락 보존 시뮬레이터 — ${SITE.authorKo}`}
-  description="Claude Fable 5 (Mythos Engine)의 초장기 작업(Long-horizon Tasks) 맥락 보존율과 128k 출력 토큰 시뮬레이션을 눈으로 확인합니다."
+  description="Claude Fable (Mythos Engine)의 초장기 작업(Long-horizon Tasks) 맥락 보존율과 128k 출력 토큰 시뮬레이션을 눈으로 확인합니다."
   locale="ko"
   path="/playground/long-horizon/"
 >
@@ -13,13 +13,14 @@ import { SITE } from "../../consts";
     <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
     <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">장기 추론 맥락 보존 시뮬레이터</h1>
     <p class="mt-3 text-muted">
-      에이전트 작업 턴(Turn) 수가 길어짐에 따라 기존 모델과 Claude Fable 5의 맥락 보존율 및 에러 누적 억제 효과를 비교해보세요.
+      에이전트 작업 턴(Turn) 수가 길어짐에 따라 기존 모델과 Claude Fable의 맥락 보존율 및 에러 누적 억제 효과를 비교해보세요.
     </p>
   </header>
+  <p class="mb-4 text-xs text-muted">※ 화면의 수치(시간·토큰·점수)는 개념 설명용 가상 시뮬레이션 값입니다. 실측이 아닙니다.</p>
 
   <section class="lh-container" id="lh">
     <div class="lh-top">
-      <a class="lh-crosslink" href="/blog/agent-deep-reasoning/">개념 더 읽기 → 2. 심층 장기 추론 — Claude Fable 5</a>
+      <a class="lh-crosslink" href="/blog/agent-deep-reasoning/">개념 더 읽기 → 2. 심층 장기 추론 — Claude Fable</a>
     </div>
 
     <!-- Controls -->
@@ -27,7 +28,7 @@ import { SITE } from "../../consts";
       <div class="lh-ctrl-group">
         <span class="ctrl-label">추론 엔진:</span>
         <button type="button" class="lh-engine-btn" data-engine="legacy">Standard LLM (기존 모델)</button>
-        <button type="button" class="lh-engine-btn active" data-engine="fable">Claude Fable 5 (Mythos Engine)</button>
+        <button type="button" class="lh-engine-btn active" data-engine="fable">Claude Fable (Mythos Engine)</button>
       </div>
 
       <div class="lh-ctrl-group full-w">
