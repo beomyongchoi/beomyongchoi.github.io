@@ -44,6 +44,7 @@ export const SERIES: Record<string, Series> = {
       { slug: "transformer-block", toy: "/playground/transformer-block/", published: true, title: { ko: "2. 트랜스포머 블록", en: "2. The Transformer block" } },
       { slug: "bert-encoder", toy: "/playground/bert/", published: true, title: { ko: "3. 인코더 온리 — BERT", en: "3. Encoder-only — BERT" } },
       { slug: "gpt-decoder", toy: "/playground/gpt/", published: true, title: { ko: "4. 디코더 온리 — GPT", en: "4. Decoder-only — GPT" } },
+      { slug: "sampling", toy: "/playground/sampling/", published: true, title: { ko: "5. 샘플링 — 진짜 분포 자르기", en: "5. Sampling — cutting a real distribution" } },
     ],
   },
   agents: {

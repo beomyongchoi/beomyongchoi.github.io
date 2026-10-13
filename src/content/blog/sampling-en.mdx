@@ -1,0 +1,19 @@
+---
+title: "Sampling — Cutting a Real Distribution with top-k, top-p, and min-p"
+description: "Measured on a real language model (SmolLM2-135M): where top-k goes wrong, why top-p breaks down at high temperature, and how min-p holds up. With an in-browser lab you can run yourself. Click any sentence to flip between English and Korean."
+pubDate: 2026-10-13T12:00:00
+lang: en
+translationKey: sampling
+tags: ["AI", "Transformer", "LLM", "Sampling"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/sampling";
+
+<SeriesNav id="transformer" current="sampling" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="transformer" current="sampling" lang="en" />
