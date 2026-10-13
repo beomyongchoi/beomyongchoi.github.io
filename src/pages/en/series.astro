@@ -4,7 +4,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { SITE } from "../../consts";
 import { SERIES } from "../../data/series";
 
-const ORDER = ["linalg", "transformer", "training"];
+const ORDER = ["linalg", "transformer", "training", "evolution"];
 const list = ORDER.map((id) => ({ id, s: SERIES[id] })).filter((x) => x.s);
 ---
 

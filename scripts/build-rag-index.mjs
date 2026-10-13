@@ -57,12 +57,14 @@ for (const f of readdirSync(dir).filter((f) => f.endsWith(".mdx") && !f.endsWith
 }
 
 const embed = await pipeline("feature-extraction", MODEL, { dtype: "q8" });
-for (let i = 0; i < entries.length; i += 16) {
-  const batch = entries.slice(i, i + 16);
+// One chunk at a time: batching pads inputs, which nudges q8 vectors depending on which chunks
+// share a batch — adding a post would then shift scores of unrelated chunks.
+for (let i = 0; i < entries.length; i += 1) {
+  const batch = entries.slice(i, i + 1);
   const out = await embed(batch.map((e) => "passage: " + (e.head ? e.head + ". " : "") + e.text), { pooling: "mean", normalize: true });
   const [, d] = out.dims;
   batch.forEach((e, k) => (e.v = Array.from(out.data.slice(k * d, (k + 1) * d), (x) => Math.round(x * 1000) / 1000)));
-  process.stdout.write(`\rembedded ${Math.min(i + 16, entries.length)}/${entries.length}`);
+  if (i % 50 === 0) process.stdout.write(`\rembedded ${i}/${entries.length}`);
 }
 writeFileSync(ROOT + "public/lab/rag-index.json", JSON.stringify({ model: MODEL, dtype: "q8", built: new Date().toISOString().slice(0, 10), entries }));
 console.log(`\nwrote ${entries.length} chunks from ${new Set(entries.map((e) => e.slug)).size} posts`);

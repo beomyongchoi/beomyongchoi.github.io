@@ -6,6 +6,22 @@ export type SeriesPart = { slug: string; title: L; toy?: string; published: bool
 export type Series = { title: L; blurb: L; parts: SeriesPart[] };
 
 export const SERIES: Record<string, Series> = {
+  evolution: {
+    title: { ko: "트랜스포머는 어떻게 진화했나", en: "How the Transformer Evolved" },
+    blurb: {
+      ko: "2017년 설계도에서 DeepSeek-V3·Qwen3까지 — 무엇이 왜 바뀌었는지 실제 설정 파일과 인터랙티브로 한 편씩. (트랜스포머 뜯어보기의 속편)",
+      en: "From the 2017 blueprint to DeepSeek-V3 and Qwen3 — what changed and why, with real config files and an interactive per part. (Sequel to Taking the Transformer Apart.)",
+    },
+    parts: [
+      { slug: "evolution-map", toy: "/playground/arch/", published: true, title: { ko: "0. 지도 — 무엇이 바뀌었나", en: "0. The map — what changed" } },
+      { slug: "evolution-position", published: false, title: { ko: "1. 위치를 아는 법 — RoPE", en: "1. Knowing position — RoPE" } },
+      { slug: "evolution-depth", published: false, title: { ko: "2. 깊게 쌓기 — Pre-norm·RMSNorm·SwiGLU", en: "2. Going deep — Pre-norm, RMSNorm, SwiGLU" } },
+      { slug: "evolution-kv", published: false, title: { ko: "3. 어텐션 다이어트 — KV 캐시·GQA·MLA", en: "3. Attention on a diet — KV cache, GQA, MLA" } },
+      { slug: "evolution-moe", published: false, title: { ko: "4. 전문가들 — MoE", en: "4. The experts — MoE" } },
+      { slug: "evolution-scaling", published: false, title: { ko: "5. 키우는 법칙 — 스케일링·정밀도", en: "5. Laws of growth — scaling and precision" } },
+      { slug: "evolution-reasoning", published: false, title: { ko: "6. 생각하는 모델 — 추론", en: "6. Models that think — reasoning" } },
+    ],
+  },
   training: {
     title: { ko: "모델은 어떻게 배우나", en: "How Models Learn" },
     blurb: {

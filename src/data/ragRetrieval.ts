@@ -46,6 +46,7 @@ export const blocks: BiBlock[] = [
       { ko: "각 조각은 다국어 임베딩 모델 <strong>multilingual-e5-small</strong>로 384차원 벡터가 됩니다.", en: "Each chunk becomes a 384-dimensional vector via the multilingual embedding model <strong>multilingual-e5-small</strong>." },
       { ko: "이 모델은 문서 앞에 <code>passage:</code>, 질문 앞에 <code>query:</code>를 붙이도록 학습됐습니다. 모델 카드는 빼면 성능이 떨어진다고 적어 둡니다.", en: "It was trained with <code>passage:</code> before documents and <code>query:</code> before questions; the model card warns that dropping them degrades performance." },
       { ko: "조각 임베딩은 빌드할 때 미리 계산해 두고, 브라우저는 질문 한 줄만 임베딩합니다.", en: "Chunk embeddings are precomputed at build time; the browser only embeds your one-line question." },
+      { ko: "아래 숫자는 2026년 10월 13일, 글 21편(조각 375개) 기준으로 잰 값입니다. 글이 늘면 단어의 희소성이 바뀌어 키워드 점수가 달라지므로, 실험실 숫자는 이후 조금씩 다를 수 있습니다.", en: "The numbers below were measured on Oct 13, 2026, over 21 posts (375 chunks). As posts are added, word rarity shifts and keyword scores change, so the lab's numbers may drift a little later." },
       { ko: "이 글 자체는 인덱스에서 뺐습니다. 아래 테스트 질문을 그대로 인용하고 있어서, 넣었더니 키워드 검색이 이 글을 1위로 올렸습니다. 평가 질문이 문서에 섞이면 결과가 오염됩니다.", en: "This post itself is left out of the index. It quotes the test questions below verbatim, and when I included it, keyword search ranked this post #1. Let eval questions leak into the corpus and the results are contaminated." },
     ],
   },
