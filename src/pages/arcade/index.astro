@@ -1,0 +1,46 @@
+---
+import ArcTitle from "../../components/ArcTitle.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+
+// Games against a real model running in your browser. "soon" entries render without a link.
+const games = [
+  { href: "/arcade/next-word/", title: "사람 vs GPT — 다음 단어 맞히기", tag: "LIVE 실모델 · 10라운드", desc: "끊긴 문장의 원문 단어를 맞혀라. 진짜 언어 모델이 같은 보기로 함께 맞힌다. 관용구는 모델이, 반전은 사람이 강하다?" },
+  { title: "의미 스무고개", tag: "곧", desc: "숨은 단어를 맞혀라. 추측할 때마다 임베딩 유사도로 얼마나 가까운지 알려 준다." },
+  { title: "모델 조종하기", tag: "곧", desc: "앞 문장만 바꿔서 모델의 1위 다음 단어를 목표 단어로 만들어라." },
+];
+---
+
+<BaseLayout
+  title={`오락실 — ${SITE.authorKo}`}
+  description="브라우저 안에서 진짜 AI 모델과 겨루는 게임. 이기다 보면 모델이 어떻게 생각하는지 알게 됩니다."
+  locale="ko"
+  path="/arcade/"
+>
+  <header class="mb-10 text-center">
+    <ArcTitle text="오락실" />
+    <p class="mx-auto mt-2 max-w-xl text-balance text-muted">
+      브라우저 안에서 진짜 AI 모델과 겨룹니다. 이기다 보면 모델이 어떻게 생각하는지 저절로 알게 됩니다.
+    </p>
+  </header>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {
+      games.map((g) =>
+        g.href ? (
+          <a href={g.href} class="group rounded-xl border border-border bg-surface p-5 transition hover:border-accent">
+            <p class="font-mono text-xs text-accent">{g.tag}</p>
+            <h2 class="mt-2 text-lg font-semibold group-hover:text-accent">{g.title}</h2>
+            <p class="mt-2 text-sm leading-relaxed text-muted">{g.desc}</p>
+          </a>
+        ) : (
+          <div class="rounded-xl border border-dashed border-border p-5 opacity-60">
+            <p class="font-mono text-xs text-muted">{g.tag}</p>
+            <h2 class="mt-2 text-lg font-semibold">{g.title}</h2>
+            <p class="mt-2 text-sm leading-relaxed text-muted">{g.desc}</p>
+          </div>
+        )
+      )
+    }
+  </div>
+</BaseLayout>

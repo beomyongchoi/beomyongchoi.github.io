@@ -1,13 +1,20 @@
-// Shared in-browser LM for playground toys: SmolLM2-135M via transformers.js, loaded on demand.
-// loadLM(onStatus) once, then nextLogits(text) → { logits: Float64Array-ish number[], n }.
+// Shared in-browser LM for playground toys via transformers.js, loaded on demand.
+// loadLM(onStatus, key?) then nextLogits(text) → { logits: number[], n }.
+// Default stays SmolLM2-135M: every number in the posts was measured with it.
 const LIB = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0";
-const MODEL = "HuggingFaceTB/SmolLM2-135M-Instruct";
+export const LMS = {
+  smol: { id: "HuggingFaceTB/SmolLM2-135M-Instruct", label: "SmolLM2-135M", size: "약 120MB", note: "가볍지만 영어 전용" },
+  qwen3: { id: "onnx-community/Qwen3-0.6B-ONNX", label: "Qwen3-0.6B", size: "약 570MB", note: "더 똑똑하고 한국어 가능" },
+};
 
-let ready = null;
+let ready = null, current = null;
 export let tok = null;
 export let backend = "";
+export const currentLM = () => current;
 
-export function loadLM(onStatus = () => {}) {
+export function loadLM(onStatus = () => {}, key = "smol") {
+  if (current !== key) { ready = null; current = key; }
+  const MODEL = LMS[key].id;
   ready ??= (async () => {
     onStatus("라이브러리·모델 정보 불러오는 중…");
     const { AutoTokenizer, AutoModelForCausalLM } = await import(LIB);
