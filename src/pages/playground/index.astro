@@ -32,6 +32,7 @@ const groups = [
     toys: [
       { href: "/playground/loss/", toy: "loss", title: "손실 — 틀림을 숫자로", tag: "0편 · 손실", desc: "예측 슬라이더로 제곱 오차 포물선 위를 움직이고, −log p가 폭발하는 걸 눈으로." },
       { href: "/playground/gradient/", toy: "gradient", title: "경사하강 — 공 굴리기", tag: "1편 · 경사하강", desc: "learning rate 하나로 안착·핑퐁·발산이 갈리는 걸 공 굴리며 체험." },
+      { href: "/playground/backprop/", toy: "backprop", title: "역전파 — 기울기 역류", tag: "2편 · 역전파", desc: "계산 그래프에서 값은 앞으로, 기울기는 거꾸로. 밀어서 잰 값과 대조하고 한 걸음씩 학습." },
     ],
   },
   {
@@ -261,6 +262,18 @@ const groups = [
       ctx.beginPath(); ctx.roundRect(20 + i * bw + 2, H - 15 - h, bw - 4, h, 2); ctx.fill();
     }
     ctx.strokeStyle = acc; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(20 + cut * bw, 10); ctx.lineTo(20 + cut * bw, H - 10); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // A 4-node chain: a forward dot runs left→right, then an accent dot runs back right→left.
+  function backprop(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e";
+    const n = 4, xs = Array.from({ length: n }, (_, i) => 36 + i * (W - 72) / (n - 1)), y = H / 2;
+    ctx.strokeStyle = "#c4c8d0"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xs[0], y); ctx.lineTo(xs[n - 1], y); ctx.stroke();
+    const t = (f % 200) / 100, back = t > 1, u = back ? 2 - t : t, px = xs[0] + u * (xs[n - 1] - xs[0]);
+    for (const x of xs) { ctx.fillStyle = (back ? x >= px : x <= px) ? acc : "#d7dae0"; ctx.beginPath(); ctx.roundRect(x - 12, y - 12, 24, 24, 6); ctx.fill(); }
+    ctx.fillStyle = back ? acc : "#6b6f76"; ctx.beginPath(); ctx.arc(px, y - 22, 4, 0, 7); ctx.fill();
   }
 
   function embeddings(ctx, W, H, f) {
@@ -500,7 +513,7 @@ const groups = [
     ctx.beginPath(); ctx.roundRect((W * 3) / 4 - 20, H / 2 - 15, 40, 30, 6); ctx.fill();
   }
 
-  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
+  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
   let f = 0;
   function loop() {
     f++;

@@ -1,0 +1,19 @@
+---
+title: "역전파 — 책임을 거꾸로 나눠 주기"
+description: "역전파는 손실에 대한 책임을 출력에서 입력 쪽으로 거꾸로 나눠 주는 계산입니다. 사슬은 곱하고 갈림길은 더한다는 두 규칙만으로, 앞으로 한 번·뒤로 한 번에 모든 기울기를 얻습니다. 손으로 푼 예제와 계산 그래프 실험실과 함께. 문장을 클릭하면 한/영 원문을 볼 수 있습니다."
+pubDate: 2026-10-13T10:00:00
+lang: ko
+translationKey: backprop
+tags: ["AI", "딥러닝", "역전파", "학습"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/backprop";
+
+<SeriesNav id="training" current="backprop" lang="ko" />
+
+<BilingualArticle blocks={blocks} />
+
+<SeriesNext id="training" current="backprop" lang="ko" />
