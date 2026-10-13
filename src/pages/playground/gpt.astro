@@ -224,33 +224,17 @@ import { SITE } from "../../consts";
 </script>
 
 <script type="module" is:inline>
-  // Real next-token distribution from SmolLM2-135M via transformers.js (loaded on demand).
+  // Real next-token distribution from SmolLM2-135M — shared loader in /lab/lm.js.
+  import { loadLM, nextLogits, label, decode, softmax } from "/lab/lm.js";
+  import { sample } from "/lab/sampling.js";
   const $ = (id) => document.getElementById(id);
-  const MODEL = "HuggingFaceTB/SmolLM2-135M-Instruct";
-  let tok, model, logits = null, busy = false;
+  let logits = null;
 
   $("gl-load").addEventListener("click", async () => {
     $("gl-load").disabled = true;
     const status = (t) => ($("gl-status").textContent = t);
     try {
-      status("라이브러리·모델 정보 불러오는 중…");
-      const { AutoTokenizer, AutoModelForCausalLM } = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0");
-      const webgpu = !!navigator.gpu && !!(await navigator.gpu.requestAdapter().catch(() => null));
-      const files = {};
-      const progress_callback = (e) => {
-        if (e.status === "progress" && e.total) {
-          files[e.file] = [e.loaded, e.total];
-          const [l, t] = Object.values(files).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0]);
-          if (t > 1e6) status(`모델 내려받는 중… ${(l / 1e6).toFixed(0)} / ${(t / 1e6).toFixed(0)} MB`);
-        }
-      };
-      tok = await AutoTokenizer.from_pretrained(MODEL);
-      model = await AutoModelForCausalLM.from_pretrained(MODEL, {
-        device: webgpu ? "webgpu" : "wasm",
-        dtype: webgpu ? "q4f16" : "q8",
-        progress_callback,
-      });
-      status(`준비 완료 · ${webgpu ? "WebGPU" : "WASM(CPU)"}에서 실행 중 · 다음부터는 캐시에서 바로 뜹니다`);
+      await loadLM(status);
       $("gl-load").hidden = true;
       $("gl-ui").hidden = false;
       await refresh();
@@ -262,28 +246,14 @@ import { SITE } from "../../consts";
   });
 
   async function refresh() {
-    if (busy) return;
-    busy = true;
-    const text = $("gl-text").value;
     const t0 = performance.now();
-    const inputs = tok(text);
-    const out = await model(inputs);
-    const [, n, V] = out.logits.dims;
-    const all = Array.from(out.logits.data.slice((n - 1) * V, n * V), Number);
-    logits = all;
-    $("gl-meta").textContent = `· 입력 ${n}토큰 · ${(performance.now() - t0).toFixed(0)}ms`;
-    busy = false;
+    const out = await nextLogits($("gl-text").value);
+    logits = out.logits;
+    $("gl-meta").textContent = `· 입력 ${out.n}토큰 · ${(performance.now() - t0).toFixed(0)}ms`;
     draw();
   }
 
-  function probs() {
-    const T = Number($("gl-temp").value);
-    let m = -Infinity;
-    for (const l of logits) if (l > m) m = l;
-    const e = logits.map((l) => Math.exp((l - m) / T));
-    const z = e.reduce((a, b) => a + b, 0);
-    return e.map((x) => x / z);
-  }
+  const probs = () => softmax(logits, Number($("gl-temp").value));
 
   function draw() {
     const p = probs();
@@ -292,34 +262,25 @@ import { SITE } from "../../consts";
     for (const [id, v] of top) {
       const row = document.createElement("div");
       row.className = "gp-bar";
-      // show spaces as ␣ — tokens usually carry their leading space
-      const label = JSON.stringify(tok.decode([id])).slice(1, -1).replace(/ /g, "␣");
       row.innerHTML = `<span class="k"></span><span class="track"><span class="fill" style="width:${(v * 100).toFixed(1)}%"></span></span><span class="v">${(v * 100).toFixed(1)}%</span>`;
-      row.querySelector(".k").textContent = label;
+      row.querySelector(".k").textContent = label(id);
       row.addEventListener("click", () => append(id));
       $("gl-bars").appendChild(row);
     }
   }
 
   async function append(id) {
-    $("gl-text").value += tok.decode([id]);
+    $("gl-text").value += decode(id);
     await refresh();
-  }
-
-  function sample() {
-    const p = probs();
-    let r = Math.random();
-    for (let i = 0; i < p.length; i++) if ((r -= p[i]) <= 0) return i;
-    return p.length - 1;
   }
 
   $("gl-temp").addEventListener("input", () => {
     $("gl-tval").textContent = Number($("gl-temp").value).toFixed(1);
     if (logits) draw();
   });
-  $("gl-sample").addEventListener("click", () => append(sample()));
+  $("gl-sample").addEventListener("click", () => append(sample(probs())));
   $("gl-auto").addEventListener("click", async () => {
-    for (let k = 0; k < 10; k++) await append(sample());
+    for (let k = 0; k < 10; k++) await append(sample(probs()));
   });
   let deb;
   $("gl-text").addEventListener("input", () => {

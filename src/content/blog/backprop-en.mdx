@@ -1,0 +1,19 @@
+---
+title: "Backprop — Handing Blame Backward"
+description: "Backprop hands out blame for the loss from the output back to the inputs. Two rules — multiply along a chain, add where paths split — give you every gradient in one forward and one backward pass. With a worked example and a computational-graph lab. Click any sentence to flip between English and Korean."
+pubDate: 2026-10-13T10:00:00
+lang: en
+translationKey: backprop
+tags: ["AI", "Deep Learning", "Backprop", "Training"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/backprop";
+
+<SeriesNav id="training" current="backprop" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="training" current="backprop" lang="en" />

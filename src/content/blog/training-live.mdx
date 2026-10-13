@@ -1,0 +1,19 @@
+---
+title: "실전 — 신경망이 배우는 걸 지켜보기"
+description: "손실·경사하강·역전파를 한 루프로 돌려 작은 신경망을 브라우저에서 실제로 학습시킵니다. 미니배치·에포크, 경계가 고리를 감싸는 순간, 직선 모델과 너무 큰 learning rate의 실패, 과적합과 조기 종료까지 실측으로. 문장을 클릭하면 한/영 원문을 볼 수 있습니다."
+pubDate: 2026-10-13T11:00:00
+lang: ko
+translationKey: training-live
+tags: ["AI", "딥러닝", "학습", "과적합"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/trainingLive";
+
+<SeriesNav id="training" current="training-live" lang="ko" />
+
+<BilingualArticle blocks={blocks} />
+
+<SeriesNext id="training" current="training-live" lang="ko" />

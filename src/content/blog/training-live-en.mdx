@@ -1,0 +1,19 @@
+---
+title: "Training for Real — Watching a Network Learn"
+description: "Wire loss, gradient descent, and backprop into one loop and train a small network live in the browser: minibatches and epochs, the moment the boundary wraps the ring, failures from a linear model and a too-large learning rate, and overfitting with early stopping — all measured. Click any sentence to flip between English and Korean."
+pubDate: 2026-10-13T11:00:00
+lang: en
+translationKey: training-live
+tags: ["AI", "Deep Learning", "Training", "Overfitting"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/trainingLive";
+
+<SeriesNav id="training" current="training-live" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="training" current="training-live" lang="en" />

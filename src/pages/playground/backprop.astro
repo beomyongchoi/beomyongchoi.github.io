@@ -1,0 +1,283 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`역전파 — 기울기가 거꾸로 흐른다 — ${SITE.authorKo}`}
+  description="계산 그래프 위에서 값은 앞으로, 기울기는 거꾸로 흐릅니다. 연쇄 법칙(곱하기)과 갈림길(더하기)을 눌러 보며 확인하고, 밀어서 잰 기울기와 대조하고, 한 걸음씩 학습시켜 보세요. 모델은 어떻게 배우나 시리즈 2편."
+  locale="ko"
+  path="/playground/backprop/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">역전파 — 기울기가 거꾸로 흐른다</h1>
+    <p class="mt-3 text-muted">
+      값은 이미 앞으로 흘러 있습니다. <strong>②</strong>를 눌러 기울기를 거꾸로 흘려 보세요. 화살표 위 숫자가 그 칸의 국소 기울기이고, 노드 아래 숫자는 그걸 곱해 온 결과입니다.
+    </p>
+  </header>
+
+  <section class="bp">
+    <a class="bp-crosslink" href="/blog/backprop/">개념 더 읽기 → 역전파 — 책임을 거꾸로 (2편)</a>
+
+    <div class="bp-ctl">
+      <label>w1 <b id="v-w1"></b><input id="k-w1" type="range" min="-3" max="3" step="0.01" value="1" /></label>
+      <label>w2 <b id="v-w2"></b><input id="k-w2" type="range" min="-3" max="3" step="0.01" value="2" /></label>
+      <label>learning rate <b id="v-lr"></b><input id="k-lr" type="range" min="0.005" max="0.06" step="0.005" value="0.01" /></label>
+    </div>
+    <div class="bp-btns">
+      <button id="b-fwd" type="button">① 순방향</button>
+      <button id="b-bwd" type="button">② 역방향</button>
+      <button id="b-step" type="button">③ 한 걸음</button>
+      <button id="b-run" type="button" class="ghost">▶ 20걸음</button>
+      <button id="b-reset" type="button" class="ghost">↺ 처음으로</button>
+    </div>
+
+    <div class="bp-canvas"><svg id="bp-svg" viewBox="0 0 940 320" role="img" aria-label="계산 그래프: x와 w1을 곱해 h, h와 w2를 곱해 y, y에서 6을 빼 e, e를 제곱해 손실 L"></svg></div>
+
+    <div class="bp-plots">
+      <figure><svg id="pl-w1" viewBox="0 0 300 190"></svg><figcaption>w2를 고정하고 <b>w1</b>만 움직일 때의 손실. 점선 = 접선, 기울기 = ∂L/∂w1</figcaption></figure>
+      <figure><svg id="pl-w2" viewBox="0 0 300 190"></svg><figcaption>w1을 고정하고 <b>w2</b>만 움직일 때의 손실. 기울기 = ∂L/∂w2</figcaption></figure>
+      <figure><svg id="pl-hist" viewBox="0 0 300 190"></svg><figcaption>걸음별 손실. lr을 0.03, 0.05로 올려 보세요 — 골짜기를 왔다 갔다 합니다.</figcaption></figure>
+    </div>
+
+    <div class="bp-grid">
+      <div class="bp-card">
+        <div class="bp-card-h">밀어서 확인 (1편 방식)</div>
+        <table class="bp-tbl" id="bp-check"></table>
+        <p class="bp-small">가중치를 0.01 올려 손실 변화를 0.01로 나눈 값입니다. 역전파 값과 거의 같아야 합니다.</p>
+      </div>
+      <div class="bp-card">
+        <div class="bp-card-h">학습 기록</div>
+        <ol class="bp-log" id="bp-log"></ol>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .bp-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .bp-crosslink:hover { text-decoration: underline; }
+  .bp-ctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 22px; margin: 16px 0 10px; }
+  .bp-ctl label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); display: grid; grid-template-columns: 1fr auto; gap: 4px; }
+  .bp-ctl input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+  .bp-ctl b { color: var(--accent); }
+  .bp-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bp-btns button { font: inherit; font-family: var(--font-mono); font-size: 0.8rem; padding: 7px 13px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .bp-btns button.ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+  .bp-btns button:disabled { opacity: 0.4; cursor: default; }
+
+  .bp-canvas { margin: 16px 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); padding: 8px; overflow-x: auto; }
+  #bp-svg { display: block; width: 100%; min-width: 640px; height: auto; font-family: var(--font-mono); }
+  #bp-svg .edge { stroke: var(--border); stroke-width: 2; fill: none; transition: stroke .25s; }
+  #bp-svg .edge.fwd { stroke: color-mix(in srgb, var(--fg) 45%, transparent); }
+  #bp-svg .edge.bwd { stroke: var(--accent); stroke-width: 2.5; }
+  #bp-svg .local { font-size: 12px; fill: var(--accent); opacity: 0; transition: opacity .25s; paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+  #bp-svg .local.on { opacity: 1; }
+  #bp-svg .box { fill: var(--bg); stroke: var(--border); stroke-width: 1.5; transition: stroke .25s; }
+  #bp-svg .node.fwd .box { stroke: color-mix(in srgb, var(--fg) 55%, transparent); }
+  #bp-svg .node.bwd .box { stroke: var(--accent); stroke-width: 2.5; }
+  #bp-svg .node.param .box { fill: color-mix(in srgb, var(--accent) 8%, var(--bg)); }
+  #bp-svg .name { font-size: 13px; fill: var(--muted); }
+  #bp-svg .val { font-size: 16px; font-weight: 700; fill: var(--fg); opacity: 0; transition: opacity .25s; }
+  #bp-svg .node.fwd .val { opacity: 1; }
+  #bp-svg .grad { font-size: 11px; fill: var(--accent); opacity: 0; transition: opacity .25s; }
+  #bp-svg .node.bwd .grad { opacity: 1; }
+
+  .bp-plots { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .bp-plots figure { margin: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 8px 8px 10px; }
+  .bp-plots svg { display: block; width: 100%; height: auto; font-family: var(--font-mono); }
+  .bp-plots figcaption { font-size: 0.72rem; color: var(--muted); line-height: 1.5; padding: 4px 4px 0; }
+  .bp-plots figcaption b { color: var(--fg); }
+  .bp-plots .ax { stroke: var(--border); stroke-width: 1; }
+  .bp-plots .curve { fill: none; stroke: color-mix(in srgb, var(--fg) 55%, transparent); stroke-width: 1.8; }
+  .bp-plots .tan { stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 5 4; }
+  .bp-plots .trail { fill: none; stroke: var(--accent); stroke-width: 1; opacity: .45; }
+  .bp-plots .pt { fill: var(--accent); transition: cx .25s, cy .25s; }
+  .bp-plots .lbl { font-size: 10.5px; fill: var(--muted); }
+  .bp-plots .big { font-size: 12px; fill: var(--accent); font-weight: 700; }
+  .bp-plots .hist { fill: none; stroke: var(--accent); stroke-width: 1.8; }
+  .bp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .bp-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 13px 15px; }
+  .bp-card-h { font-size: 0.88rem; font-weight: 700; margin-bottom: 8px; }
+  .bp-tbl { width: 100%; font-family: var(--font-mono); font-size: 0.8rem; border-collapse: collapse; }
+  .bp-tbl th { text-align: right; color: var(--muted); font-weight: 400; padding: 3px 6px; }
+  .bp-tbl td { text-align: right; padding: 3px 6px; }
+  .bp-tbl td:first-child, .bp-tbl th:first-child { text-align: left; }
+  .bp-tbl .ok { color: var(--accent); }
+  .bp-small { margin-top: 8px; font-size: 0.75rem; color: var(--muted); }
+  .bp-log { margin: 0; padding-left: 0; list-style: none; font-family: var(--font-mono); font-size: 0.76rem; max-height: 210px; overflow-y: auto; }
+  .bp-log li { padding: 2px 0; }
+  .bp-log li:first-child { color: var(--accent); font-weight: 700; }
+</style>
+
+<script type="module" is:inline>
+  import { Value } from "/lab/autograd.js";
+
+  const $ = (id) => document.getElementById(id);
+  const X = 2, TARGET = 6;
+  const lr = () => +$("k-lr").value;
+  // name: [x, y, kind]  — layout of the drawn nodes
+  const POS = { x: [75, 75, "input"], w1: [75, 225, "param"], h: [285, 150, "op"], w2: [285, 275, "param"], y: [470, 212, "op"], e: [640, 212, "op"], L: [865, 212, "op"] };
+  const NAME = { x: "x", w1: "w1", h: "h = w1·x", w2: "w2", y: "y = w2·h", e: "e = y − 6", L: "L = e²" };
+  // edges: [from(input), to(output), local-derivative label fn]
+  const EDGES = [
+    ["x", "h", (g) => `×w1 = ${f(g.w1.data)}`],
+    ["w1", "h", (g) => `×x = ${f(X)}`],
+    ["h", "y", (g) => `×w2 = ${f(g.w2.data)}`],
+    ["w2", "y", (g) => `×h = ${f(g.h.data)}`],
+    ["y", "e", () => "×1"],
+    ["e", "L", (g) => `×2e = ${f(2 * g.e.data)}`],
+  ];
+  const ORDER = ["x", "w1", "w2", "h", "y", "e", "L"];
+  const f = (v) => (Math.abs(v) < 1e-9 ? "0" : (Math.round(v * 1000) / 1000).toString());
+
+  let w1 = 1, w2 = 2, step = 0, timers = [], hist = [], trail = [];
+
+  function build(a = w1, b = w2) {
+    const g = { x: new Value(X, [], "", "x"), w1: new Value(a, [], "", "w1"), w2: new Value(b, [], "", "w2") };
+    g.h = g.w1.mul(g.x);
+    g.y = g.w2.mul(g.h);
+    g.e = g.y.add(-TARGET);
+    g.L = g.e.square();
+    return g;
+  }
+
+  function draw() {
+    const g = build();
+    g.L.backward();
+    const svg = $("bp-svg");
+    const W = 128, H = 60;
+    let out = "";
+    for (const [a, b, lab] of EDGES) {
+      const [x1, y1] = POS[a], [x2, y2] = POS[b];
+      const sx = x1 + W / 2, ex = x2 - W / 2, mx = (sx + ex) / 2;
+      out += `<path class="edge" data-e="${a}-${b}" d="M${sx},${y1} C${mx},${y1} ${mx},${y2} ${ex},${y2}" />`;
+      out += `<text class="local" data-e="${a}-${b}" x="${mx}" y="${Math.min(y1, y2) - 14}" text-anchor="middle">${lab(g)}</text>`;
+    }
+    for (const n of ORDER) {
+      const [cx, cy, kind] = POS[n];
+      out += `<g class="node ${kind}" data-n="${n}"><rect class="box" x="${cx - W / 2}" y="${cy - H / 2}" width="${W}" height="${H}" rx="10" />` +
+        `<text class="name" x="${cx}" y="${cy - H / 2 - 7}" text-anchor="middle">${NAME[n]}</text>` +
+        `<text class="val" x="${cx}" y="${cy + 1}" text-anchor="middle">${f(g[n].data)}</text>` +
+        `<text class="grad" x="${cx}" y="${cy + 20}" text-anchor="middle">∂L/∂${n} = ${f(g[n].grad)}</text></g>`;
+    }
+    svg.innerHTML = out;
+    $("v-w1").textContent = w1.toFixed(2);
+    $("v-w2").textContent = w2.toFixed(2);
+    $("v-lr").textContent = lr().toFixed(3);
+    check(g);
+    plots(g);
+    return g;
+  }
+
+  function check(g) {
+    const L0 = g.L.data, eps = 0.01;
+    const row = (n, grad, Lp) => {
+      const fd = (Lp - L0) / eps;
+      return `<tr><td>${n}</td><td>${f(grad)}</td><td>${fd.toFixed(3)}</td><td class="ok">${Math.abs(fd - grad) < Math.max(0.05, Math.abs(grad) * 0.02) ? "≈" : ""}</td></tr>`;
+    };
+    $("bp-check").innerHTML = `<tr><th></th><th>역전파</th><th>밀어서</th><th></th></tr>` +
+      row("w1", g.w1.grad, build(w1 + eps, w2).L.data) + row("w2", g.w2.grad, build(w1, w2 + eps).L.data);
+  }
+
+  // L as a function of one weight with the other held fixed: a parabola. Draw it, the trail of
+  // visited points, the current point, and the tangent whose slope is the backprop gradient.
+  const lossAt = (a, b) => (2 * a * b - TARGET) ** 2;
+  function slice(id, cur, other, grad, which) {
+    const W = 300, H = 190, P = 26, lo = -1, hi = 4, top = 20;   // fixed scale so the point visibly slides and bounces
+    const sx = (v) => P + ((v - lo) / (hi - lo)) * (W - 2 * P), sy = (L) => H - P - (Math.min(L, top * 1.1) / top) * (H - 2 * P);
+    const Lof = (v) => (which === "w1" ? lossAt(v, other) : lossAt(other, v));
+    let d = "";
+    for (let i = 0; i <= 120; i++) { const v = lo + ((hi - lo) * i) / 120; d += (i ? "L" : "M") + sx(v).toFixed(1) + "," + sy(Lof(v)).toFixed(1); }
+    const L0 = Lof(cur), dx = 0.6;
+    const tr = trail.map((t) => [t[which], which === "w1" ? lossAt(t.w1, other) : lossAt(other, t.w2)]);
+    $(id).innerHTML =
+      `<line class="ax" x1="${P}" y1="${H - P}" x2="${W - P}" y2="${H - P}" /><line class="ax" x1="${sx(0)}" y1="${P / 2}" x2="${sx(0)}" y2="${H - P}" />` +
+      `<path class="curve" d="${d}" />` +
+      (tr.length > 1 ? `<path class="trail" d="${tr.map(([v, L], i) => (i ? "L" : "M") + sx(v).toFixed(1) + "," + sy(L).toFixed(1)).join("")}" />` : "") +
+      `<line class="tan" x1="${sx(cur - dx)}" y1="${sy(L0 - grad * dx)}" x2="${sx(cur + dx)}" y2="${sy(L0 + grad * dx)}" />` +
+      `<circle class="pt" cx="${sx(cur)}" cy="${sy(L0)}" r="5" />` +
+      `<text class="big" x="${P + 2}" y="${P - 6}">∂L/∂${which} = ${f(grad)}</text>` +
+      `<text class="lbl" x="${W - P}" y="${H - 8}" text-anchor="end">${which} →</text><text class="lbl" x="${sx(cur)}" y="${H - 8}" text-anchor="middle">${cur.toFixed(2)}</text>`;
+  }
+  function plots(g) {
+    slice("pl-w1", w1, w2, g.w1.grad, "w1");
+    slice("pl-w2", w2, w1, g.w2.grad, "w2");
+    const W = 300, H = 190, P = 26, top = Math.max(4, ...hist);
+    const n = Math.max(20, hist.length - 1), sx = (i) => P + (i / n) * (W - 2 * P), sy = (L) => H - P - (L / top) * (H - 2 * P);
+    $("pl-hist").innerHTML = `<line class="ax" x1="${P}" y1="${H - P}" x2="${W - P}" y2="${H - P}" /><line class="ax" x1="${P}" y1="${P / 2}" x2="${P}" y2="${H - P}" />` +
+      (hist.length > 1 ? `<path class="hist" d="${hist.map((L, i) => (i ? "L" : "M") + sx(i).toFixed(1) + "," + sy(L).toFixed(1)).join("")}" />` : "") +
+      (hist.length ? `<circle class="pt" cx="${sx(hist.length - 1)}" cy="${sy(hist.at(-1))}" r="4" />` : "") +
+      `<text class="big" x="${P + 2}" y="${P - 6}">L = ${hist.length ? hist.at(-1).toFixed(4) : "-"}</text><text class="lbl" x="${W - P}" y="${H - 8}" text-anchor="end">step →</text>`;
+  }
+
+  const clear = () => { timers.forEach(clearTimeout); timers = []; };
+  const mark = (sel, cls) => document.querySelectorAll(sel).forEach((el) => el.classList.add(cls));
+  const later = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+  function forward(speed = 260) {
+    clear();
+    draw();
+    ORDER.forEach((n, i) => later(i * speed, () => {
+      mark(`.node[data-n="${n}"]`, "fwd");
+      EDGES.filter(([, b]) => b === n).forEach(([a, b]) => mark(`.edge[data-e="${a}-${b}"]`, "fwd"));
+    }));
+    return ORDER.length * speed;
+  }
+
+  function backward(speed = 320) {
+    clear();
+    mark(".node", "fwd");
+    mark(".edge", "fwd");
+    [...ORDER].reverse().forEach((n, i) => later(i * speed, () => {
+      mark(`.node[data-n="${n}"]`, "bwd");
+      EDGES.filter(([, b]) => b === n).forEach(([a, b]) => { mark(`.edge[data-e="${a}-${b}"]`, "bwd"); mark(`.local[data-e="${a}-${b}"]`, "on"); });
+    }));
+  }
+
+  function log(g) {
+    hist.push(g.L.data);
+    trail.push({ w1, w2 });
+    plots(g);
+    const li = document.createElement("li");
+    li.textContent = `step ${step}  w1=${w1.toFixed(4)}  w2=${w2.toFixed(4)}  L=${g.L.data.toFixed(4)}`;
+    $("bp-log").prepend(li);
+  }
+
+  function doStep() {
+    const g = build();
+    g.L.backward();
+    w1 -= lr() * g.w1.grad;
+    w2 -= lr() * g.w2.grad;
+    step++;
+    $("k-w1").value = w1;
+    $("k-w2").value = w2;
+    const g2 = draw();
+    mark(".node", "fwd"); mark(".edge", "fwd"); mark(".node", "bwd"); mark(".local", "on");
+    log(g2);
+  }
+
+  function reset() {
+    clear();
+    w1 = 1; w2 = 2; step = 0;
+    $("k-w1").value = 1; $("k-w2").value = 2;
+    $("bp-log").innerHTML = "";
+    hist = []; trail = [];
+    log(draw());
+    mark(".node", "fwd"); mark(".edge", "fwd");   // start with values shown; ② is the interesting click
+  }
+
+  $("b-fwd").addEventListener("click", () => forward());
+  $("b-bwd").addEventListener("click", () => backward());
+  $("b-step").addEventListener("click", doStep);
+  $("b-run").addEventListener("click", () => { clear(); for (let i = 0; i < 20; i++) later(i * 220, doStep); });
+  $("b-reset").addEventListener("click", reset);
+  for (const k of ["w1", "w2"]) $("k-" + k).addEventListener("input", (e) => {
+    if (k === "w1") w1 = +e.target.value; else w2 = +e.target.value;
+    clear(); hist = []; trail = []; step = 0; $("bp-log").innerHTML = ""; log(draw()); mark(".node", "fwd"); mark(".edge", "fwd");
+  });
+  $("k-lr").addEventListener("input", () => ($("v-lr").textContent = lr().toFixed(3)));
+
+  reset();
+</script>
