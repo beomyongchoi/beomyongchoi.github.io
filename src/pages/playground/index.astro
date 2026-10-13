@@ -33,6 +33,7 @@ const groups = [
       { href: "/playground/loss/", toy: "loss", title: "손실 — 틀림을 숫자로", tag: "0편 · 손실", desc: "예측 슬라이더로 제곱 오차 포물선 위를 움직이고, −log p가 폭발하는 걸 눈으로." },
       { href: "/playground/gradient/", toy: "gradient", title: "경사하강 — 공 굴리기", tag: "1편 · 경사하강", desc: "learning rate 하나로 안착·핑퐁·발산이 갈리는 걸 공 굴리며 체험." },
       { href: "/playground/backprop/", toy: "backprop", title: "역전파 — 기울기 역류", tag: "2편 · 역전파", desc: "계산 그래프에서 값은 앞으로, 기울기는 거꾸로. 밀어서 잰 값과 대조하고 한 걸음씩 학습." },
+      { href: "/playground/train/", toy: "train", title: "라이브 학습 — 경계가 휜다", tag: "3편 · 피날레", desc: "작은 신경망을 브라우저에서 진짜로 학습. 고리를 감싸는 경계, 직선·lr 과다·과적합까지 직접." },
     ],
   },
   {
@@ -276,6 +277,16 @@ const groups = [
     ctx.fillStyle = back ? acc : "#6b6f76"; ctx.beginPath(); ctx.arc(px, y - 22, 4, 0, 7); ctx.fill();
   }
 
+  // A boundary circle that grows from a dot to wrap the ring as "training" proceeds, then resets.
+  function train(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", cx = W / 2, cy = H / 2, k = Math.min(1, (f % 240) / 160);
+    ctx.fillStyle = "rgba(224,132,42,0.18)"; ctx.beginPath(); ctx.ellipse(cx, cy, 8 + k * 30, 6 + k * 24 + 6 * (1 - k) * Math.sin(f * 0.2), 0, 0, 7); ctx.fill();
+    for (let i = 0; i < 14; i++) { const a = i * 0.449; ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(cx + 50 * Math.cos(a), cy + 38 * Math.sin(a), 3, 0, 7); ctx.fill(); }
+    for (let i = 0; i < 7; i++) { const a = i * 0.9; ctx.fillStyle = "#c86a12"; ctx.beginPath(); ctx.arc(cx + 12 * Math.cos(a), cy + 9 * Math.sin(a), 3, 0, 7); ctx.fill(); }
+  }
+
   function embeddings(ctx, W, H, f) {
     const cs = getComputedStyle(document.documentElement);
     ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
@@ -513,7 +524,7 @@ const groups = [
     ctx.beginPath(); ctx.roundRect((W * 3) / 4 - 20, H / 2 - 15, 40, 30, 6); ctx.fill();
   }
 
-  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
+  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, train, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
   let f = 0;
   function loop() {
     f++;

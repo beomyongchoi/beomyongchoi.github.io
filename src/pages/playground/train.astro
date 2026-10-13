@@ -1,0 +1,202 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`라이브 학습 — 신경망이 배우는 걸 지켜보기 — ${SITE.authorKo}`}
+  description="작은 신경망을 브라우저에서 진짜로 학습시킵니다. 손실·경사하강·역전파가 한 루프로 돌며 결정 경계가 고리를 감싸는 걸 지켜보고, 직선 모델·너무 큰 learning rate·과적합까지 직접 일으켜 보세요. 모델은 어떻게 배우나 시리즈 3편(피날레)."
+  locale="ko"
+  path="/playground/train/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">라이브 학습 — 경계가 휘는 걸 지켜보기</h1>
+    <p class="mt-3 text-muted">
+      ▶를 누르면 작은 신경망이 <strong>진짜로</strong> 학습합니다. 손실 → 역전파 → 한 걸음이 미니배치마다 돕니다. 프리셋으로 실패도 일부러 일으켜 보세요.
+    </p>
+  </header>
+
+  <section class="tr">
+    <a class="tr-crosslink" href="/blog/training-live/">개념 더 읽기 → 실전 — 학습을 지켜보기 (3편)</a>
+
+    <div class="tr-presets" id="tr-presets">
+      <button data-p="base" class="on">기본 · 120점 · 은닉 8-8</button>
+      <button data-p="linear">직선 모델 · 은닉층 없음</button>
+      <button data-p="hot">lr 너무 큼 · 2.0</button>
+      <button data-p="overfit">과적합 · 30점+노이즈 · 은닉 24-24</button>
+    </div>
+
+    <div class="tr-stage">
+      <div class="tr-left">
+        <canvas id="tr-map" width="420" height="420"></canvas>
+        <p class="tr-legend">● 학습 데이터 &nbsp; ○ 테스트 데이터(학습에 안 씀) &nbsp; 파랑 = 고리 쪽 · 주황 = 안쪽 뭉치로 보는 영역</p>
+      </div>
+      <div class="tr-right">
+        <div class="tr-stats" id="tr-stats"></div>
+        <svg id="tr-curve" viewBox="0 0 360 200"></svg>
+        <p class="tr-legend"><span class="sw tr-sw-train"></span> train 손실 &nbsp; <span class="sw tr-sw-test"></span> test 손실 (로그 스케일)</p>
+        <div class="tr-btns">
+          <button id="tr-play" type="button">▶ 학습</button>
+          <button id="tr-epoch" type="button" class="ghost">+1 에포크</button>
+          <button id="tr-reset" type="button" class="ghost">↺ 처음으로</button>
+        </div>
+        <div class="tr-knobs">
+          <label>learning rate <b id="v-lr"></b><input id="k-lr" type="range" min="0.01" max="2" step="0.01" /></label>
+          <label>미니배치 크기 <b id="v-bs"></b><input id="k-bs" type="range" min="1" max="64" step="1" /></label>
+        </div>
+        <p class="tr-note" id="tr-note"></p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .tr-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .tr-crosslink:hover { text-decoration: underline; }
+  .tr-presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+  .tr-presets button { font: inherit; font-family: var(--font-mono); font-size: 0.72rem; padding: 5px 11px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--fg); cursor: pointer; }
+  .tr-presets button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .tr-stage { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .tr-stage { grid-template-columns: 1fr; } }
+  #tr-map { width: 100%; height: auto; aspect-ratio: 1; border: 1px solid var(--border); border-radius: 14px; display: block; }
+  .tr-legend { margin-top: 6px; font-size: 0.72rem; color: var(--muted); }
+  .tr-legend .sw { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 3px; border-radius: 2px; }
+  .tr-sw-train { background: var(--accent); }
+  .tr-sw-test { background: #e0842a; }
+  .tr-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+  .tr-stat { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 7px 11px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .tr-stat b { display: block; font-size: 1rem; color: var(--fg); }
+  #tr-curve { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-family: var(--font-mono); }
+  #tr-curve .ax { stroke: var(--border); }
+  #tr-curve .lbl { font-size: 10px; fill: var(--muted); }
+  #tr-curve .tr { fill: none; stroke: var(--accent); stroke-width: 2; }
+  #tr-curve .te { fill: none; stroke: #e0842a; stroke-width: 2; }
+  #tr-curve .best { fill: #e0842a; }
+  .tr-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .tr-btns button { font: inherit; font-family: var(--font-mono); font-size: 0.8rem; padding: 7px 13px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .tr-btns button.ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+  .tr-knobs { display: grid; gap: 10px; }
+  .tr-knobs label { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted); display: grid; grid-template-columns: 1fr auto; gap: 4px; }
+  .tr-knobs input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+  .tr-knobs b { color: var(--accent); }
+  .tr-note { margin-top: 12px; font-size: 0.85rem; line-height: 1.6; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 9px 13px; }
+</style>
+
+<script type="module" is:inline>
+  import { MLP, makeRing, batches, rng } from "/lab/mlp.js";
+
+  const $ = (id) => document.getElementById(id);
+  // Same four setups the post measured (numbers in the post come from these exact presets).
+  const PRESETS = {
+    base: { sizes: [2, 8, 8, 1], n: 120, noise: 0, lr: 0.1, bs: 16, note: "은닉층 두 개(8-8, 파라미터 105개)가 고리를 감쌉니다. 25에포크쯤이면 train·test 모두 100%입니다." },
+    linear: { sizes: [2, 1], n: 120, noise: 0, lr: 0.1, bs: 16, note: "은닉층이 없으면 경계는 직선 하나입니다. 아무리 돌려도 고리 안팎을 못 가르고 정확도가 절반 언저리를 맴돕니다." },
+    hot: { sizes: [2, 8, 8, 1], n: 120, noise: 0, lr: 2, bs: 16, note: "보폭이 너무 커서 첫 몇 걸음에 tanh가 포화됩니다. 기울기가 0에 붙어 모든 점을 한쪽으로 찍은 채 굳어 버립니다(정확도 50%)." },
+    overfit: { sizes: [2, 24, 24, 1], n: 30, noise: 0.6, lr: 0.1, bs: 8, note: "점 30개에 파라미터 697개. train 손실은 0으로 가는데, test 손실은 바닥을 찍은 뒤 다시 오릅니다 — 외우기 시작한 겁니다. 경계가 학습 점에만 맞춰지면서, 데이터가 없는 곳으로 엉뚱하게 뻗는 걸 보세요." },
+  };
+
+  let P, model, train, test, r, epoch, hist, running = false, best;
+
+  function load(name) {
+    P = { ...PRESETS[name] };
+    document.querySelectorAll("#tr-presets button").forEach((b) => b.classList.toggle("on", b.dataset.p === name));
+    $("k-lr").value = P.lr; $("k-bs").value = P.bs;
+    $("tr-note").textContent = P.note;
+    reset();
+  }
+
+  function reset() {
+    stop();
+    const all = makeRing({ n: P.n * 2, noise: P.noise, seed: 7 });
+    // balanced split: pairs (inner, outer) alternate between train and test
+    train = all.filter((_, i) => Math.floor(i / 2) % 2 === 0);
+    test = all.filter((_, i) => Math.floor(i / 2) % 2 === 1);
+    model = new MLP(P.sizes, 3);
+    r = rng(11);
+    epoch = 0;
+    hist = [];
+    best = { e: 0, L: Infinity };
+    record();
+    render();
+  }
+
+  function oneEpoch() {
+    const lr = +$("k-lr").value, bs = +$("k-bs").value;
+    for (const b of batches(train, bs, r)) model.step(b, lr);
+    epoch++;
+    record();
+  }
+
+  function record() {
+    const tl = model.loss(train), te = model.loss(test);
+    hist.push([tl, te]);
+    if (te < best.L) best = { e: epoch, L: te };
+  }
+
+  // Background: predict on a grid, blue = ring side (+1), orange = blob side (−1).
+  const RANGE = 4.2, RES = 70;
+  function drawMap() {
+    const c = $("tr-map"), ctx = c.getContext("2d"), W = c.width, cell = W / RES;
+    const toPx = (v) => ((v + RANGE) / (2 * RANGE)) * W;
+    for (let i = 0; i < RES; i++) for (let j = 0; j < RES; j++) {
+      const x = -RANGE + ((i + 0.5) / RES) * 2 * RANGE, y = RANGE - ((j + 0.5) / RES) * 2 * RANGE;
+      const p = model.predict(x, y), a = 0.06 + 0.2 * Math.abs(p);
+      ctx.fillStyle = "#fbfbfc"; ctx.fillRect(i * cell, j * cell, cell + 1, cell + 1);
+      ctx.fillStyle = p > 0 ? `rgba(43,74,126,${a})` : `rgba(224,132,42,${a})`;
+      ctx.fillRect(i * cell, j * cell, cell + 1, cell + 1);
+    }
+    for (const [pts, filled] of [[test, false], [train, true]]) for (const pt of pts) {
+      const x = toPx(pt.x), y = W - toPx(pt.y), col = pt.t > 0 ? "#2b4a7e" : "#c86a12";
+      ctx.beginPath(); ctx.arc(x, y, filled ? 6 : 5, 0, 7);
+      if (filled) { ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke(); }
+      else { ctx.fillStyle = "#fff"; ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.stroke(); }
+    }
+  }
+
+  function drawCurve() {
+    const W = 360, H = 200, P0 = 40, n = Math.max(50, hist.length - 1);
+    const lo = -3, hi = 1;   // log10 loss from 0.001 to 10
+    const sx = (i) => P0 + (i / n) * (W - P0 - 10), sy = (L) => { const v = Math.min(hi, Math.max(lo, Math.log10(Math.max(L, 1e-6)))); return 10 + ((hi - v) / (hi - lo)) * (H - 40); };
+    const path = (k) => hist.map((h, i) => (i ? "L" : "M") + sx(i).toFixed(1) + "," + sy(h[k]).toFixed(1)).join("");
+    let ticks = "";
+    for (const t of [10, 1, 0.1, 0.01, 0.001]) ticks += `<line class="ax" x1="${P0}" x2="${W - 10}" y1="${sy(t)}" y2="${sy(t)}" /><text class="lbl" x="${P0 - 4}" y="${sy(t) + 3}" text-anchor="end">${t}</text>`;
+    $("tr-curve").innerHTML = ticks + `<path class="tr" d="${path(0)}" /><path class="te" d="${path(1)}" />` +
+      (hist.length > 2 ? `<circle class="best" cx="${sx(best.e)}" cy="${sy(best.L)}" r="4" />` : "") +
+      `<text class="lbl" x="${W - 10}" y="${H - 8}" text-anchor="end">epoch ${epoch}</text>`;
+  }
+
+  function render() {
+    drawMap();
+    drawCurve();
+    const [tl, te] = hist.at(-1);
+    const stat = (k, v) => `<div class="tr-stat">${k}<b>${v}</b></div>`;
+    $("tr-stats").innerHTML =
+      stat("에포크", epoch) + stat("파라미터", model.params().length) +
+      stat("train 손실 · 정확도", `${tl.toFixed(3)} · ${(model.accuracy(train) * 100).toFixed(0)}%`) +
+      stat("test 손실 · 정확도", `${te.toFixed(3)} · ${(model.accuracy(test) * 100).toFixed(0)}%`);
+    $("v-lr").textContent = (+$("k-lr").value).toFixed(2);
+    $("v-bs").textContent = $("k-bs").value + ` (한 에포크 = ${Math.ceil(train.length / +$("k-bs").value)}걸음)`;
+  }
+
+  // Train for ~12ms per frame, then redraw.
+  function loop() {
+    if (!running) return;
+    const t0 = performance.now();
+    do oneEpoch(); while (performance.now() - t0 < 12 && epoch < 3000);
+    render();
+    if (epoch >= 3000) return stop();
+    requestAnimationFrame(loop);
+  }
+  function stop() { running = false; $("tr-play").textContent = "▶ 학습"; }
+
+  $("tr-play").addEventListener("click", () => {
+    if (running) return stop();
+    running = true; $("tr-play").textContent = "❚❚ 멈춤"; loop();
+  });
+  $("tr-epoch").addEventListener("click", () => { oneEpoch(); render(); });
+  $("tr-reset").addEventListener("click", reset);
+  document.querySelectorAll("#tr-presets button").forEach((b) => b.addEventListener("click", () => load(b.dataset.p)));
+  for (const k of ["k-lr", "k-bs"]) $(k).addEventListener("input", render);
+
+  load("base");
+</script>
