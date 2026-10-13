@@ -5,7 +5,7 @@ import { SITE } from "../../consts";
 
 <BaseLayout
   title={`Thinking Effort 시각화 — ${SITE.authorKo}`}
-  description="Gemini 3.6 Flash의 가변 추론(Thinking Effort) 메커니즘을 샌드박스로 체험합니다. 작업 난이도와 추론 깊이 조합에 따른 체인오브소트(CoT) 단계, 지연 시간, 토큰 효율 실시간 비교."
+  description="Gemini Flash의 가변 추론(Thinking Effort) 메커니즘을 샌드박스로 체험합니다. 작업 난이도와 추론 깊이 조합에 따른 체인오브소트(CoT) 단계, 지연 시간, 토큰 효율 실시간 비교."
   locale="ko"
   path="/playground/thinking-effort/"
 >
@@ -16,6 +16,7 @@ import { SITE } from "../../consts";
       작업 난이도와 추론 깊이(Effort Tier)를 직접 조합하고 [Execute Task]를 실행해보세요. 생각의 깊이가 부족할 때 발생하는 에러 위험과, 과도할 때 발생하는 토큰 낭비를 체감할 수 있습니다.
     </p>
   </header>
+  <p class="mb-4 text-xs text-muted">※ 화면의 수치(시간·토큰·점수)는 개념 설명용 가상 시뮬레이션 값입니다. 실측이 아닙니다.</p>
 
   <section class="te-container" id="te">
     <div class="te-top">

@@ -7,6 +7,12 @@ export const blocks: BiBlock[] = [
     ko: "<strong>결론부터.</strong> 단일 에이전트에 모든 작업을 순차 위임하는 방식은 대규모 코드베이스에서 병목을 유발합니다. <strong>Google Antigravity(AGY)</strong>는 메인 에이전트가 탐색·테스트·리팩토링 등 역할별 <strong>동적 서브에이전트(Dynamic Subagents)</strong>를 생성하고 독립된 워크스페이스(Branch/Share)에서 병렬 실행합니다.",
     en: "<strong>The short version.</strong> Delegating all tasks sequentially to a single agent creates a major bottleneck in large codebases. <strong>Google Antigravity (AGY)</strong> solves this by spawning role-specific <strong>Dynamic Subagents</strong> that execute in parallel across isolated workspaces (Branch/Share).",
   },
+  {
+    type: "callout",
+    tone: "warn",
+    ko: "<strong>2026-10 업데이트.</strong> 이 글은 2026-07 기준으로 썼습니다. 최신 Flash는 이제 <strong>Gemini 3.8 Flash</strong>입니다. 서브에이전트 구조 설명은 Antigravity 문서 기준으로 보강했고, 문서에 없는 \"검증 후 병합\"·\"오버헤드 무시 가능\"은 필자 해석으로 표시했습니다. 실험실의 24.0s → 6.8s는 가상 시뮬레이션 값입니다.",
+    en: "<strong>Update (2026-10).</strong> Written as of 2026-07. The latest Flash is now <strong>Gemini 3.8 Flash</strong>. The subagent section now follows the Antigravity docs; claims the docs don't make (\"verified merging\", \"negligible overhead\") are marked as my interpretation. The lab's 24.0s → 6.8s is a simulated figure.",
+  },
 
   {
     type: "p",
@@ -46,16 +52,17 @@ export const blocks: BiBlock[] = [
     type: "p",
     s: [
       { ko: "서브에이전트의 강점은 안전성에 있습니다.", en: "The core advantage of subagents lies in execution safety." },
-      { ko: "부모 워크스페이스를 복제(Branch)하거나 공유(Share)하여 작업하므로 실증 코드베이스를 훼손하지 않습니다.", en: "They work in branched or shared workspaces, protecting the production codebase from breaking edits." },
-      { ko: "작업 완료 시 메타데이터와 결과물만 메인 에이전트로 전달되어 검증 후 병합됩니다.", en: "Upon completion, only key metadata and artifacts pass back to the main agent for verified merging." },
+      { ko: "워크스페이스 모드는 부모를 그대로 쓰는 <code>inherit</code>, git worktree로 복제하는 <code>branch</code>, 공유하는 <code>share</code> 세 가지입니다.", en: "Workspace modes are <code>inherit</code> (use the parent as-is), <code>branch</code> (a git worktree copy), and <code>share</code>." },
+      { ko: "서브에이전트는 부모의 대화 이력을 물려받지 않고, 끝나면 결과 메시지를 부모에게 돌려줍니다.", en: "Subagents don't inherit the parent's conversation history and send a result message back when done." },
+      { ko: "그 결과를 검증하고 합치는 건 메인 에이전트(또는 사람)의 몫입니다.", en: "Verifying and merging that result is up to the main agent (or you)." },
     ],
   },
 
   {
     type: "p",
     s: [
-      { ko: "Gemini 3.6 Flash의 빠른 턴어라운드 타임과 결합하면서 이 오케스트레이션의 효용이 극대화됩니다.", en: "Combined with Gemini 3.6 Flash's fast turnaround times, this orchestration reaches peak efficiency." },
-      { ko: "서브에이전트 생성과 응답 수집에 드는 오버헤드가 거의 발생하지 않기 때문입니다.", en: "The overhead of spawning subagents and collecting responses becomes virtually negligible." },
+      { ko: "서브에이전트 모델은 <code>inherit</code>/<code>flash</code>/<code>pro</code> 중에 고를 수 있습니다.", en: "Each subagent's model can be <code>inherit</code>, <code>flash</code>, or <code>pro</code>." },
+      { ko: "빠른 Flash를 서브에이전트에 붙이면 생성·수집 오버헤드가 상대적으로 작아진다는 게 필자의 해석입니다.", en: "My take: pairing subagents with a fast Flash keeps spawn-and-collect overhead relatively small." },
     ],
   },
 
@@ -67,5 +74,11 @@ export const blocks: BiBlock[] = [
       { ko: "병렬 오케스트레이션은 대규모 엔지니어링 작업을 잘게 쪼개어 속도와 안전성을 동시에 확보하는 핵심 메커니즘입니다.", en: "Parallel orchestration is the key mechanism for splitting massive engineering tasks into fast, safe units." },
       { ko: "다음 2편에서는 이와 대척점에 있는 <strong>Claude Fable 5의 Mythos급 단일 에이전트 심층 장기 추론(Long-horizon Reasoning)</strong>을 다룹니다.", en: "In Episode 2, we will examine the opposite paradigm: <strong>Claude Fable 5's Mythos-class single-agent deep long-horizon reasoning</strong>." },
     ],
+  },
+
+  { type: "hr" },
+  {
+    type: "sources",
+    html: "<h3>출처 · Sources</h3><ul><li><a href=\"https://antigravity.google/docs/subagents?tab=cli\">Antigravity — Subagents</a></li><li><a href=\"https://ai.google.dev/gemini-api/docs/models\">Gemini API — Models</a></li></ul>",
   },
 ];

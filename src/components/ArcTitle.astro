@@ -1,0 +1,34 @@
+---
+// Short page title set on an upward arc, with a hand-drawn arc underneath.
+// Pure CSS can't put text on a curve → SVG <textPath>. Font shrinks to fit longer text.
+interface Props { text: string; label?: string }
+const { text, label = text } = Astro.props;
+// Rough advance width in em (CJK ≈ 1, Latin ≈ 0.55) → fit ~760 units of arc.
+const em = [...text].reduce((w, c) => w + (/[\u3000-\u9fff\uac00-\ud7af]/.test(c) ? 1 : 0.47), 0) * 1.06;
+const size = Math.round(Math.min(64, 720 / Math.max(em, 1)));
+// Arc apex sits at y=170; crop the empty sky above smaller text.
+const top = Math.max(0, 160 - size);
+const id = `arc-${text.replace(/\W/g, "") || "t"}-${Math.random().toString(36).slice(2, 7)}`;
+---
+
+<h1 class="arc-title">
+  <span class="sr-only">{label}</span>
+  <svg viewBox={`0 ${top} 1000 ${300 - top}`} aria-hidden="true">
+    <defs>
+      <path id={id} d="M 100 230 Q 500 110 900 230" />
+      <filter id={`${id}-rough`}>
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" />
+        <feDisplacementMap in="SourceGraphic" scale="2.2" />
+      </filter>
+    </defs>
+    <text text-anchor="middle" font-size={size}><textPath href={`#${id}`} startOffset="50%">{text}</textPath></text>
+    <path class="arc-line" d="M 20 295 Q 500 170 980 295" filter={`url(#${id}-rough)`} />
+  </svg>
+</h1>
+
+<style>
+  .arc-title { margin: 0 auto; max-width: 44rem; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  text { fill: var(--fg); font-family: var(--font-serif); font-weight: 600; letter-spacing: 0.06em; }
+  .arc-line { fill: none; stroke: var(--fg); stroke-width: 1.6; }
+</style>
