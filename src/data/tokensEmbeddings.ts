@@ -80,14 +80,14 @@ export const blocks: BiBlock[] = [
       { ko: "쪼갠 토큰마다 정수 번호를 붙입니다.", en: "Each split token gets an integer number." },
       { ko: "이게 <strong>토큰 ID</strong>입니다.", en: "That's the <strong>token ID</strong>." },
       { ko: "번호를 붙일 수 있는 토큰의 전체 목록이 <strong>어휘</strong>(vocabulary)입니다.", en: "The full list of tokens you can number is the <strong>vocabulary</strong>." },
-      { ko: "어휘 크기는 대략 1만~10만 사이입니다.", en: "Vocabulary size is roughly between 10,000 and 100,000." },
+      { ko: "어휘 크기는 대략 3만~25만 사이이고, 최근 모델일수록 커지는 추세입니다(Llama 3는 128,256개).", en: "Vocabulary size runs roughly 30,000 to 250,000, trending larger in newer models (Llama 3: 128,256)." },
     ],
   },
   {
     type: "list",
     items: [
       { ko: "<strong>GPT-2</strong>: 50,257개 (바이트 256 + 병합 50,000 + 특수 토큰 1)", en: "<strong>GPT-2</strong>: 50,257 (256 bytes + 50,000 merges + 1 special token)" },
-      { ko: "<strong>BERT</strong>: 30,522개 (WordPiece, BPE의 변형)", en: "<strong>BERT</strong>: 30,522 (WordPiece, a BPE variant)" },
+      { ko: "<strong>BERT</strong>: 30,522개 (WordPiece, BPE와 비슷한 서브워드 방식)", en: "<strong>BERT</strong>: 30,522 (WordPiece, a BPE-like subword method)" },
       { ko: "<strong>GPT-4</strong>: 100,000개 이상", en: "<strong>GPT-4</strong>: 100,000+" },
     ],
   },

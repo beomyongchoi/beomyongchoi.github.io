@@ -183,8 +183,8 @@ export const blocks: BiBlock[] = [
   {
     type: "callout",
     tone: "tip",
-    ko: "<strong>실전에서는.</strong> 매 걸음 데이터 전체로 기울기를 재지 않습니다. 작은 묶음(mini-batch)으로 어림잡아 걷는 게 <strong>SGD</strong>입니다 — 걸음은 조금 흔들리지만 훨씬 쌉니다. <strong>Adam</strong>은 가중치마다 보폭을 자동으로 조절해 주는 변형이고, 실전에서는 그 개량형인 <strong>AdamW</strong>가 LLM 학습의 표준입니다. LLM 사전학습 런 하나는 GPU 클러스터에서 이런 걸음 수십만 번이고, learning rate를 학습 중에 어떻게 올렸다 내릴지 — 스케줄 — 는 ML 전체에서 가장 공들여 튜닝되는 손잡이 중 하나입니다.",
-    en: "<strong>In practice.</strong> Real training doesn't measure the slope on the full dataset each step. <strong>SGD</strong> walks on slopes estimated from a small mini-batch — noisier steps, vastly cheaper. <strong>Adam</strong> is a variant that adapts each weight's step size automatically; its refinement <strong>AdamW</strong> is the standard for LLM training. One LLM pre-training run is hundreds of thousands of these steps on a GPU cluster, and how the learning rate ramps and decays over a run — the schedule — is among the most-tuned knobs in all of ML.",
+    ko: "<strong>실전에서는.</strong> 매 걸음 데이터 전체로 기울기를 재지 않습니다. 작은 묶음(mini-batch)으로 어림잡아 걷는 게 <strong>SGD</strong>입니다 — 걸음은 조금 흔들리지만 훨씬 쌉니다. <strong>Adam</strong>은 가중치마다 보폭을 자동으로 조절해 주는 변형이고, 실전에서는 그 개량형인 <strong>AdamW</strong>가 여전히 LLM 학습의 기본값입니다(Muon 같은 새 옵티마이저도 쓰이기 시작했습니다). LLM 사전학습 런 하나는 GPU 클러스터에서 이런 걸음 수십만 번이고, learning rate를 학습 중에 어떻게 올렸다 내릴지 — 스케줄 — 는 ML 전체에서 가장 공들여 튜닝되는 손잡이 중 하나입니다.",
+    en: "<strong>In practice.</strong> Real training doesn't measure the slope on the full dataset each step. <strong>SGD</strong> walks on slopes estimated from a small mini-batch — noisier steps, vastly cheaper. <strong>Adam</strong> is a variant that adapts each weight's step size automatically; its refinement <strong>AdamW</strong> remains the default for LLM training (newer optimizers like Muon are emerging). One LLM pre-training run is hundreds of thousands of these steps on a GPU cluster, and how the learning rate ramps and decays over a run — the schedule — is among the most-tuned knobs in all of ML.",
   },
 
   {
