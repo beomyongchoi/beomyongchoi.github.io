@@ -1,0 +1,205 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`샘플링 — top-k·top-p·min-p 실험실 — ${SITE.authorKo}`}
+  description="실제 언어 모델(SmolLM2-135M)을 브라우저에서 돌려, temperature·top-k·top-p·min-p가 진짜 다음 토큰 분포를 어떻게 자르는지 직접 만져봅니다."
+  locale="ko"
+  path="/playground/sampling/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">샘플링, 진짜 분포 위에서</h1>
+    <p class="mt-3 text-muted">
+      모델은 다음 토큰마다 <strong>어휘 4.9만 개 전체</strong>에 확률을 매깁니다. 그중 무엇을 남기고 무엇을 자를지가 샘플링입니다.
+      실제 모델로 잘라 보세요.
+    </p>
+  </header>
+
+  <section class="sp" id="sp">
+    <a class="gp-crosslink" href="/blog/sampling/">개념 더 읽기 → 샘플링 글</a>
+
+    <div class="sp-load">
+      <button id="sp-load" type="button" class="sp-btn">모델 내려받기 (약 120MB) →</button>
+      <p id="sp-status" class="sp-status">SmolLM2-135M을 브라우저 안에서 돌립니다. 서버로 아무것도 보내지 않습니다.</p>
+    </div>
+
+    <div id="sp-ui" hidden>
+      <div class="sp-presets" id="sp-presets">
+        <button data-t="The capital of France is">뾰족한 분포 · The capital of France is</button>
+        <button data-t="My favorite food is">평평한 분포 · My favorite food is</button>
+        <button data-t="def fibonacci(n):&#10;    ">코드 · def fibonacci(n):</button>
+      </div>
+      <textarea id="sp-text" class="sp-text" rows="2" spellcheck="false">The capital of France is</textarea>
+
+      <div class="sp-knobs">
+        <label>temperature <b id="v-T"></b><input id="k-T" type="range" min="0.1" max="2" step="0.05" value="1" /></label>
+        <label>top-k <b id="v-k"></b><input id="k-k" type="range" min="0" max="100" step="1" value="0" /></label>
+        <label>top-p <b id="v-p"></b><input id="k-p" type="range" min="0.05" max="1" step="0.01" value="1" /></label>
+        <label>min-p <b id="v-m"></b><input id="k-m" type="range" min="0" max="0.5" step="0.01" value="0" /></label>
+      </div>
+      <div class="sp-row">
+        <button id="sp-off" type="button" class="sp-btn ghost">자르기 전부 끄기</button>
+        <span class="sp-presets2">
+          <button data-k="40" data-p="1" data-m="0">top-k 40</button>
+          <button data-k="0" data-p="0.9" data-m="0">top-p 0.9</button>
+          <button data-k="0" data-p="1" data-m="0.1">min-p 0.1</button>
+        </span>
+      </div>
+
+      <div class="sp-stats" id="sp-stats"></div>
+      <div class="sp-bars" id="sp-bars"></div>
+      <p class="sp-foot" id="sp-foot"></p>
+
+      <div class="sp-gen">
+        <div class="sp-gen-head">
+          <b>같은 설정으로 5번 이어 쓰기</b>
+          <button id="sp-run" type="button" class="sp-btn">생성 →</button>
+        </div>
+        <ol id="sp-outs" class="sp-outs"></ol>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .gp-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .gp-crosslink:hover { text-decoration: underline; }
+  .sp-load { margin: 14px 0 0; }
+  .sp-status { margin-top: 8px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+  .sp-btn { font: inherit; font-size: 0.82rem; font-family: var(--font-mono); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .sp-btn.ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+  .sp-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .sp-presets, .sp-presets2 { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sp-presets { margin: 16px 0 8px; }
+  .sp-presets button, .sp-presets2 button { font: inherit; font-family: var(--font-mono); font-size: 0.72rem; padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--fg); cursor: pointer; }
+  .sp-presets button:hover, .sp-presets2 button:hover { border-color: var(--accent); color: var(--accent); }
+  .sp-text { width: 100%; font: inherit; font-family: var(--font-mono); font-size: 0.95rem; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--fg); resize: vertical; }
+
+  .sp-knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 20px; margin: 14px 0 10px; }
+  .sp-knobs label { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted); display: grid; grid-template-columns: 1fr auto; gap: 4px; }
+  .sp-knobs input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+  .sp-knobs b { color: var(--accent); }
+  .sp-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+  .sp-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 10px; }
+  .sp-stat { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 7px 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .sp-stat b { display: block; font-size: 1.05rem; color: var(--fg); }
+
+  .sp-bars { display: flex; flex-direction: column; gap: 4px; max-width: 640px; }
+  .sp-bar { display: grid; grid-template-columns: 120px 1fr 56px 56px; align-items: center; gap: 8px; font-size: 0.78rem; font-family: var(--font-mono); }
+  .sp-bar .k { white-space: pre; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+  .sp-bar .track { position: relative; height: 12px; background: color-mix(in srgb, var(--muted) 12%, transparent); border-radius: 3px; overflow: hidden; }
+  .sp-bar .orig { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--muted) 35%, transparent); }
+  .sp-bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); transition: width .2s; }
+  .sp-bar .v, .sp-bar .v2 { text-align: right; }
+  .sp-bar .v { color: var(--muted); }
+  .sp-bar.cut { opacity: 0.4; }
+  .sp-bar.cut .k { text-decoration: line-through; }
+  .sp-legend { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); margin-bottom: 4px; }
+  .sp-foot { margin-top: 8px; font-size: 0.78rem; color: var(--muted); }
+
+  .sp-gen { margin-top: 26px; border-top: 1px solid var(--border); padding-top: 18px; }
+  .sp-gen-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .sp-outs { margin: 12px 0 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 0.85rem; }
+  .sp-outs li { white-space: pre-wrap; }
+  .sp-outs .ctx { color: var(--muted); }
+  .sp-outs .gen { color: var(--accent); }
+</style>
+
+<script type="module" is:inline>
+  import { loadLM, nextLogits, label, decode, softmax } from "/lab/lm.js";
+  import { truncate, sample, entropy } from "/lab/sampling.js";
+
+  const $ = (id) => document.getElementById(id);
+  const knob = { T: $("k-T"), k: $("k-k"), p: $("k-p"), m: $("k-m") };
+  let logits = null, base = null;
+
+  const cfg = () => ({ T: +knob.T.value, k: +knob.k.value, p: +knob.p.value, minP: +knob.m.value });
+
+  function labels() {
+    const c = cfg();
+    $("v-T").textContent = c.T.toFixed(2);
+    $("v-k").textContent = c.k ? c.k : "off";
+    $("v-p").textContent = c.p < 1 ? c.p.toFixed(2) : "off";
+    $("v-m").textContent = c.minP ? c.minP.toFixed(2) : "off";
+  }
+
+  function draw() {
+    labels();
+    if (!logits) return;
+    const c = cfg();
+    const scaled = softmax(logits, c.T);
+    const r = truncate(scaled, c);
+    const stat = (k, v) => `<div class="sp-stat">${k}<b>${v}</b></div>`;
+    $("sp-stats").innerHTML =
+      stat("엔트로피 (T=1)", entropy(base).toFixed(2) + " bits") +
+      stat("1위 확률 (T 적용)", (scaled[r.order[0]] * 100).toFixed(1) + "%") +
+      stat("남은 후보", r.kept.toLocaleString() + " / " + logits.length.toLocaleString()) +
+      stat("남은 확률 질량", (r.mass * 100).toFixed(1) + "%");
+    const rows = r.order.slice(0, 20).map((id) => {
+      const cut = !r.keep[id];
+      return `<div class="sp-bar${cut ? " cut" : ""}"><span class="k">${escape(label(id))}</span><span class="track"><span class="orig" style="width:${scaled[id] * 100}%"></span><span class="fill" style="width:${r.probs[id] * 100}%"></span></span><span class="v">${(scaled[id] * 100).toFixed(1)}%</span><span class="v2">${cut ? "잘림" : (r.probs[id] * 100).toFixed(1) + "%"}</span></div>`;
+    });
+    $("sp-bars").innerHTML = `<div class="sp-legend">토큰 · 회색 = 자르기 전 · 파랑 = 자르고 다시 합을 1로 맞춘 확률</div>` + rows.join("");
+    $("sp-foot").textContent = r.kept > 20 ? `화면 밖에 남은 후보가 ${(r.kept - 20).toLocaleString()}개 더 있습니다. 이들의 몫을 합치면 ${(r.order.slice(20, r.kept).reduce((a, i) => a + r.probs[i], 0) * 100).toFixed(1)}%입니다.` : "";
+  }
+
+  const escape = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+
+  async function refresh() {
+    const out = await nextLogits($("sp-text").value);
+    logits = out.logits;
+    base = softmax(logits, 1);
+    draw();
+  }
+
+  $("sp-load").addEventListener("click", async () => {
+    $("sp-load").disabled = true;
+    try {
+      await loadLM((t) => ($("sp-status").textContent = t));
+      $("sp-load").hidden = true;
+      $("sp-ui").hidden = false;
+      await refresh();
+    } catch (e) {
+      console.error(e);
+      $("sp-status").textContent = "불러오기 실패: " + (e?.message || e) + " — 최신 Chrome/Edge/Safari 26에서 다시 시도해 보세요.";
+      $("sp-load").disabled = false;
+    }
+  });
+
+  Object.values(knob).forEach((el) => el.addEventListener("input", draw));
+  $("sp-off").addEventListener("click", () => { knob.k.value = 0; knob.p.value = 1; knob.m.value = 0; draw(); });
+  document.querySelectorAll(".sp-presets2 button").forEach((b) =>
+    b.addEventListener("click", () => { knob.k.value = b.dataset.k; knob.p.value = b.dataset.p; knob.m.value = b.dataset.m; draw(); }));
+  document.querySelectorAll("#sp-presets button").forEach((b) =>
+    b.addEventListener("click", () => { $("sp-text").value = b.dataset.t; refresh(); }));
+  let deb;
+  $("sp-text").addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(refresh, 350); });
+
+  $("sp-run").addEventListener("click", async () => {
+    $("sp-run").disabled = true;
+    const ctx = $("sp-text").value, c = cfg();
+    const ol = $("sp-outs");
+    ol.innerHTML = "";
+    for (let i = 0; i < 5; i++) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="ctx"></span><span class="gen"></span>`;
+      li.querySelector(".ctx").textContent = ctx;
+      ol.appendChild(li);
+      let text = ctx;
+      for (let t = 0; t < 12; t++) {
+        const { logits: lg } = await nextLogits(text);
+        const id = sample(truncate(softmax(lg, c.T), c).probs);
+        text += decode(id);
+        li.querySelector(".gen").textContent = text.slice(ctx.length);
+      }
+    }
+    $("sp-run").disabled = false;
+  });
+
+  labels();
+</script>
