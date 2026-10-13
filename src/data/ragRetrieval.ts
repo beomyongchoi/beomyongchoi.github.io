@@ -1,13 +1,13 @@
 import type { BiBlock } from "./aiParadox";
 
-// Measured 2026-10-13 against public/lab/rag-index.json (373 chunks, 21 posts) with
+// Measured 2026-10-13 against public/lab/rag-index.json (375 chunks, 21 posts; re-measured after the 2026-10-13 audit edits) with
 // multilingual-e5-small q8 — identical in Node (scripts) and the browser lab.
 export const blocks: BiBlock[] = [
   {
     type: "callout",
     tone: "tldr",
-    ko: "<strong>결론부터.</strong> RAG의 답은 <strong>검색이 찾아온 문단</strong>보다 좋아질 수 없습니다. 키워드 검색은 같은 <em>글자</em>를, 임베딩 검색은 같은 <em>뜻</em>을 찾습니다. 이 블로그 글로 실험해 보니 둘 다 한 번씩 엉뚱한 걸 1위에 올렸습니다. 점수 대신 <strong>순위만 섞는 하이브리드(RRF)</strong>가 두 경우 모두 정답을 2위 안으로 끌어올렸습니다.",
-    en: "<strong>The short version.</strong> A RAG answer can't be better than <strong>the passages retrieval brings back</strong>. Keyword search finds the same <em>characters</em>; embedding search finds the same <em>meaning</em>. Tested on this blog's posts, each put the wrong thing first once. <strong>A hybrid that merges ranks, not scores (RRF)</strong> pulled the right answer into the top 2 both times.",
+    ko: "<strong>결론부터.</strong> RAG의 답은 <strong>검색이 찾아온 문단</strong>보다 좋아질 수 없습니다. 키워드 검색은 같은 <em>글자</em>를, 임베딩 검색은 같은 <em>뜻</em>을 찾습니다. 이 블로그 글로 실험해 보니 둘 다 한 번씩 엉뚱한 답을 위로 올렸습니다. 점수 대신 <strong>순위만 섞는 하이브리드(RRF)</strong>가 두 경우 모두 정답을 2위 안으로 끌어올렸습니다.",
+    en: "<strong>The short version.</strong> A RAG answer can't be better than <strong>the passages retrieval brings back</strong>. Keyword search finds the same <em>characters</em>; embedding search finds the same <em>meaning</em>. Tested on this blog's posts, each pushed a wrong answer up once. <strong>A hybrid that merges ranks, not scores (RRF)</strong> pulled the right answer into the top 2 both times.",
   },
 
   {
@@ -35,7 +35,7 @@ export const blocks: BiBlock[] = [
     type: "p",
     s: [
       { ko: "글 21편을 소제목마다 잘랐습니다. 600자가 넘는 절은 문장 경계에서 한 번 더 잘랐습니다.", en: "I cut 21 posts at every heading, splitting any section over 600 characters at a sentence boundary." },
-      { ko: "한국어와 영어를 따로 넣어 조각은 모두 <strong>373개</strong>입니다.", en: "Korean and English go in separately, for <strong>373 chunks</strong> in total." },
+      { ko: "한국어와 영어를 따로 넣어 조각은 모두 <strong>375개</strong>입니다.", en: "Korean and English go in separately, for <strong>375 chunks</strong> in total." },
       { ko: "소제목 단위로 자르면 검색 결과가 글의 그 절로 바로 연결됩니다.", en: "Cutting at headings means every result can deep-link to its section." },
       { ko: "<a href=\"/blog/query-fanout/\">AI 답변 엔진이 문서를 통째로 읽지 않는다</a>는 글에서 본 문단 단위 검색을 직접 만든 셈입니다.", en: "It's a hand-built version of the passage-level retrieval from <a href=\"/blog/query-fanout/\">AI answer engines don't read pages whole</a>." },
     ],
@@ -61,14 +61,14 @@ export const blocks: BiBlock[] = [
   },
   {
     type: "code",
-    code: "$ ask \"학습률이 너무 크면 어떻게 되나요\"\n  keyword   1. 경사하강 › 결론부터                     13.78\n            2. 샘플링 › top-k — 개수로 자르면…           10.86   ✗\n  semantic  1. 경사하강 › 결론부터                     0.878\n            2. 경사하강 › learning rate — 보폭이 운명을…  0.862   ✓",
+    code: "$ ask \"학습률이 너무 크면 어떻게 되나요\"        # 정답: 경사하강 › learning rate 절\n  keyword   1. 경사하강 › 결론부터                     13.79\n            2. 샘플링 › top-k — 개수로 자르면…           10.89   ✗\n           10. 경사하강 › learning rate — 보폭이 운명을…        ← 정답\n  semantic  1. 경사하강 › 결론부터                     0.878\n            5. 경사하강 › learning rate — 보폭이 운명을…  ← 정답",
   },
   {
     type: "p",
     s: [
       { ko: "경사하강 글은 \"학습률\" 대신 \"learning rate\"라고 씁니다.", en: "The gradient-descent post says \"learning rate,\" not \"학습률.\"" },
-      { ko: "키워드 검색은 질문과 글자가 일부 겹친 샘플링 글을 2위에 올렸습니다.", en: "Keyword search put the sampling post second, on partial character overlap with the question." },
-      { ko: "임베딩은 두 표현이 같은 뜻인 걸 알고 learning rate 절을 2위로 찾았습니다.", en: "The embedding knows the two terms mean the same thing and found the learning-rate section at #2." },
+      { ko: "키워드 검색은 질문과 글자가 일부 겹친 샘플링 글을 2위에 올렸고, learning rate 절은 10위로 밀렸습니다.", en: "Keyword search put the sampling post second, on partial character overlap with the question, and pushed the learning-rate section down to #10." },
+      { ko: "임베딩은 두 표현이 같은 뜻인 걸 알아서 learning rate 절을 5위로 더 위에 올렸습니다.", en: "The embedding knows the two terms mean the same thing and ranked the learning-rate section higher, at #5." },
     ],
   },
 
@@ -81,13 +81,13 @@ export const blocks: BiBlock[] = [
   },
   {
     type: "code",
-    code: "$ ask \"모델이 학습 데이터를 통째로 외워 버리면?\"\n  semantic  1. BERT › MLM — 15%를 가리고 맞힌다         0.872   ✗\n            2. 경사하강 › 결론부터                     0.870   ✗\n            3. 손실 › 손실은 가중치 위의 지형이다          0.867   ✗\n  keyword   1. 실전 › 과적합 — train은 내려가는데…        15.43   ✓",
+    code: "$ ask \"모델이 학습 데이터를 통째로 외워 버리면?\"   # 정답: 실전 › 과적합 절\n  semantic  1. BERT › MLM — 15%를 가리고 맞힌다         0.873   ✗\n            2. 손실 › 손실은 가중치 위의 지형이다          0.871   ✗\n            3. 경사하강 › 결론부터                     0.871   ✗\n            7. 실전 › 과적합 — train은 내려가는데…              ← 정답\n  keyword   1. 실전 › 과적합 — train은 내려가는데…        15.34   ✓",
   },
   {
     type: "p",
     s: [
       { ko: "\"외워 버린다\"는 과적합을 설명하는 말이지만, 그 절에는 \"과적합\"과 \"외우기\"라는 단어로 쓰여 있습니다.", en: "\"Memorizes\" describes overfitting, but that section phrases it as \"overfitting\" and \"memorizing.\"" },
-      { ko: "작은 다국어 모델은 이 연결을 놓쳤고, 상위 세 개가 모두 빗나갔습니다.", en: "The small multilingual model missed the link; its top three all missed." },
+      { ko: "작은 다국어 모델은 이 연결을 놓쳤습니다. 상위 세 개가 모두 빗나갔고 정답은 7위였습니다.", en: "The small multilingual model missed the link: its top three all missed, and the right answer sat at #7." },
       { ko: "키워드 검색은 \"학습\", \"데이터\" 같은 글자가 겹친 덕에 과적합 절을 1위로 찾았습니다.", en: "Keyword search found the overfitting section first, thanks to overlapping characters like \"학습\" (training) and \"데이터\" (data)." },
       { ko: "임베딩은 마법이 아닙니다. 모델 크기와 학습 데이터만큼만 뜻을 압니다.", en: "Embeddings aren't magic: they know meaning only as well as their size and training data allow." },
     ],
@@ -97,7 +97,7 @@ export const blocks: BiBlock[] = [
   {
     type: "p",
     s: [
-      { ko: "첫 질문의 의미 검색 점수를 보면 1위 0.878, 10위 0.851, 373개 중 꼴찌가 0.732입니다.", en: "For the first question, the semantic scores run: #1 0.878, #10 0.851, last of 373 at 0.732." },
+      { ko: "첫 질문의 의미 검색 점수를 보면 1위 0.878, 10위 0.853, 375개 중 꼴찌가 0.732입니다.", en: "For the first question, the semantic scores run: #1 0.878, #10 0.853, last of 375 at 0.732." },
       { ko: "1위와 10위가 0.03도 안 벌어집니다. 0.87이 \"87% 맞다\"는 뜻이 아닙니다.", en: "#1 and #10 are less than 0.03 apart. 0.87 does not mean \"87% right.\"" },
       { ko: "BM25 점수는 13.78처럼 전혀 다른 눈금을 씁니다.", en: "BM25 uses a completely different scale — 13.78, say." },
       { ko: "그래서 두 점수를 그냥 더하면 BM25가 다 이깁니다.", en: "So if you simply add the two scores, BM25 wins every time." },
@@ -116,15 +116,15 @@ export const blocks: BiBlock[] = [
   {
     type: "list",
     items: [
-      { ko: "\"학습률\" 질문: 하이브리드 2위가 learning rate 절입니다. 키워드 쪽의 샘플링 오답은 밀려났습니다.", en: "The \"학습률\" (learning rate) question: hybrid #2 is the learning-rate section; keyword's sampling miss got pushed down." },
-      { ko: "\"외워 버리면\" 질문: 하이브리드 2위가 과적합 절입니다. 의미 검색 혼자서는 상위 3위 안에 못 넣었습니다.", en: "The \"memorizes\" question: hybrid #2 is the overfitting section — semantic search alone couldn't get it into the top 3." },
+      { ko: "\"학습률\" 질문: learning rate 절은 키워드 10위, 의미 5위로 양쪽 모두 애매했습니다. 섞으니 <strong>2위</strong>입니다. 키워드 쪽의 샘플링 오답은 4위로 밀려났습니다.", en: "The \"학습률\" (learning rate) question: the learning-rate section was a lukewarm #10 for keywords and #5 for semantics. Merged, it's <strong>#2</strong>; keyword's sampling miss fell to #4." },
+      { ko: "\"외워 버리면\" 질문: 키워드 1위, 의미 7위였던 과적합 절이 하이브리드 <strong>1위</strong>입니다.", en: "The \"memorizes\" question: the overfitting section — #1 for keywords, #7 for semantics — is hybrid <strong>#1</strong>." },
     ],
   },
   {
     type: "p",
     s: [
       { ko: "어느 한쪽이 확실히 맞히면, 다른 쪽이 틀려도 그 조각은 위로 올라옵니다.", en: "When either side clearly gets it, that chunk rises even if the other side misses." },
-      { ko: "둘 다 애매하게 걸친 조각도 올라옵니다. 그래서 1위가 늘 정답은 아닙니다. 두 번째 질문의 1위는 여전히 손실 글이었습니다.", en: "Chunks that both sides half-like rise too, so #1 isn't always right — the second question's #1 was still the loss post." },
+      { ko: "양쪽에서 중간쯤 걸친 조각도 올라옵니다. 첫 질문의 정답이 바로 그렇게 올라왔습니다. 대신 1위가 늘 정답은 아닙니다. 첫 질문의 1위는 경사하강 글의 요약 절이었습니다.", en: "Chunks both sides rank middling rise too — that's exactly how the first answer climbed. But #1 isn't always the answer: the first question's #1 was the gradient-descent summary." },
     ],
   },
 

@@ -59,7 +59,7 @@ export const blocks: BiBlock[] = [
       { ko: "먼저 볼 것은 사용률과 신뢰도의 간극입니다.", en: "Start with the gap between usage and trust." },
       { ko: "Stack Overflow 2025에 따르면 AI 도구의 정확도를 신뢰한다는 응답은 <strong>29%</strong>에 그칩니다.", en: "Per Stack Overflow 2025, only <strong>29%</strong> trust the accuracy of AI tools." },
       { ko: "전년 40%대에서 크게 떨어졌습니다.", en: "That's down sharply from the 40s a year earlier." },
-      { ko: "신뢰(33%)보다 불신(46%)이 많고, '매우 신뢰한다'는 3%뿐입니다.", en: "More distrust it (46%) than trust it (33%), and just 3% \"highly trust\" it." },
+      { ko: "29%는 Stack Overflow 결과 블로그의 수치이고, 설문 원자료 표(전체 응답자)로 보면 신뢰 33%, 불신 46%입니다. 어느 쪽이든 불신이 더 많고, '매우 신뢰한다'는 3%뿐입니다.", en: "The 29% is from Stack Overflow's results blog; the raw survey table (all respondents) shows 33% trust versus 46% distrust. Either way distrust wins, and just 3% \"highly trust\" it." },
     ],
   },
   {
@@ -72,7 +72,8 @@ export const blocks: BiBlock[] = [
   {
     type: "list",
     items: [
-      { ko: "Veracode 2025: AI가 생성한 코드의 <strong>45%</strong>에서 보안 취약점이 나왔습니다. 사람이 쓴 코드보다 2.74배 많습니다. 특히 <strong>Java는 실패율 72%</strong>, XSS 방어 실패 86%, 로그 인젝션 방어 실패 88%였습니다.", en: "Veracode 2025: <strong>45%</strong> of AI-generated code had a security flaw — 2.74× more than human-written code. Java was the worst at a <strong>72% failure rate</strong>; models failed to defend against XSS 86% of the time and log injection 88%." },
+      { ko: "Veracode 2025: 100개 넘는 LLM에 코딩 과제 80개를 시켰더니 결과의 <strong>45%</strong>에서 보안 취약점이 나왔습니다. 특히 <strong>Java는 실패율 72%</strong>, XSS 방어 실패 86%, 로그 인젝션 방어 실패 88%였습니다.", en: "Veracode 2025: across 80 coding tasks given to 100+ LLMs, <strong>45%</strong> of the results had a security flaw. Java was the worst at a <strong>72% failure rate</strong>; models failed to defend against XSS 86% of the time and log injection 88%." },
+      { ko: "사람이 쓴 코드와 직접 비교한 연구로는 CodeRabbit(2025년 12월, PR 470개)이 있습니다. AI가 함께 쓴 PR은 문제가 약 1.7배 많았고, XSS 취약점은 2.74배였습니다.", en: "For a direct comparison with human code, CodeRabbit (Dec 2025, 470 PRs) found AI-co-authored PRs had about 1.7× more issues, and 2.74× more XSS vulnerabilities." },
       { ko: "GitGuardian: Copilot이 켜진 저장소의 <strong>6.4%</strong>에서 시크릿(자격 증명 등)이 유출됐습니다. 전체 공개 저장소 평균(4.6%)보다 약 <strong>40% 높은</strong> 수치입니다.", en: "GitGuardian: <strong>6.4%</strong> of repositories with Copilot active leaked a secret (credentials and the like) — about <strong>40% higher</strong> than the 4.6% baseline across all public repos." },
     ],
   },
@@ -81,7 +82,7 @@ export const blocks: BiBlock[] = [
   {
     type: "p",
     s: [
-      { ko: "응답자의 45%가 이걸 가장 큰 불편으로 꼽았고, 66%는 이 '거의 맞는' 코드를 고치는 데 오히려 시간을 더 쓴다고 답했습니다.", en: "45% named this their biggest annoyance, and 66% say they spend <em>more</em> time fixing this \"almost-right\" code." },
+      { ko: "응답자의 66%가 이걸 가장 큰 불편으로 꼽았고, 45%는 AI가 만든 코드를 디버깅하는 데 오히려 시간이 더 든다고 답했습니다.", en: "66% named this their biggest frustration, and 45% say debugging AI-generated code takes <em>more</em> time." },
       { ko: "문제는 도구가 아니라, 검증의 책임을 놓아버린 쪽에 있습니다.", en: "The problem isn't the tool — it's whoever let go of the duty to verify." },
     ],
   },
@@ -148,7 +149,7 @@ export const blocks: BiBlock[] = [
     type: "p",
     s: [
       { ko: "그런데 시간 절약은 거꾸로 나타납니다.", en: "Yet the time savings run the other way." },
-      { ko: "DX 기준 일반 개발자가 주당 3.6시간을 아낄 때, <strong>Staff+ 등급 시니어는 주당 4.4시간</strong>을 아낍니다.", en: "Per DX, the average developer saves 3.6 hours a week — while <strong>Staff+ engineers save 4.4</strong>." },
+      { ko: "DX 기준 AI를 매일 쓰는 개발자는 평균 주당 4.1시간을 아끼고, 그중 <strong>Staff+ 등급 시니어는 주당 4.4시간</strong>을 아낍니다.", en: "Per DX, developers who use AI daily save 4.1 hours a week on average — and <strong>daily Staff+ engineers save 4.4</strong>." },
     ],
   },
   {
@@ -231,6 +232,6 @@ export const blocks: BiBlock[] = [
 <li>DX — <a href="https://getdx.com/blog/ai-assisted-engineering-q4-impact-report-2025/">AI-assisted engineering: Q4 2025 impact report</a></li>
 <li>JetBrains — <a href="https://blog.jetbrains.com/research/2026/04/which-ai-coding-tools-do-developers-actually-use-at-work/">Which AI Coding Tools Do Developers Actually Use at Work? (2026)</a></li>
 <li>GitGuardian — <a href="https://blog.gitguardian.com/yes-github-copilot-can-leak-secrets/">Yes, GitHub Copilot can Leak (Real) Secrets</a></li>
-</ul>`,
+<li>CodeRabbit — <a href="https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report">State of AI vs Human Code Generation Report</a> (2025-12)</li></ul>`,
   },
 ];

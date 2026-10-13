@@ -67,7 +67,7 @@ export const blocks: BiBlock[] = [
   {
     type: "quote",
     ko: "<strong>한국어 번역 및 해설:</strong> \"우리의 가설은, 모델을 (새로운 과제에) 적응시키는 동안 발생하는 가중치의 변화량은 낮은 <strong>'내재적 계급(intrinsic rank)'</strong>을 가질 것이라는 점이며, 이는 우리가 제안한 방법으로 이어짐.\"",
-    en: "<strong><a href=\"https://arxiv.org/pdf/2106.09685\">From the paper (Abstract):</a></strong> \"We hypothesize that the change in weights during model adaptation has a low 'intrinsic rank', leading to our proposed method.\"",
+    en: "<strong><a href=\"https://arxiv.org/pdf/2106.09685\">From the paper (Introduction):</a></strong> \"We hypothesize that the change in weights during model adaptation also has a low 'intrinsic rank', leading to our proposed Low-Rank Adaptation (LoRA) approach.\"",
   },
   {
     type: "p",
@@ -167,8 +167,8 @@ export const blocks: BiBlock[] = [
     type: "list",
     items: [
       {
-        ko: "<strong>Pre-trained Model → 포토샵 원본 프로그램</strong>: <code>klue/bert-base</code>와 같은 거대 언어 모델은, 수많은 기능이 담긴 포토샵 프로그램과 같습니다. 그 자체로 이미지 처리(언어 이해)에 대한 엄청난 잠재력을 갖추고 있습니다.",
-        en: "<strong>Pre-trained model → the Photoshop application itself</strong>: A large language model like <code>klue/bert-base</code> is like Photoshop: packed with capability, and hugely powerful for image processing (language understanding) out of the box.",
+        ko: "<strong>Pre-trained Model → 포토샵 원본 프로그램</strong>: <code>klue/bert-base</code>와 같은 사전학습 모델은, 수많은 기능이 담긴 포토샵 프로그램과 같습니다. 그 자체로 이미지 처리(언어 이해)에 대한 엄청난 잠재력을 갖추고 있습니다.",
+        en: "<strong>Pre-trained model → the Photoshop application itself</strong>: A pre-trained model like <code>klue/bert-base</code> is like Photoshop: packed with capability, and hugely powerful for image processing (language understanding) out of the box.",
       },
       {
         ko: "<strong>Full Fine-tuning → 포토샵 전체 재설치</strong>: '인물 사진 보정' 기능을 추가하기 위해, 포토샵의 전체 소스 코드를 수정하고 수십 GB짜리 프로그램을 통째로 다시 설치하는 것과 같습니다. 매우 비효율적이고 저장 공간도 두 배로 차지합니다.",
