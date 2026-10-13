@@ -1,0 +1,188 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`사람 vs GPT — 다음 단어 맞히기 — ${SITE.authorKo}`}
+  description="문장이 끊긴 자리에서 원문의 다음 단어를 맞히는 게임. 브라우저 안에서 진짜 언어 모델이 같은 보기로 함께 맞힙니다. 10라운드, 누가 더 많이 맞힐까요?"
+  locale="ko"
+  path="/arcade/next-word/"
+>
+  <header class="mb-5">
+    <a href="/arcade/" class="text-sm text-muted hover:text-accent">← 오락실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">사람 vs GPT — 다음 단어 맞히기</h1>
+    <p class="mt-3 text-muted">
+      문장 다음에 <strong>원문</strong>에선 어떤 단어가 왔을까요? 같은 보기 4개를 놓고 진짜 언어 모델도 함께 맞힙니다. 모델은 자기가 가장 높은 확률을 준 단어를 고릅니다.
+    </p>
+  </header>
+
+  <section class="nw" id="nw">
+    <div class="nw-card" id="nw-intro">
+      <p class="nw-rule">10라운드 · 보기 4개 = 원문 단어 1개 + 모델이 그럴듯하다고 본 단어 3개 · 매 라운드 모델이 각 보기에 매긴 확률을 공개합니다.</p>
+      <div class="nw-models" id="nw-models"></div>
+      <button id="nw-start" type="button" class="nw-btn">모델 내려받고 시작 →</button>
+      <p class="nw-status" id="nw-status">모델은 브라우저 안에서만 돌아갑니다. 서버로 아무것도 보내지 않습니다.</p>
+      <p class="nw-best" id="nw-best"></p>
+    </div>
+
+    <div id="nw-game" hidden>
+      <div class="nw-top">
+        <span class="nw-round" id="nw-round"></span>
+        <span class="nw-score"><b id="sc-me">0</b> 나 <span>:</span> GPT <b id="sc-ai">0</b></span>
+      </div>
+      <div class="nw-card nw-q">
+        <span class="nw-tag" id="nw-tag"></span>
+        <p class="nw-ctx"><span id="nw-ctx"></span> <span class="nw-blank">____</span></p>
+        <div class="nw-opts" id="nw-opts"></div>
+        <div class="nw-reveal" id="nw-reveal" hidden></div>
+        <button id="nw-next" type="button" class="nw-btn" hidden>다음 →</button>
+      </div>
+    </div>
+
+    <div class="nw-card" id="nw-end" hidden></div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .nw-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 20px 22px; }
+  .nw-rule { color: var(--muted); font-size: 0.9rem; line-height: 1.7; margin: 0 0 14px; }
+  .nw-models { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .nw-model { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; background: var(--bg); cursor: pointer; font-size: 0.85rem; }
+  .nw-model input { margin-top: 4px; accent-color: var(--accent); }
+  .nw-model b { display: block; }
+  .nw-model small { color: var(--muted); font-family: var(--font-mono); font-size: 0.72rem; }
+  .nw-btn { font: inherit; font-size: 0.9rem; font-family: var(--font-mono); padding: 10px 18px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .nw-btn:disabled { opacity: 0.45; cursor: default; }
+  .nw-status, .nw-best { margin-top: 10px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+
+  .nw-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+  .nw-score { font-size: 0.95rem; color: var(--fg); }
+  .nw-score b { font-size: 1.3rem; color: var(--accent); }
+  .nw-score span { color: var(--muted); margin: 0 4px; }
+  .nw-tag { display: inline-block; font-family: var(--font-mono); font-size: 0.68rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+  .nw-ctx { font-size: 1.5rem; line-height: 1.5; margin: 14px 0 18px; font-family: Newsreader, Georgia, serif; }
+  .nw-blank { color: var(--accent); letter-spacing: 2px; }
+  .nw-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .nw-opt { position: relative; font: inherit; font-size: 1.05rem; padding: 14px 12px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--fg); cursor: pointer; text-align: left; overflow: hidden; transition: border-color .15s, transform .1s; }
+  .nw-opt:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
+  .nw-opt:disabled { cursor: default; }
+  .nw-opt .bar { position: absolute; inset: auto 0 0 0; height: 4px; background: var(--accent); opacity: 0; transition: width .5s, opacity .3s; width: 0; }
+  .nw-opt .w { position: relative; font-family: Newsreader, Georgia, serif; }
+  .nw-opt .p { position: relative; float: right; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); opacity: 0; transition: opacity .3s; }
+  .nw-opt .who { position: relative; display: block; font-size: 0.7rem; font-family: var(--font-mono); color: var(--muted); min-height: 1em; margin-top: 4px; }
+  .nw-opt.done .bar, .nw-opt.done .p { opacity: 1; }
+  .nw-opt.right { border-color: #1f9d55; background: color-mix(in srgb, #1f9d55 10%, var(--bg)); }
+  .nw-opt.wrong { border-color: #d64545; }
+  .nw-reveal { margin-top: 16px; font-size: 0.92rem; line-height: 1.7; border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; }
+  .nw-reveal b { color: var(--accent); }
+  #nw-next { margin-top: 14px; }
+
+  .nw-final { font-size: 1.6rem; font-weight: 700; margin: 0 0 6px; }
+  .nw-tags { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 16px 0; }
+  .nw-tagstat { border: 1px solid var(--border); border-radius: 10px; padding: 8px 11px; background: var(--bg); font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); }
+  .nw-tagstat b { display: block; color: var(--fg); font-size: 0.95rem; }
+  .nw-learn { font-size: 0.9rem; line-height: 1.7; color: var(--fg); }
+  .nw-learn a { color: var(--accent); }
+</style>
+
+<script type="module" is:inline>
+  import { LMS, loadLM, nextLogits, decode, softmax, tok } from "/lab/lm.js";
+  import { pickDecoys, shuffle, modelPick, rankOf } from "/lab/nextword.js";
+
+  const $ = (id) => document.getElementById(id);
+  const ROUNDS = 10, BEST_KEY = "arcade.nextword.best";
+  let pool = [], qs = [], i = 0, me = 0, ai = 0, log = [], modelKey = "smol";
+
+  const store = { get: () => { try { return JSON.parse(localStorage.getItem(BEST_KEY) || "null"); } catch { return null; } },
+                  set: (v) => { try { localStorage.setItem(BEST_KEY, JSON.stringify(v)); } catch {} } };
+
+  $("nw-models").innerHTML = Object.entries(LMS).map(([k, m], n) =>
+    `<label class="nw-model"><input type="radio" name="nw-m" value="${k}" ${n === 0 ? "checked" : ""}/><span><b>${m.label}</b><small>${m.size} · ${m.note}</small></span></label>`).join("");
+  const best = store.get();
+  if (best) $("nw-best").textContent = `내 최고 기록: ${best.me} : ${best.ai} (vs ${best.model})`;
+
+  $("nw-start").addEventListener("click", async () => {
+    modelKey = document.querySelector('input[name="nw-m"]:checked').value;
+    $("nw-start").disabled = true;
+    try {
+      pool = await (await fetch("/arcade/next-word-pool.json")).json();
+      await loadLM((t) => ($("nw-status").textContent = t), modelKey);
+      start();
+    } catch (e) {
+      console.error(e);
+      $("nw-status").textContent = "불러오기 실패: " + (e?.message || e) + " — 최신 Chrome/Edge/Safari 26에서 다시 시도해 보세요.";
+      $("nw-start").disabled = false;
+    }
+  });
+
+  function start() {
+    // Mix: half "predictable" (idioms, proverbs, daily), half "surprising" — so both sides can win rounds.
+    const twist = shuffle(pool.filter((p) => p.tag === "반전")), rest = shuffle(pool.filter((p) => p.tag !== "반전"));
+    qs = shuffle([...twist.slice(0, 3), ...rest.slice(0, ROUNDS - 3)]);
+    i = me = ai = 0; log = [];
+    $("nw-intro").hidden = true; $("nw-end").hidden = true; $("nw-game").hidden = false;
+    round();
+  }
+
+  async function round() {
+    const q = qs[i];
+    $("nw-round").textContent = `${i + 1} / ${ROUNDS}`;
+    $("sc-me").textContent = me; $("sc-ai").textContent = ai;
+    $("nw-tag").textContent = q.tag;
+    $("nw-ctx").textContent = q.ctx;
+    $("nw-reveal").hidden = true; $("nw-next").hidden = true;
+    $("nw-opts").innerHTML = `<p class="nw-status">모델이 생각하는 중…</p>`;
+    const { logits } = await nextLogits(q.ctx);
+    const probs = softmax(logits, 1);
+    const order = probs.map((_, k) => k).sort((a, b) => probs[b] - probs[a]);
+    // Every answer in the pool is verified single-token for both models (scripts/arcade-pool.check.mjs).
+    const ansId = tok.encode(" " + q.ans, { add_special_tokens: false })[0];
+    const opts = shuffle([ansId, ...pickDecoys(order, decode, q.ans)]);
+    const aiId = modelPick(opts, probs);
+    const top = Math.max(...opts.map((id) => probs[id]));
+    $("nw-opts").innerHTML = opts.map((id) =>
+      `<button class="nw-opt" data-id="${id}"><span class="bar" style="width:${(probs[id] / top) * 100}%"></span><span class="p">${fmt(probs[id])}</span><span class="w">${decode(id).trim()}</span><span class="who"></span></button>`).join("");
+    document.querySelectorAll(".nw-opt").forEach((b) => b.addEventListener("click", () => answer(+b.dataset.id, { q, ansId, aiId, opts, probs, order })));
+  }
+
+  const fmt = (p) => (p >= 0.001 ? (p * 100).toFixed(1) + "%" : p >= 1e-6 ? (p * 100).toFixed(4) + "%" : "≈0%");
+
+  function answer(pick, { q, ansId, aiId, opts, probs, order }) {
+    const meOk = pick === ansId, aiOk = aiId === ansId;
+    me += meOk; ai += aiOk;
+    log.push({ tag: q.tag, meOk, aiOk });
+    document.querySelectorAll(".nw-opt").forEach((b) => {
+      const id = +b.dataset.id;
+      b.disabled = true; b.classList.add("done");
+      if (id === ansId) b.classList.add("right"); else if (id === pick) b.classList.add("wrong");
+      b.querySelector(".who").textContent = [id === pick ? "🙋 나" : "", id === aiId ? "🤖 GPT" : ""].filter(Boolean).join(" · ");
+    });
+    $("sc-me").textContent = me; $("sc-ai").textContent = ai;
+    const r = rankOf(order, ansId);
+    const verdict = meOk && !aiOk ? "<b>내 승리.</b>" : aiOk && !meOk ? "<b>GPT 승리.</b>" : meOk ? "<b>둘 다 정답.</b>" : "<b>둘 다 오답.</b>";
+    $("nw-reveal").innerHTML = `${verdict} 원문은 <b>${q.ans}</b>. 모델은 이 단어에 ${fmt(probs[ansId])}를 줬고, 어휘 ${probs.length.toLocaleString()}개 중 <b>${r.toLocaleString()}위</b>로 봤습니다.` +
+      (r > 100 ? " 사람이 지어낸 엉뚱한 문장은 모델의 확률 지도 밖에 있습니다." : r === 1 ? " 모델이 가장 먼저 떠올린 단어였습니다." : "");
+    $("nw-reveal").hidden = false;
+    $("nw-next").hidden = false;
+    $("nw-next").textContent = i + 1 < ROUNDS ? "다음 →" : "결과 보기 →";
+  }
+
+  $("nw-next").addEventListener("click", () => { i++; if (i < ROUNDS) round(); else end(); });
+
+  function end() {
+    $("nw-game").hidden = true;
+    const tags = {};
+    for (const l of log) { tags[l.tag] ??= { n: 0, me: 0, ai: 0 }; tags[l.tag].n++; tags[l.tag].me += l.meOk; tags[l.tag].ai += l.aiOk; }
+    const head = me > ai ? "🎉 사람 승리" : me < ai ? "🤖 GPT 승리" : "🤝 무승부";
+    const prev = store.get();
+    if (!prev || me - ai > prev.me - prev.ai) store.set({ me, ai, model: LMS[modelKey].label });
+    $("nw-end").innerHTML =
+      `<p class="nw-final">${head} — ${me} : ${ai}</p><p class="nw-status">상대: ${LMS[modelKey].label}</p>` +
+      `<div class="nw-tags">${Object.entries(tags).map(([t, v]) => `<div class="nw-tagstat">${t} (${v.n}문제)<b>나 ${v.me} : ${v.ai} GPT</b></div>`).join("")}</div>` +
+      `<p class="nw-learn">모델은 <b>관용구·일상 문장</b>처럼 인터넷에 흔한 패턴에서 강하고, <b>반전</b>처럼 사람이 일부러 비튼 문장에서 약합니다. 확률이 높은 단어 = 흔한 단어이기 때문입니다. 원리는 <a href="/blog/gpt-decoder/">GPT 글</a>과 <a href="/blog/sampling/">샘플링 글</a>에.</p>` +
+      `<p style="margin-top:14px"><button class="nw-btn" id="nw-again">다시 하기 →</button></p>`;
+    $("nw-end").hidden = false;
+    $("nw-again").addEventListener("click", start);
+  }
+</script>

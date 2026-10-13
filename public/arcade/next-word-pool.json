@@ -1,0 +1,152 @@
+[
+ {
+  "ctx": "Once upon a",
+  "ans": "time",
+  "tag": "관용구"
+ },
+ {
+  "ctx": "The early bird catches the",
+  "ans": "worm",
+  "tag": "속담"
+ },
+ {
+  "ctx": "Better late than",
+  "ans": "never",
+  "tag": "속담"
+ },
+ {
+  "ctx": "Actions speak louder than",
+  "ans": "words",
+  "tag": "속담"
+ },
+ {
+  "ctx": "I would like a cup of",
+  "ans": "tea",
+  "tag": "일상"
+ },
+ {
+  "ctx": "She opened the fridge and grabbed a cold",
+  "ans": "beer",
+  "tag": "일상"
+ },
+ {
+  "ctx": "He forgot his umbrella, so he got completely",
+  "ans": "soaked",
+  "tag": "일상"
+ },
+ {
+  "ctx": "The meeting was moved to next",
+  "ans": "Tuesday",
+  "tag": "일상"
+ },
+ {
+  "ctx": "My grandmother keeps her reading glasses on her",
+  "ans": "head",
+  "tag": "일상"
+ },
+ {
+  "ctx": "The cat knocked the glass off the",
+  "ans": "table",
+  "tag": "일상"
+ },
+ {
+  "ctx": "We missed the last train, so we had to take a",
+  "ans": "taxi",
+  "tag": "일상"
+ },
+ {
+  "ctx": "The server returned a 404 because the page was",
+  "ans": "deleted",
+  "tag": "개발"
+ },
+ {
+  "ctx": "Always write tests before you",
+  "ans": "deploy",
+  "tag": "개발"
+ },
+ {
+  "ctx": "The bug only happened on",
+  "ans": "Friday",
+  "tag": "개발"
+ },
+ {
+  "ctx": "He pushed directly to main and broke the",
+  "ans": "build",
+  "tag": "개발"
+ },
+ {
+  "ctx": "The database was slow because the query had no",
+  "ans": "index",
+  "tag": "개발"
+ },
+ {
+  "ctx": "The model was trained on billions of",
+  "ans": "tokens",
+  "tag": "AI"
+ },
+ {
+  "ctx": "Attention is all you",
+  "ans": "need",
+  "tag": "AI"
+ },
+ {
+  "ctx": "To reduce overfitting, they collected more",
+  "ans": "data",
+  "tag": "AI"
+ },
+ {
+  "ctx": "The robot looked at the sunset and felt",
+  "ans": "nothing",
+  "tag": "반전"
+ },
+ {
+  "ctx": "The astronaut floated to the window and saw a",
+  "ans": "pigeon",
+  "tag": "반전"
+ },
+ {
+  "ctx": "After ten years of training, the ninja finally mastered",
+  "ans": "knitting",
+  "tag": "반전"
+ },
+ {
+  "ctx": "The dragon guarded its treasure: a pile of",
+  "ans": "socks",
+  "tag": "반전"
+ },
+ {
+  "ctx": "The detective examined the clue closely. It was a",
+  "ans": "banana",
+  "tag": "반전"
+ },
+ {
+  "ctx": "Her secret ingredient for the perfect cake was",
+  "ans": "salt",
+  "tag": "반전"
+ },
+ {
+  "ctx": "The king's most trusted advisor was a",
+  "ans": "goat",
+  "tag": "반전"
+ },
+ {
+  "ctx": "The ocean is deep, the sky is",
+  "ans": "blue",
+  "tag": "관용구"
+ },
+ {
+  "ctx": "Rome was not built in a",
+  "ans": "day",
+  "tag": "속담"
+ },
+ {
+  "ctx": "The quick brown fox jumps over the lazy",
+  "ans": "dog",
+  "tag": "관용구"
+ },
+ {
+  "ctx": "The library was so quiet you could hear a pin",
+  "ans": "drop",
+  "tag": "관용구"
+ }
+]
