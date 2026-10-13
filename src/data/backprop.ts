@@ -148,6 +148,8 @@ export const blocks: BiBlock[] = [
       { ko: "걸음마다 기울기가 큰 w1이 더 많이 움직입니다.", en: "Each step, w1 — the one with the bigger slope — moves more." },
       { ko: "답은 w1 × w2 = 3이기만 하면 되니 정답이 하나가 아닙니다.", en: "Any pair with w1 × w2 = 3 works, so there's no single right answer." },
       { ko: "어디서 출발했느냐에 따라 도착점이 달라집니다.", en: "Where you land depends on where you started." },
+      { ko: "실험실에서 lr을 0.03으로 올리면 w1이 1.48 → 1.31 → 1.42로 골짜기를 지그재그로 오가다 내려앉습니다.", en: "In the lab, raise lr to 0.03 and w1 zigzags across the valley — 1.48 → 1.31 → 1.42 — before settling." },
+      { ko: "0.05면 끝내 자리를 못 잡고 양쪽 비탈을 튀어 다닙니다. 1편의 핑퐁이 가중치 두 개에서도 그대로 일어납니다.", en: "At 0.05 it never settles, bouncing between the slopes — part 1's ping-pong, now with two weights." },
     ],
   },
 
