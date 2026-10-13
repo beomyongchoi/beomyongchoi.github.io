@@ -37,6 +37,13 @@ const groups = [
     ],
   },
   {
+    label: "🧬 트랜스포머는 어떻게 진화했나",
+    desc: "2017년 설계도에서 DeepSeek-V3·Qwen3까지 — 실제 설정 파일로 따라가는 부품별 진화.",
+    toys: [
+      { href: "/playground/arch/", toy: "arch", title: "설계도 비교기", tag: "0편 · 지도", desc: "실제 config.json 7개를 나란히. 바뀐 부품, 전체·활성 파라미터, 컨텍스트별 KV 캐시 메모리 계산." },
+    ],
+  },
+  {
     label: "🤖 에이전틱 AI 아키텍처",
     desc: "가변 추론부터 서브에이전트 병렬 오케스트레이션까지 — 에이전트 시스템의 동작 메커니즘.",
     toys: [
@@ -300,6 +307,20 @@ const groups = [
     }
   }
 
+  // A grid of "config cells": columns light up left→right as the blueprint changes across models.
+  function arch(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", cols = 6, rows = 5, cw = (W - 50) / cols, rh = (H - 30) / rows;
+    const front = Math.floor(f / 30) % (cols + 2);
+    const changed = [[0, 0, 0, 0, 0], [1, 0, 0, 1, 0], [1, 1, 1, 1, 0], [1, 1, 1, 1, 1], [1, 1, 1, 1, 0], [1, 1, 1, 1, 1]];
+    for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) {
+      ctx.fillStyle = c <= front && changed[c][r] ? acc : "#d7dae0"; ctx.globalAlpha = c <= front ? 1 : 0.5;
+      ctx.beginPath(); ctx.roundRect(25 + c * cw + 2, 15 + r * rh + 2, cw - 4, rh - 4, 3); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
   function embeddings(ctx, W, H, f) {
     const cs = getComputedStyle(document.documentElement);
     ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
@@ -537,7 +558,7 @@ const groups = [
     ctx.beginPath(); ctx.roundRect((W * 3) / 4 - 20, H / 2 - 15, 40, 30, 6); ctx.fill();
   }
 
-  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, train, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, rag, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
+  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, train, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, rag, arch, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
   let f = 0;
   function loop() {
     f++;

@@ -1,0 +1,19 @@
+---
+title: "0. The Map — the 2017 Blueprint vs Today's Models"
+description: "Lining up the 2017 transformer with GPT-2, Llama 3.1, Mixtral, DeepSeek-V3, and Qwen3 using their real config.json files, we trace six parts that changed — computing from the configs why a 671B MoE uses 37B per token and why 128K tokens cost 16 GB vs 8.6 GB of KV cache. Click any sentence to flip between English and Korean."
+pubDate: 2026-10-13T14:00:00
+lang: en
+translationKey: evolution-map
+tags: ["AI", "Transformer", "LLM", "Architecture"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/evolutionMap";
+
+<SeriesNav id="evolution" current="evolution-map" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="evolution" current="evolution-map" lang="en" />

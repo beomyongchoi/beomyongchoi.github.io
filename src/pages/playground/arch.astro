@@ -1,0 +1,134 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`설계도 비교기 — 2017 트랜스포머부터 DeepSeek-V3까지 — ${SITE.authorKo}`}
+  description="공개 모델의 실제 config.json으로 2017년 트랜스포머, GPT-2, Llama 3.1, Mixtral, DeepSeek-V3, Qwen3를 나란히 비교합니다. 바뀐 부품, 전체·활성 파라미터, 토큰당 KV 캐시와 컨텍스트 길이별 메모리를 직접 계산해 보세요."
+  locale="ko"
+  path="/playground/arch/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">설계도 비교기</h1>
+    <p class="mt-3 text-muted">
+      공개 모델의 실제 <code>config.json</code> 값입니다. 2017년 원형과 <strong>다른 칸</strong>이 칠해집니다. 아래 숫자는 모두 이 설정값에서 직접 계산합니다.
+    </p>
+  </header>
+
+  <section class="ar">
+    <a class="ar-crosslink" href="/blog/evolution-map/">개념 더 읽기 → 진화 0편 · 지도</a>
+
+    <div class="ar-tablewrap"><table class="ar-tbl" id="ar-tbl"></table></div>
+    <p class="ar-note">칠한 칸 = 2017년 원형(Transformer base)과 달라진 부품. 모델 이름을 누르면 설정 파일 원문으로 갑니다.</p>
+
+    <h2 class="ar-h">크기 — 전체 vs 토큰 하나가 실제로 쓰는 양</h2>
+    <div id="ar-params" class="ar-bars"></div>
+    <p class="ar-note">로그 스케일. 연한 막대 = 전체 파라미터, 진한 막대 = 토큰 하나를 처리할 때 켜지는 파라미터(MoE만 다름).</p>
+
+    <h2 class="ar-h">KV 캐시 — 긴 대화가 먹는 메모리</h2>
+    <div class="ar-kvctl">
+      <label>모델 <select id="ar-model"></select></label>
+      <label>컨텍스트 길이 <b id="ar-ctxv"></b><input id="ar-ctx" type="range" min="10" max="17.3" step="0.1" value="13" /></label>
+    </div>
+    <div id="ar-kv" class="ar-kv"></div>
+    <p class="ar-note">bf16(2바이트) 기준, 대화 하나(배치 1)의 캐시만 셉니다. 모델 가중치 자체의 메모리는 별도입니다.</p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .ar-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .ar-crosslink:hover { text-decoration: underline; }
+  .ar-tablewrap { overflow-x: auto; margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; }
+  .ar-tbl { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 760px; }
+  .ar-tbl th, .ar-tbl td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  .ar-tbl thead th { background: var(--surface); font-weight: 700; vertical-align: bottom; }
+  .ar-tbl thead a { color: var(--fg); text-decoration: none; }
+  .ar-tbl thead a:hover { color: var(--accent); }
+  .ar-tbl thead small { display: block; font-weight: 400; color: var(--muted); font-family: var(--font-mono); font-size: 0.66rem; }
+  .ar-tbl tbody th { font-weight: 400; color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; background: var(--surface); position: sticky; left: 0; }
+  .ar-tbl td { font-family: var(--font-mono); font-size: 0.74rem; }
+  .ar-tbl td.chg { background: color-mix(in srgb, var(--accent) 13%, transparent); color: var(--fg); font-weight: 600; }
+  .ar-note { margin-top: 6px; font-size: 0.72rem; color: var(--muted); }
+  .ar-h { font-size: 1.05rem; font-weight: 700; margin: 30px 0 10px; }
+  .ar-bars { display: flex; flex-direction: column; gap: 7px; }
+  .ar-bar { display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; gap: 10px; font-size: 0.76rem; }
+  .ar-bar .n { text-align: right; }
+  .ar-bar .t { position: relative; height: 16px; background: color-mix(in srgb, var(--muted) 10%, transparent); border-radius: 4px; overflow: hidden; }
+  .ar-bar .tot { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .ar-bar .act { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+  .ar-bar .v { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .ar-kvctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 22px; }
+  .ar-kvctl label { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted); display: grid; gap: 5px; }
+  .ar-kvctl select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+  .ar-kvctl input { width: 100%; accent-color: var(--accent); }
+  .ar-kvctl b { color: var(--accent); }
+  .ar-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
+  .ar-stat { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 9px 12px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .ar-stat b { display: block; font-size: 1.1rem; color: var(--fg); margin-top: 2px; }
+  .ar-stat.hi b { color: var(--accent); }
+</style>
+
+<script type="module" is:inline>
+  import { MODELS, params, kvBytesPerToken, kvBytesMHA } from "/lab/arch.js";
+
+  const $ = (id) => document.getElementById(id);
+  const base = MODELS[0];
+  const big = (n) => (n >= 1e9 ? (n / 1e9).toFixed(n >= 1e11 ? 0 : n >= 1e10 ? 1 : 2) + "B" : (n / 1e6).toFixed(0) + "M");
+  const bytes = (b) => (b >= 2 ** 30 ? (b / 2 ** 30).toFixed(1) + " GB" : b >= 2 ** 20 ? (b / 2 ** 20).toFixed(1) + " MB" : (b / 1024).toFixed(1) + " KB");
+
+  // Rows: label, value getter, and how to compare with 2017 (changed = different from vanilla).
+  const attnKind = (m) => (m.mla ? "MLA (압축 캐시)" : m.kvHeads === m.heads ? "MHA" : `GQA (${m.heads}→${m.kvHeads})`);
+  const ROWS = [
+    ["구조", (m) => (m.layout === "decoder" ? "디코더만" : "인코더+디코더")],
+    ["층 수", (m) => m.layers],
+    ["폭 (d_model)", (m) => m.d.toLocaleString()],
+    ["어텐션", attnKind],
+    ["위치 표현", (m) => m.pos],
+    ["정규화", (m) => `${m.normPos === "pre" ? "Pre" : "Post"}-${m.norm}`],
+    ["FFN 활성화", (m) => (m.gated ? `${m.act} 게이트 (SwiGLU)` : m.act)],
+    ["FFN 구성", (m) => (m.moe ? `MoE ${m.moe.experts}개 중 ${m.moe.active}개${m.moe.shared ? ` + 공유 ${m.moe.shared}` : ""}` : "단일 (dense)")],
+    ["어휘 수", (m) => m.vocab.toLocaleString()],
+    ["최대 컨텍스트", (m) => (m.ctx ? m.ctx.toLocaleString() : "—")],
+  ];
+  const NUMERIC = new Set(["층 수", "폭 (d_model)", "어휘 수", "최대 컨텍스트"]);
+
+  function table() {
+    const head = `<thead><tr><th></th>${MODELS.map((m) => `<th><a href="${m.src}" target="_blank" rel="noopener">${m.name}</a><small>${m.org} · ${m.year}</small></th>`).join("")}</tr></thead>`;
+    const body = ROWS.map(([label, get]) => `<tr><th>${label}</th>${MODELS.map((m) => {
+      const v = get(m), changed = !NUMERIC.has(label) && m !== base && String(v) !== String(get(base));
+      return `<td class="${changed ? "chg" : ""}">${v}</td>`;
+    }).join("")}</tr>`).join("");
+    $("ar-tbl").innerHTML = head + `<tbody>${body}</tbody>`;
+  }
+
+  function bars() {
+    const lo = Math.log10(3e7), hi = Math.log10(1e12), w = (n) => ((Math.log10(n) - lo) / (hi - lo)) * 100;
+    $("ar-params").innerHTML = MODELS.map((m) => {
+      const p = params(m);
+      return `<div class="ar-bar"><span class="n">${m.name}</span><span class="t"><span class="tot" style="width:${w(p.total)}%"></span><span class="act" style="width:${w(p.active)}%"></span></span>` +
+        `<span class="v">${big(p.total)}${p.active < p.total ? ` · 활성 ${big(p.active)} (${((p.active / p.total) * 100).toFixed(1)}%)` : ""}</span></div>`;
+    }).join("");
+  }
+
+  function kv() {
+    const m = MODELS.find((x) => x.id === $("ar-model").value), ctx = Math.round(2 ** +$("ar-ctx").value);
+    $("ar-ctxv").textContent = ctx.toLocaleString() + " 토큰" + (m.ctx && ctx > m.ctx ? " (이 모델 한도 초과)" : "");
+    const per = kvBytesPerToken(m), mha = kvBytesMHA(m);
+    const st = (k, v, hi) => `<div class="ar-stat${hi ? " hi" : ""}">${k}<b>${v}</b></div>`;
+    $("ar-kv").innerHTML =
+      st("토큰당 KV 캐시", bytes(per)) +
+      st(`${ctx.toLocaleString()} 토큰이면`, bytes(per * ctx), true) +
+      st("헤드마다 따로 캐시했다면 (MHA)", bytes(mha * ctx)) +
+      st("절약 배수", mha === per ? "1× (공유 안 함)" : (mha / per).toFixed(1) + "×");
+  }
+
+  table();
+  bars();
+  $("ar-model").innerHTML = MODELS.filter((m) => m.layout === "decoder").map((m) => `<option value="${m.id}">${m.name}</option>`).join("");
+  $("ar-model").value = "llama31";
+  $("ar-model").addEventListener("change", kv);
+  $("ar-ctx").addEventListener("input", kv);
+  kv();
+</script>

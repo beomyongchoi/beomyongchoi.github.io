@@ -1,0 +1,19 @@
+---
+title: "0. 지도 — 2017년 설계도와 지금 모델, 무엇이 바뀌었나"
+description: "2017년 트랜스포머와 GPT-2, Llama 3.1, Mixtral, DeepSeek-V3, Qwen3를 실제 config.json으로 나란히 놓고 바뀐 부품 여섯 개를 짚습니다. 671B인데 토큰당 37B만 쓰는 MoE, 128K 토큰에 16GB 대 8.6GB인 KV 캐시까지 설정값으로 직접 계산. 문장을 클릭하면 한/영 원문을 볼 수 있습니다."
+pubDate: 2026-10-13T14:00:00
+lang: ko
+translationKey: evolution-map
+tags: ["AI", "트랜스포머", "LLM", "아키텍처"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/evolutionMap";
+
+<SeriesNav id="evolution" current="evolution-map" lang="ko" />
+
+<BilingualArticle blocks={blocks} />
+
+<SeriesNext id="evolution" current="evolution-map" lang="ko" />
