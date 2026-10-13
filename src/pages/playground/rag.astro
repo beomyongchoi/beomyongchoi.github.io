@@ -1,0 +1,181 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`이 블로그에 물어보기 — 키워드 vs 의미 vs 하이브리드 검색 — ${SITE.authorKo}`}
+  description="이 블로그의 글 21편을 소제목 단위로 잘라 둔 인덱스에 질문을 던져, 키워드 검색(BM25)·의미 검색(임베딩)·하이브리드(RRF)가 각각 무엇을 찾아오는지 나란히 비교합니다. 다국어 임베딩 모델이 브라우저에서 돌아갑니다."
+  locale="ko"
+  path="/playground/rag/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">이 블로그에 물어보기</h1>
+    <p class="mt-3 text-muted">
+      RAG의 답은 <strong>검색이 찾아온 문단</strong>만큼만 좋습니다. 이 블로그 글을 소제목 단위로 잘라 둔 인덱스에 질문해 보고, 세 가지 검색이 각각 무엇을 가져오는지 비교하세요.
+    </p>
+  </header>
+
+  <section class="rg">
+    <a class="rg-crosslink" href="/blog/rag-retrieval/">개념 더 읽기 → RAG의 R</a>
+
+    <div class="rg-load">
+      <button id="rg-load" type="button" class="rg-btn">의미 검색 켜기 · 임베딩 모델 내려받기 (약 120MB) →</button>
+      <p id="rg-status" class="rg-status">키워드 검색은 지금 바로 됩니다. 의미 검색은 multilingual-e5-small을 브라우저에서 돌립니다.</p>
+    </div>
+
+    <div class="rg-q">
+      <input id="rg-input" type="text" value="학습률이 너무 크면 어떻게 되나요" spellcheck="false" />
+      <div class="rg-chips" id="rg-chips">
+        <button>학습률이 너무 크면 어떻게 되나요</button>
+        <button>모델이 학습 데이터를 통째로 외워 버리면?</button>
+        <button>3.9204</button>
+        <button>왜 직선으로는 고리를 못 가르나</button>
+        <button>how does attention decide which words matter</button>
+      </div>
+      <div class="rg-lang" id="rg-lang">
+        <button data-l="all" class="on">한·영 전체</button><button data-l="ko">한국어만</button><button data-l="en">English only</button>
+      </div>
+    </div>
+
+    <div class="rg-cols">
+      <div class="rg-col"><h2>키워드 <span>BM25 · 같은 글자</span></h2><ol id="col-kw"></ol></div>
+      <div class="rg-col"><h2>의미 <span>임베딩 · 같은 뜻</span></h2><ol id="col-sem"><li class="rg-empty">모델을 내려받으면 켜집니다.</li></ol><p class="rg-spread" id="rg-spread"></p></div>
+      <div class="rg-col"><h2>하이브리드 <span>RRF · 순위만 섞기</span></h2><ol id="col-hyb"></ol></div>
+    </div>
+    <p class="rg-foot" id="rg-foot"></p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .rg-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .rg-crosslink:hover { text-decoration: underline; }
+  .rg-load { margin: 14px 0 0; }
+  .rg-btn { font: inherit; font-size: 0.82rem; font-family: var(--font-mono); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .rg-btn:disabled { opacity: 0.4; cursor: default; }
+  .rg-status { margin-top: 8px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+  .rg-q { margin: 16px 0 18px; }
+  #rg-input { width: 100%; font: inherit; font-size: 1rem; padding: 11px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--fg); }
+  #rg-input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+  .rg-chips, .rg-lang { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .rg-chips button, .rg-lang button { font: inherit; font-size: 0.74rem; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--fg); cursor: pointer; }
+  .rg-chips button:hover { border-color: var(--accent); color: var(--accent); }
+  .rg-lang button { font-family: var(--font-mono); font-size: 0.7rem; }
+  .rg-lang button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+  .rg-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 820px) { .rg-cols { grid-template-columns: 1fr; } }
+  .rg-col { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 12px 12px 6px; min-width: 0; }
+  .rg-col h2 { font-size: 0.95rem; font-weight: 700; margin: 0 0 8px; }
+  .rg-col h2 span { display: block; font-family: var(--font-mono); font-size: 0.66rem; font-weight: 400; color: var(--muted); }
+  .rg-col ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .rg-col li { border-top: 1px solid var(--border); padding-top: 8px; }
+  .rg-col li:first-child { border-top: 0; padding-top: 0; }
+  .rg-col a { color: var(--fg); text-decoration: none; display: block; }
+  .rg-col a:hover .rg-h { color: var(--accent); }
+  .rg-meta { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+  .rg-meta b { color: var(--accent); }
+  .rg-h { font-size: 0.84rem; font-weight: 700; line-height: 1.35; margin: 2px 0; }
+  .rg-t { font-size: 0.74rem; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .rg-empty { font-size: 0.78rem; color: var(--muted); }
+  .rg-spread { margin: 8px 0 4px; font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); }
+  .rg-foot { margin-top: 10px; font-size: 0.74rem; color: var(--muted); }
+</style>
+
+<script type="module" is:inline>
+  import { bm25Index, cosine, rank, rrf } from "/lab/rag.js";
+
+  const $ = (id) => document.getElementById(id);
+  const LIB = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0";
+  const TOP = 5;
+  let entries = [], bm = null, embed = null, lang = "all", seq = 0;
+
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const href = (e) => `${e.lang === "en" ? "/en" : ""}/blog/${e.slug}/${e.s ? "#s-" + e.s : ""}`;
+  const keep = (i) => lang === "all" || entries[i].lang === lang;
+
+  // One row per (post, section, lang): long sections are split into pieces; show the best piece.
+  function top(ids, score) {
+    const seen = new Set(), out = [];
+    for (const i of ids) {
+      if (!keep(i)) continue;
+      const e = entries[i], k = `${e.slug}#${e.s}#${e.lang}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push([i, score(i)]);
+      if (out.length === TOP) break;
+    }
+    return out;
+  }
+
+  function list(id, rows, fmt) {
+    $(id).innerHTML = rows.length ? rows.map(([i, v], r) => {
+      const e = entries[i];
+      return `<li><a href="${href(e)}"><div class="rg-meta"><span>${r + 1}위 · ${e.lang.toUpperCase()}</span><b>${fmt(v)}</b></div>` +
+        `<div class="rg-h">${esc(e.title)}${e.head ? " › " + esc(e.head) : ""}</div><div class="rg-t">${esc(e.text)}</div></a></li>`;
+    }).join("") : `<li class="rg-empty">맞는 글자가 하나도 없습니다.</li>`;
+  }
+
+  async function search() {
+    const q = $("rg-input").value.trim(), my = ++seq;
+    if (!q || !bm) return;
+    const ks = bm(q), kr = rank(ks).filter((i) => ks[i] > 0);
+    list("col-kw", top(kr, (i) => ks[i]), (v) => v.toFixed(2));
+    if (!embed) {
+      $("col-hyb").innerHTML = `<li class="rg-empty">의미 검색이 켜지면 두 순위를 섞습니다.</li>`;
+      $("rg-foot").textContent = `키워드가 하나라도 겹친 조각: ${kr.length} / ${entries.length}`;
+      return;
+    }
+    const qv = Array.from((await embed("query: " + q, { pooling: "mean", normalize: true })).data);
+    if (my !== seq) return;   // a newer query is already running
+    const ss = entries.map((e) => cosine(qv, e.v)), sr = rank(ss);
+    list("col-sem", top(sr, (i) => ss[i]), (v) => v.toFixed(3));
+    const vis = sr.filter(keep);
+    $("rg-spread").textContent = `점수 분포: 1위 ${ss[vis[0]].toFixed(3)} · 10위 ${ss[vis[9]].toFixed(3)} · 꼴찌 ${ss[vis.at(-1)].toFixed(3)}`;
+    const fused = rrf([kr.slice(0, 50), sr.slice(0, 50)]);
+    const fs = new Map(fused.map((x) => [x.id, x.score]));
+    list("col-hyb", top(fused.map((x) => x.id), (i) => fs.get(i)), (v) => v.toFixed(4));
+    $("rg-foot").textContent = `조각 ${entries.length}개 · 키워드가 겹친 조각 ${kr.length}개 · 하이브리드 = 두 목록의 상위 50위를 1/(60+순위)로 합산`;
+  }
+
+  $("rg-load").addEventListener("click", async () => {
+    $("rg-load").disabled = true;
+    const status = (t) => ($("rg-status").textContent = t);
+    try {
+      status("라이브러리 불러오는 중…");
+      const { pipeline } = await import(LIB);
+      const files = {};
+      embed = await pipeline("feature-extraction", "Xenova/multilingual-e5-small", {
+        device: "wasm", dtype: "q8",
+        progress_callback: (e) => {
+          if (e.status !== "progress" || !e.total) return;
+          files[e.file] = [e.loaded, e.total];
+          const [l, t] = Object.values(files).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0]);
+          if (t > 1e6) status(`모델 내려받는 중… ${(l / 1e6).toFixed(0)} / ${(t / 1e6).toFixed(0)} MB`);
+        },
+      });
+      status("의미 검색 켜짐 · 질문 하나를 임베딩해 조각 " + entries.length + "개와 코사인 유사도를 잽니다");
+      $("rg-load").hidden = true;
+      search();
+    } catch (err) {
+      console.error(err);
+      status("불러오기 실패: " + (err?.message || err));
+      $("rg-load").disabled = false;
+    }
+  });
+
+  let deb;
+  $("rg-input").addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(search, 300); });
+  document.querySelectorAll("#rg-chips button").forEach((b) => b.addEventListener("click", () => { $("rg-input").value = b.textContent; search(); }));
+  document.querySelectorAll("#rg-lang button").forEach((b) => b.addEventListener("click", () => {
+    lang = b.dataset.l;
+    document.querySelectorAll("#rg-lang button").forEach((x) => x.classList.toggle("on", x === b));
+    search();
+  }));
+
+  const idx = await (await fetch("/lab/rag-index.json")).json();
+  entries = idx.entries;
+  bm = bm25Index(entries.map((e) => (e.head ? e.head + ". " : "") + e.text));
+  search();
+</script>

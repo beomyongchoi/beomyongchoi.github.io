@@ -50,6 +50,7 @@ const groups = [
     label: "🔎 그 외 AI 실험",
     desc: "",
     toys: [
+      { href: "/playground/rag/", toy: "rag", title: "이 블로그에 물어보기", tag: "RAG · LIVE 실모델", desc: "이 블로그 글을 소제목 단위로 검색. 키워드·의미·하이브리드가 각각 뭘 찾아오는지 나란히." },
       { href: "/playground/fanout/", toy: "fanout", title: "Query Fan-out 시각화", tag: "AI · 검색", desc: "질문이 하위 쿼리로 쪼개져, 구체적인 문단만 검색되는 과정." },
     ],
   },
@@ -285,6 +286,18 @@ const groups = [
     ctx.fillStyle = "rgba(224,132,42,0.18)"; ctx.beginPath(); ctx.ellipse(cx, cy, 8 + k * 30, 6 + k * 24 + 6 * (1 - k) * Math.sin(f * 0.2), 0, 0, 7); ctx.fill();
     for (let i = 0; i < 14; i++) { const a = i * 0.449; ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(cx + 50 * Math.cos(a), cy + 38 * Math.sin(a), 3, 0, 7); ctx.fill(); }
     for (let i = 0; i < 7; i++) { const a = i * 0.9; ctx.fillStyle = "#c86a12"; ctx.beginPath(); ctx.arc(cx + 12 * Math.cos(a), cy + 9 * Math.sin(a), 3, 0, 7); ctx.fill(); }
+  }
+
+  // Three result columns; the highlighted row hops between them as the methods disagree.
+  function rag(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", cw = (W - 60) / 3;
+    const hit = [[0, 1, 0], [2, 0, 1], [1, 2, 0]][Math.floor(f / 80) % 3];
+    for (let c = 0; c < 3; c++) for (let r = 0; r < 4; r++) {
+      ctx.fillStyle = hit[c] === r ? acc : "#d7dae0";
+      ctx.beginPath(); ctx.roundRect(20 + c * (cw + 10), 22 + r * 22, cw * (r === hit[c] ? 1 : 0.85 - r * 0.1), 12, 3); ctx.fill();
+    }
   }
 
   function embeddings(ctx, W, H, f) {
@@ -524,7 +537,7 @@ const groups = [
     ctx.beginPath(); ctx.roundRect((W * 3) / 4 - 20, H / 2 - 15, 40, 30, 6); ctx.fill();
   }
 
-  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, train, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
+  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, train, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, rag, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
   let f = 0;
   function loop() {
     f++;
