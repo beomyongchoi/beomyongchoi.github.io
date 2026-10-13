@@ -4,8 +4,8 @@ export const blocks: BiBlock[] = [
   {
     type: "callout",
     tone: "tldr",
-    ko: "<strong>결론부터.</strong> 2편의 트랜스포머 블록을 디코더로만 N층 쌓으면 GPT입니다(Radford et al. 2019). 3편 BERT와 부품은 똑같습니다. 딱 하나, 어텐션 점수 행렬에 상삼각 −∞ 마스크를 씌워 각 토큰이 자신과 이전 토큰만 보게 합니다. 이 causal 마스크가 양방향 이해기를 왼→오 생성기로 바꿉니다.",
-    en: "<strong>The short version.</strong> Stack the transformer block from part 2 as a decoder-only stack of N layers and you get GPT (Radford et al. 2019). The parts are the same as BERT in part 3. Just one change: an upper-triangular −∞ mask on the attention-score matrix, so each token sees only itself and the tokens before it. That causal mask turns a bidirectional understander into a left-to-right generator.",
+    ko: "<strong>결론부터.</strong> 2편의 트랜스포머 블록을 디코더로만 N층 쌓으면 GPT입니다(GPT-1은 Radford et al. 2018, GPT-2는 2019). 3편 BERT와 부품은 똑같습니다. 딱 하나, 어텐션 점수 행렬에 상삼각 −∞ 마스크를 씌워 각 토큰이 자신과 이전 토큰만 보게 합니다. 이 causal 마스크가 양방향 이해기를 왼→오 생성기로 바꿉니다.",
+    en: "<strong>The short version.</strong> Stack the transformer block from part 2 as a decoder-only stack of N layers and you get GPT (GPT-1: Radford et al. 2018; GPT-2: 2019). The parts are the same as BERT in part 3. Just one change: an upper-triangular −∞ mask on the attention-score matrix, so each token sees only itself and the tokens before it. That causal mask turns a bidirectional understander into a left-to-right generator.",
   },
 
   {
@@ -78,7 +78,7 @@ export const blocks: BiBlock[] = [
     s: [
       { ko: "한 가지 역할 분리를 짚어둡니다.", en: "One division of labor is worth noting." },
       { ko: "토큰 사이의 <strong>순서 정보</strong>는 위치 인코딩이 넣어줍니다.", en: "The <strong>order</strong> between tokens comes from positional encoding." },
-      { ko: "마스크는 순서를 만드는 게 아니라 미래를 차단할 뿐입니다.", en: "The mask doesn't create order — it only blocks the future." },
+      { ko: "순서는 주로 위치 인코딩에서 오고, 마스크의 주된 일은 미래를 차단하는 것입니다.", en: "Order mainly comes from positional encoding; the mask's main job is blocking the future." },
     ],
   },
 
@@ -131,8 +131,8 @@ export const blocks: BiBlock[] = [
   {
     type: "callout",
     tone: "tip",
-    ko: "매 스텝 이전 전체를 다시 계산하면 시퀀스 길이에 제곱으로 비싸집니다. 그래서 <strong>KV 캐시</strong>를 씁니다. 과거 토큰의 Key·Value를 저장해두고, 새 토큰 하나 것만 계산해 이어 붙입니다. 매 스텝 전체 재계산을 피하는 방법입니다.",
-    en: "Recomputing the entire past at every step costs quadratically in sequence length. So we use a <strong>KV cache</strong>: store the Keys and Values of past tokens, and compute only the new token's, then append. It's how you avoid recomputing everything each step.",
+    ko: "매 스텝 이전 토큰 전체를 다시 계산하면 길이가 늘수록 비용이 불어납니다. 그래서 <strong>KV 캐시</strong>를 씁니다. 과거 토큰의 Key·Value를 저장해두고, 새 토큰 하나 것만 계산해 이어 붙입니다. 매 스텝 전체 재계산을 피하는 방법입니다.",
+    en: "Redoing every past token at every step makes the cost balloon with length. So we use a <strong>KV cache</strong>: store the Keys and Values of past tokens, and compute only the new token's, then append. It's how you avoid recomputing everything each step.",
   },
 
   { type: "h2", ko: "4. 다음 토큰 고르기 — 샘플링", en: "4. Choosing the next token — sampling" },
@@ -190,7 +190,7 @@ export const blocks: BiBlock[] = [
     s: [
       { ko: "여기서 3편 BERT와의 대비가 완성됩니다.", en: "This is where the contrast with BERT from part 3 completes." },
       { ko: "BERT는 양쪽을 다 보므로 왼쪽만 보고 다음을 이어쓰는 자기회귀 생성을 애초에 훈련한 적이 없습니다.", en: "BERT sees both sides, so it was never trained to continue autoregressively from the left alone." },
-      { ko: "양방향은 다음 토큰이 구조적으로 새어 들어와 생성기로 쓸 수 없습니다.", en: "Bidirectionality structurally leaks the next token, so it can't be used as a generator." },
+      { ko: "양방향은 다음 토큰이 구조적으로 새어 들어와 자연스러운 생성기가 되기 어렵습니다.", en: "Bidirectionality structurally leaks the next token, so it isn't a natural or efficient generator." },
     ],
   },
 

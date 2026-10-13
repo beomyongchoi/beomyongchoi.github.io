@@ -159,9 +159,9 @@ export const blocks: BiBlock[] = [
     type: "p",
     s: [
       { ko: "Ahrefs는 AI Overview가 있으면 1위 페이지 CTR이 낮아진다고 봤습니다.", en: "Ahrefs found that an AI Overview lowers the click-through rate of the top-ranked page." },
-      { ko: "초기 <strong>34.5%</strong> 하락으로 보고했고, 이후 <strong>58%</strong>로 갱신됐습니다.", en: "It initially reported a <strong>34.5%</strong> drop, later revised to <strong>58%</strong>." },
+      { ko: "2025년 4월 분석에서는 <strong>34.5%</strong> 하락이었고, 2026년 2월 더 최근 데이터로 다시 재 보니 <strong>58%</strong>였습니다.", en: "Its April 2025 analysis found a <strong>34.5%</strong> drop; a February 2026 re-run on newer data found <strong>58%</strong>." },
       { ko: "SparkToro(2024)는 미국 구글 검색의 약 <strong>58.5%</strong>가 클릭 없이 끝난다고 집계했습니다.", en: "SparkToro (2024) measured that about <strong>58.5%</strong> of U.S. Google searches end without a click." },
-      { ko: "AI Overviews는 전체 검색의 20% 이상에 노출됩니다.", en: "AI Overviews appear on more than 20% of all searches." },
+      { ko: "Pew 조사(2025년 3월)에서는 검색의 18%, 약 5번에 1번꼴로 AI Overviews가 떴습니다.", en: "In Pew's data (March 2025), AI Overviews appeared on 18% of searches — about one in five." },
     ],
   },
 
@@ -197,6 +197,6 @@ export const blocks: BiBlock[] = [
 
   {
     type: "sources",
-    html: "<h3>출처</h3><ul><li><a href=\"https://searchengineland.com/guide/query-fan-out\">Search Engine Land — Query fan-out guide</a></li><li><a href=\"https://www.searchenginejournal.com/query-fan-out-technique-in-ai-mode/552532/\">Search Engine Journal — Query Fan-Out Technique in AI Mode</a></li><li><a href=\"https://www.pewresearch.org/short-reads/2025/07/22/google-users-are-less-likely-to-click-on-links-when-an-ai-summary-appears-in-the-results/\">Pew Research (2025.7) — Google users and AI summaries</a></li><li><a href=\"https://ahrefs.com/blog/ai-overviews-reduce-clicks/\">Ahrefs — AI Overviews reduce clicks</a></li><li><a href=\"https://sparktoro.com/blog/2024-zero-click-search-study-for-every-1000-us-google-searches-only-374-clicks-go-to-the-open-web-in-the-eu-its-360/\">SparkToro (2024) — Zero-click search study</a></li><li><a href=\"https://unstructured.io/blog/chunking-for-rag-best-practices\">Unstructured — Chunking for RAG best practices</a></li></ul>",
+    html: "<h3>출처</h3><ul><li><a href=\"https://searchengineland.com/guide/query-fan-out\">Search Engine Land — Query fan-out guide</a></li><li><a href=\"https://www.searchenginejournal.com/query-fan-out-technique-in-ai-mode/552532/\">Search Engine Journal — Query Fan-Out Technique in AI Mode</a></li><li><a href=\"https://www.pewresearch.org/short-reads/2025/07/22/google-users-are-less-likely-to-click-on-links-when-an-ai-summary-appears-in-the-results/\">Pew Research (2025.7) — Google users and AI summaries</a></li><li><a href=\"https://ahrefs.com/blog/ai-overviews-reduce-clicks/\">Ahrefs — AI Overviews reduce clicks</a></li><li><a href=\"https://sparktoro.com/blog/2024-zero-click-search-study-for-every-1000-us-google-searches-only-374-clicks-go-to-the-open-web-in-the-eu-its-360/\">SparkToro (2024) — Zero-click search study</a></li><li><a href=\"https://unstructured.io/blog/chunking-for-rag-best-practices\">Unstructured — Chunking for RAG best practices</a></li><li><a href=\"https://blog.google/products/search/google-search-ai-mode-update/\">Google — AI Mode in Google Search: Updates from Google I/O 2025</a></li><li><a href=\"https://ahrefs.com/blog/ai-overviews-reduce-clicks-update/\">Ahrefs — Update: AI Overviews Reduce Clicks by 58%</a> (2026-02)</li></ul>",
   },
 ];

@@ -52,7 +52,7 @@ export const blocks: BiBlock[] = [
   {
     type: "list",
     items: [
-      { ko: "<strong>Query</strong>: 내가 지금 찾는 것 (it의 Q = \"내가 가리키는 명사는?\")", en: "<strong>Query</strong>: what I'm looking for right now (it's Q = \"which noun do I refer to?\")" },
+      { ko: "<strong>Query</strong>: 내가 지금 찾는 것 (it의 Q = \"내가 가리키는 명사는?\")", en: "<strong>Query</strong>: what I'm looking for right now (<code>it</code>'s Q = \"which noun do I refer to?\")" },
       { ko: "<strong>Key</strong>: 남에게 내놓는 검색용 간판 (cat의 K = \"나는 배부를 수 있는 단수 동물\")", en: "<strong>Key</strong>: the searchable signboard I show others (cat's K = \"I'm a singular animal that can be full\")" },
       { ko: "<strong>Value</strong>: 실제로 넘겨줄 의미 (cat의 V = cat이라는 뜻 덩어리)", en: "<strong>Value</strong>: the meaning I actually hand over (cat's V = the chunk of meaning that is cat)" }
     ]
@@ -91,7 +91,7 @@ export const blocks: BiBlock[] = [
     s: [
       { ko: "내적은 방향이 얼마나 겹치는지 재는 자입니다.", en: "The dot product is a ruler for how much two directions overlap." },
       { ko: "각도가 좁을수록 값이 큽니다.", en: "The narrower the angle, the larger the value." },
-      { ko: "it의 Query와 cat의 Key가 같은 쪽을 가리키면 점수가 높고, because나 was와는 어긋나 낮습니다.", en: "When it's Query and cat's Key point the same way the score is high, while it's low against because or was, where they don't line up." },
+      { ko: "it의 Query와 cat의 Key가 같은 쪽을 가리키면 점수가 높고, because나 was와는 어긋나 낮습니다.", en: "When <code>it</code>'s Query and cat's Key point the same way the score is high, while it's low against because or was, where they don't line up." },
       { ko: "\"궁합 점수\"라는 말이 여기서 나옵니다.", en: "That's where the phrase \"compatibility score\" comes from." }
     ]
   },
@@ -109,13 +109,14 @@ export const blocks: BiBlock[] = [
   },
   {
     type: "code",
-    code: "wᵢⱼ = softmax(scoreᵢ / τ)ⱼ"
+    code: "wᵢⱼ = softmax(scoreᵢ / τ)ⱼ        # 실제 모델: τ 대신 고정값 √d_k로 나눔"
   },
   {
     type: "p",
     s: [
       { ko: "그래서 it이 여러 단어에 나눠 주목하되 총량은 100%로 고정됩니다.", en: "So it can split its attention across several words while the total stays fixed at 100%." },
       { ko: "여기서 <strong>τ(temperature)</strong>가 분포의 뾰족함을 정합니다.", en: "Here <strong>τ (temperature)</strong> sets how sharp the distribution is." },
+      { ko: "실제 트랜스포머에는 이 손잡이가 없습니다. 벡터 차원 d<sub>k</sub>의 제곱근 <code>√d_k</code>라는 고정값으로 나눌 뿐입니다. τ는 감을 잡으라고 달아 둔 시연용 손잡이입니다.", en: "A real transformer has no such knob; it always divides by a fixed <code>√d_k</code>, the square root of the key dimension. τ is a demo knob to build intuition." },
       { ko: "τ가 작으면 1등 단어 하나로 확 쏠리고, 크면 여러 단어에 평평하게 퍼집니다.", en: "A small τ snaps everything onto the single top word, while a large one spreads it flatly across many." },
       { ko: "한 곳만 볼지, 두루 볼지의 다이얼입니다.", en: "It's the dial between focusing on one spot and looking broadly." }
     ]
@@ -124,7 +125,7 @@ export const blocks: BiBlock[] = [
     type: "callout",
     tone: "tip",
     ko: "인터랙티브에서 <strong>τ 슬라이더</strong>를 0.3까지 내려 보세요. it의 가중치가 cat 하나로 뾰족하게 쏠리는 게 보입니다. <a href=\"/playground/transformer/#scene-3\">τ 밀어보기 →</a>",
-    en: "In the interactive, drag the <strong>τ slider</strong> down to 0.3. You'll watch it's weight snap sharply onto cat alone. <a href=\"/playground/transformer/#scene-3\">push τ →</a>"
+    en: "In the interactive, drag the <strong>τ slider</strong> down to 0.3. You'll watch <code>it</code>'s weight snap sharply onto cat alone. <a href=\"/playground/transformer/#scene-3\">push τ →</a>"
   },
   {
     type: "h2",
@@ -145,7 +146,7 @@ export const blocks: BiBlock[] = [
   {
     type: "p",
     s: [
-      { ko: "it이 cat에 80% 쏠렸다면, it의 새 표현은 cat의 Value로 80% 물듭니다.", en: "If it puts 80% of its weight on cat, it's new representation is dyed 80% with cat's Value." },
+      { ko: "it이 cat에 80% 쏠렸다면, it의 새 표현은 cat의 Value로 80% 물듭니다.", en: "If it puts 80% of its weight on cat, <code>it</code>'s new representation is dyed 80% with cat's Value." },
       { ko: "<strong>대명사가 가리키는 대상의 \"색\"을 흡수하는 순간</strong>입니다.", en: "This is <strong>the moment a pronoun absorbs the \"color\" of what it refers to</strong>." },
       { ko: "self-attention이 \"it은 cat\"이라는 정보를 표현에 새겨 넣는 방식이 바로 이것입니다.", en: "This is precisely how self-attention writes the information \"it is cat\" into the representation." }
     ]
@@ -171,7 +172,7 @@ export const blocks: BiBlock[] = [
   {
     type: "p",
     s: [
-      { ko: "그 결과 <strong>it의 Query와 cat의 Key가 같은 방향으로 정렬</strong>됩니다.", en: "As a result, <strong>it's Query and cat's Key align in the same direction</strong>." },
+      { ko: "그 결과 <strong>it의 Query와 cat의 Key가 같은 방향으로 정렬</strong>됩니다.", en: "As a result, <strong><code>it</code>'s Query and cat's Key align in the same direction</strong>." },
       { ko: "궁합이 맞아야 손실이 줄기 때문입니다.", en: "That's because a good match is what lowers the loss." },
       { ko: "Q·K는 규칙으로 짜 넣은 게 아니라, 손실을 줄이다 얻은 정렬입니다.", en: "Q·K isn't a hand-coded rule; it's the alignment you get from driving down the loss." }
     ]
@@ -240,7 +241,7 @@ export const blocks: BiBlock[] = [
   {
     type: "callout",
     tone: "warn",
-    ko: "인터랙티브의 숫자는 실제 학습된 모델 가중치가 아니라, it→cat 같은 관계를 보여주려고 손으로 배치한 시연용 값입니다. 숫자 자체는 예시지만, Q·K → softmax(τ) → 가중합으로 흐르는 <strong>구조는 실제 트랜스포머와 동일</strong>합니다.",
-    en: "The numbers in the interactive aren't real trained model weights; they're hand-placed demo values chosen to surface relationships like it→cat. The numbers themselves are illustrative, but the <strong>structure — Q·K → softmax(τ) → weighted sum — is identical to a real transformer</strong>."
+    ko: "인터랙티브의 숫자는 실제 학습된 모델 가중치가 아니라, it→cat 같은 관계를 보여주려고 손으로 배치한 시연용 값입니다. 숫자 자체는 예시지만, Q·K → softmax → 가중합으로 흐르는 <strong>구조는 실제 트랜스포머와 동일</strong>합니다(실제 모델은 τ 대신 √d_k로 나눕니다).",
+    en: "The numbers in the interactive aren't real trained model weights; they're hand-placed demo values chosen to surface relationships like it→cat. The numbers themselves are illustrative, but the <strong>structure — Q·K → softmax → weighted sum — is identical to a real transformer</strong>."
   }
 ];
