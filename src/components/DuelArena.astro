@@ -1,0 +1,175 @@
+---
+// Human vs decision model, side by side on the same seed. Game rules live in /lab/<game>.js
+// (newGame, step, rawText, harnessText, draw, …); opponents in /lab/decide.js.
+interface Props { game: "galaga" | "crossy"; controls: { move: string; label: string }[] }
+const { game, controls } = Astro.props;
+---
+
+<section class="du" data-game={game}>
+  <div class="du-card" id="du-intro">
+    <p class="du-label">상대</p>
+    <div class="du-opts" id="du-opps"></div>
+    <label class="du-harness"><input type="checkbox" id="du-h" checked />
+      <span><b>하네스 켜기</b><small>① 게임이 매 수마다 "이쪽으로 가면 안전/위험"을 미리 계산해 넘기고 ② 죽거나 헛도는 수는 선택지에서 뺍니다. 끄면 화면을 글자로 옮긴 것만 받고, 무엇이든 고를 수 있습니다.</small></span></label>
+    <button id="du-start" type="button" class="du-btn">모델 내려받고 시작 →</button>
+    <p class="du-status" id="du-status">모델은 브라우저 안에서만 돌아갑니다. 서버로 아무것도 보내지 않습니다.</p>
+    <p class="du-status" id="du-best"></p>
+  </div>
+
+  <div id="du-arena" hidden>
+    <p class="du-count" id="du-count"></p>
+    <div class="du-boards">
+      <div class="du-side">
+        <p class="du-who">🙋 나 <span id="du-me-st"></span></p>
+        <canvas id="du-me"></canvas>
+        <div class="du-pad">{controls.map((c) => <button type="button" data-move={c.move}>{c.label}</button>)}</div>
+      </div>
+      <div class="du-side">
+        <p class="du-who">🤖 <span id="du-ai-name"></span> <span id="du-ai-st"></span></p>
+        <canvas id="du-ai"></canvas>
+        <div class="du-probs" id="du-probs"></div>
+        <p class="du-status" id="du-ms"></p>
+        <details class="du-view"><summary>모델이 받은 글 보기</summary><pre id="du-text"></pre></details>
+      </div>
+    </div>
+  </div>
+
+  <div class="du-card" id="du-end" hidden></div>
+</section>
+
+<style is:global>
+  .du-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 20px 22px; }
+  .du-label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); margin: 0 0 8px; }
+  .du-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .du-opt, .du-harness { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; background: var(--bg); cursor: pointer; font-size: 0.85rem; }
+  .du-opt input, .du-harness input { margin-top: 4px; accent-color: var(--accent); }
+  .du-opt b, .du-harness b { display: block; }
+  .du-opt small, .du-harness small { color: var(--muted); font-size: 0.75rem; line-height: 1.5; }
+  .du-harness { margin-bottom: 16px; }
+  .du-btn { font: inherit; font-size: 0.9rem; font-family: var(--font-mono); padding: 10px 18px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .du-btn.ghost { background: transparent; color: var(--accent); }
+  .du-btn:disabled { opacity: 0.45; cursor: default; }
+  .du-status { margin-top: 8px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .du-count { text-align: center; font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); min-height: 1.3em; margin: 0 0 8px; }
+  .du-boards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .du-boards { gap: 8px; } }
+  .du-who { font-family: var(--font-mono); font-size: 0.8rem; margin: 0 0 6px; }
+  .du-who span:last-child { color: var(--accent); }
+  .du-side canvas { width: 100%; height: auto; display: block; border-radius: 10px; image-rendering: pixelated; }
+  .du-pad { display: flex; gap: 6px; margin-top: 8px; }
+  .du-pad button { flex: 1; font: inherit; font-size: 1rem; padding: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); touch-action: manipulation; }
+  .du-probs { display: grid; gap: 3px; margin-top: 8px; font-family: var(--font-mono); font-size: 0.7rem; }
+  .du-prob { display: grid; grid-template-columns: 44px 1fr 38px; gap: 6px; align-items: center; color: var(--muted); }
+  .du-prob i { display: block; height: 8px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 35%, transparent); }
+  .du-prob.pick { color: var(--fg); font-weight: 700; }
+  .du-prob.pick i { background: var(--accent); }
+  .du-view { margin-top: 6px; font-size: 0.72rem; color: var(--muted); }
+  .du-view pre { white-space: pre-wrap; font-size: 0.66rem; line-height: 1.35; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-top: 6px; }
+  .du-final { font-size: 1.5rem; font-weight: 700; margin: 0 0 6px; }
+  .du-learn { font-size: 0.9rem; line-height: 1.7; margin: 12px 0 14px; }
+  .du-learn a { color: var(--accent); }
+  .du-again { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+
+<script type="module" is:inline>
+  import { OPPONENTS, loadOpponent, decide, habit, calibrate, mask } from "/lab/decide.js";
+
+  const $ = (id) => document.getElementById(id);
+  const game = document.querySelector(".du").dataset.game;
+  const G = await import(`/lab/${game}.js`);
+  const TICK = 280, CW = 32, BEST = `arcade.${game}.best`;
+  const store = { get: () => { try { return JSON.parse(localStorage.getItem(BEST) || "null"); } catch { return null; } },
+                  set: (v) => { try { localStorage.setItem(BEST, JSON.stringify(v)); } catch {} } };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let opp = "qwen3", harness = true, latched = null, running = false;
+
+  $("du-opps").innerHTML = Object.entries(OPPONENTS).map(([k, o], i) =>
+    `<label class="du-opt"><input type="radio" name="du-o" value="${k}" ${i === 0 ? "checked" : ""}/><span><b>${o.label}</b><small>${o.size} · ${o.note}</small></span></label>`).join("");
+  const best = store.get();
+  if (best) $("du-best").textContent = `내 최고 기록: ${best.me} vs ${best.ai} (${best.opp}, 하네스 ${best.h ? "켬" : "끔"})`;
+
+  for (const id of ["du-me", "du-ai"]) { $(id).width = G.SIZE.cols * CW; $(id).height = G.SIZE.rows * CW; }
+  const ctxMe = $("du-me").getContext("2d"), ctxAi = $("du-ai").getContext("2d");
+
+  addEventListener("keydown", (e) => {
+    const m = G.KEYS[e.key] ?? G.KEYS[e.key.toLowerCase?.()];
+    if (!running || !m) return;
+    e.preventDefault(); latched = m;
+  });
+  document.querySelectorAll(".du-pad button").forEach((b) => b.addEventListener("pointerdown", (e) => { e.preventDefault(); latched = b.dataset.move; }));
+
+  async function start(newOpp, newHarness) {
+    opp = newOpp; harness = newHarness;
+    $("du-start").disabled = true; $("du-end").hidden = true;
+    try {
+      await loadOpponent(opp, (t) => ($("du-status").textContent = t));
+    } catch (e) {
+      console.error(e);
+      $("du-status").textContent = "불러오기 실패: " + (e?.message || e) + " — 최신 Chrome/Edge에서 다시 시도해 보세요.";
+      $("du-start").disabled = false; $("du-intro").hidden = false;
+      return;
+    }
+    $("du-intro").hidden = true; $("du-arena").hidden = false;
+    $("du-ai-name").textContent = `${OPPONENTS[opp].label} · 하네스 ${harness ? "켬" : "끔"}`;
+    run();
+  }
+
+  $("du-start").addEventListener("click", () => start(document.querySelector('input[name="du-o"]:checked').value, $("du-h").checked));
+
+  function render(me, ai, seed) {
+    G.draw(ctxMe, me, seed, CW); G.draw(ctxAi, ai, seed, CW);
+    $("du-me-st").textContent = G.statusOf(me); $("du-ai-st").textContent = G.statusOf(ai);
+  }
+
+  async function run() {
+    const seed = Math.floor(Math.random() * 1e6);
+    let me = G.newGame(), ai = G.newGame(), msSum = 0, n = 0;
+    const base = harness && G.CALIBRATE ? await habit(opp, G.GOAL, G.OPTIONS) : null;
+    render(me, ai, seed);
+    $("du-probs").innerHTML = ""; $("du-ms").textContent = "";
+    for (const c of ["3", "2", "1"]) { $("du-count").textContent = `${c}… 같은 맵, 같은 시드`; await sleep(600); }
+    running = true; latched = null;
+    while (true) {
+      const meOn = !me.dead && me.t < G.TICKS, aiOn = !ai.dead && ai.t < G.TICKS;
+      if (!meOn && !aiOn) break;
+      $("du-count").textContent = `남은 시간 ${Math.ceil(((G.TICKS - Math.max(me.t, ai.t)) * TICK) / 1000)}초`;
+      const text = aiOn ? (harness ? G.harnessText(ai, seed) : G.rawText(ai, seed)) : null;
+      const [d] = await Promise.all([aiOn ? decide(opp, G.GOAL, G.OPTIONS, text) : null, sleep(TICK)]);
+      if (d && base) d.probs = calibrate(d.probs, base);
+      const ok = d && harness ? G.allowed(ai, seed) : null;
+      if (ok) d.probs = mask(d.probs, ok);
+      if (meOn) { me = G.step(me, seed, latched ?? "stay"); latched = null; }
+      if (d) {
+        const pick = Object.keys(d.probs).reduce((a, b) => (d.probs[b] > d.probs[a] ? b : a));
+        ai = G.step(ai, seed, pick);
+        msSum += d.ms; n++;
+        $("du-probs").innerHTML = Object.entries(d.probs).map(([k, p]) =>
+          `<div class="du-prob${k === pick ? " pick" : ""}"><span>${k}</span><i style="width:${Math.max(2, p * 100)}%"></i><span>${ok && !ok.includes(k) ? "차단" : (p * 100).toFixed(0) + "%"}</span></div>`).join("");
+        $("du-ms").textContent = `결정 1회 ${d.ms.toFixed(0)}ms (평균 ${(msSum / n).toFixed(0)}ms)`;
+        $("du-text").textContent = text;
+      }
+      render(me, ai, seed);
+    }
+    running = false;
+    end(me, ai, n ? msSum / n : 0);
+  }
+
+  function end(me, ai, ms) {
+    const a = G.scoreOf(me), b = G.scoreOf(ai), name = OPPONENTS[opp].label;
+    const head = a > b ? "🎉 사람 승리" : a < b ? `🤖 ${name} 승리` : "🤝 무승부";
+    const prev = store.get();
+    if (!prev || a - b > prev.me - prev.ai) store.set({ me: a, ai: b, opp: name, h: harness });
+    $("du-count").textContent = "";
+    $("du-end").innerHTML =
+      `<p class="du-final">${head} — ${G.statusOf(me)} : ${G.statusOf(ai)}</p>` +
+      `<p class="du-status">상대: ${name} · 하네스 ${harness ? "켬" : "끔"} · 결정 평균 ${ms.toFixed(0)}ms</p>` +
+      `<p class="du-learn">${harness
+        ? "하네스를 켜면 게임이 \"이쪽으로 가면 맞는다\" 같은 위험을 미리 계산해 줍니다. 모델은 고르기만 하면 됩니다. <b>하네스를 끄고</b> 같은 모델이 날것의 화면만 보면 얼마나 버티는지 비교해 보세요."
+        : "하네스 없이 화면만 글자로 받으면, 작은 모델은 어디가 위험한지 스스로 계산하지 못합니다. <b>하네스를 켜고</b> 같은 모델로 다시 해 보세요. 모델은 그대로인데 성적이 달라집니다."}</p>` +
+      `<div class="du-again"><button class="du-btn" id="du-again">다시 하기 →</button><button class="du-btn ghost" id="du-flip">하네스 ${harness ? "끄고" : "켜고"} 다시</button><button class="du-btn ghost" id="du-swap">상대 바꾸기</button></div>`;
+    $("du-end").hidden = false;
+    $("du-again").addEventListener("click", () => start(opp, harness));
+    $("du-flip").addEventListener("click", () => start(opp, !harness));
+    $("du-swap").addEventListener("click", () => { $("du-arena").hidden = true; $("du-end").hidden = true; $("du-intro").hidden = false; $("du-start").disabled = false; });
+  }
+</script>

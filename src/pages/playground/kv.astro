@@ -1,0 +1,120 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`KV 캐시 다이어트 — MHA·GQA·MQA·MLA — ${SITE.authorKo}`}
+  description="헤드 몇 개가 K·V를 나눠 쓰느냐에 따라 KV 캐시와 GPU 하나에 들어가는 동시 대화 수가 어떻게 바뀌는지, 공개 모델의 실제 config.json 값으로 계산해 보세요."
+  locale="ko"
+  path="/playground/kv/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">KV 캐시 다이어트</h1>
+    <p class="mt-3 text-muted">
+      쿼리 헤드는 그대로 두고, <strong>K·V 헤드 수</strong>만 바꿔 봅니다. 왼쪽 끝은 헤드마다 따로(MHA), 오른쪽 끝은 하나를 다 같이(MQA), 그 사이가 GQA입니다.
+    </p>
+  </header>
+
+  <section class="kv">
+    <a class="kv-crosslink" href="/blog/evolution-kv/">개념 더 읽기 → 진화 3편 · 어텐션 다이어트</a>
+
+    <div class="kv-ctl">
+      <label>모델 <select id="kv-model"></select></label>
+      <label>K·V 헤드 수 <b id="kv-gv"></b><input id="kv-g" type="range" min="0" max="5" step="1" /></label>
+      <label>컨텍스트 길이 <b id="kv-ctxv"></b><input id="kv-ctx" type="range" min="10" max="17" step="1" value="15" /></label>
+      <label>GPU 메모리 <select id="kv-mem"><option value="24">24 GB (게이밍 GPU)</option><option value="80" selected>80 GB (H100)</option><option value="141">141 GB (H200)</option></select></label>
+    </div>
+
+    <div id="kv-heads" class="kv-heads"></div>
+    <p class="kv-note" id="kv-headnote"></p>
+
+    <div id="kv-stats" class="kv-stats"></div>
+    <p class="kv-note">bf16(2바이트). "동시 대화" = (GPU 메모리 − bf16 가중치) ÷ 대화 하나의 KV 캐시. 실제 서버는 활성값·조각화 때문에 이보다 적게 들어갑니다.</p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .kv-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .kv-crosslink:hover { text-decoration: underline; }
+  .kv-ctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 22px; margin-top: 14px; }
+  .kv-ctl label { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted); display: grid; gap: 5px; }
+  .kv-ctl select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+  .kv-ctl input { width: 100%; accent-color: var(--accent); }
+  .kv-ctl input:disabled { opacity: 0.35; }
+  .kv-ctl b { color: var(--accent); }
+  .kv-heads { display: grid; gap: 6px; margin-top: 20px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .kv-row { display: grid; grid-template-columns: 54px 1fr; align-items: center; gap: 8px; }
+  .kv-cells { display: flex; gap: 2px; flex-wrap: wrap; }
+  .kv-cell { width: 14px; height: 14px; border-radius: 3px; }
+  .kv-note { margin-top: 6px; font-size: 0.72rem; color: var(--muted); }
+  .kv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 18px; }
+  .kv-stat { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 9px 12px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .kv-stat b { display: block; font-size: 1.1rem; color: var(--fg); margin-top: 2px; }
+  .kv-stat.hi b { color: var(--accent); }
+</style>
+
+<script type="module" is:inline>
+  import { MODELS, params, kvBytesPerToken, kvBytesMHA, kvBytesGroups, conversationsFit } from "/lab/arch.js";
+
+  const $ = (id) => document.getElementById(id);
+  const G = 2 ** 30;
+  const bytes = (b) => (b >= G ? (b / G).toFixed(1) + " GB" : b >= 2 ** 20 ? (b / 2 ** 20).toFixed(1) + " MB" : (b / 1024).toFixed(1) + " KB");
+  const models = MODELS.filter((m) => m.layout === "decoder" && m.id !== "gpt2");
+  // Group counts that divide the head count evenly (GQA needs equal-size groups).
+  const divisors = (n) => Array.from({ length: n }, (_, i) => i + 1).filter((g) => n % g === 0);
+  let opts = [];
+
+  $("kv-model").innerHTML = models.map((m) => `<option value="${m.id}">${m.name}</option>`).join("");
+  $("kv-model").value = "llama31";
+
+  function pickModel() {
+    const m = models.find((x) => x.id === $("kv-model").value);
+    opts = divisors(m.heads).reverse();   // left = MHA, right = MQA
+    $("kv-g").max = opts.length - 1;
+    $("kv-g").value = opts.indexOf(m.kvHeads);
+    $("kv-g").disabled = !!m.mla;
+    draw();
+  }
+
+  function draw() {
+    const m = models.find((x) => x.id === $("kv-model").value);
+    const g = m.mla ? null : opts[+$("kv-g").value];
+    const ctx = 2 ** +$("kv-ctx").value, mem = +$("kv-mem").value * G;
+    const kind = m.mla ? "MLA" : g === m.heads ? "MHA" : g === 1 ? "MQA" : "GQA";
+    $("kv-gv").textContent = m.mla ? "— (MLA: 압축 벡터 하나)" : `${g}개 · ${kind}${g === m.kvHeads ? " (실제 설정)" : ""}`;
+    $("kv-ctxv").textContent = ctx.toLocaleString() + " 토큰" + (m.ctx && ctx > m.ctx ? " (모델 한도 초과)" : "");
+
+    // Query heads coloured by which K/V head they read.
+    const hue = (i, n) => `hsl(${Math.round((i / n) * 300)} 60% 55%)`;
+    const H = m.heads;
+    if (m.mla) {
+      $("kv-heads").innerHTML =
+        `<div class="kv-row"><span>Q 헤드</span><span class="kv-cells">${Array.from({ length: H }, () => `<span class="kv-cell" style="background:var(--accent)"></span>`).join("")}</span></div>` +
+        `<div class="kv-row"><span>캐시</span><span class="kv-cells"><span class="kv-cell" style="width:${Math.min(100, m.mla.kvRank / 8)}%;background:var(--accent)"></span></span></div>`;
+      $("kv-headnote").textContent = `${H}개 헤드가 ${m.mla.kvRank}차원 잠재 벡터 + ${m.mla.rope}차원 위치 키 하나를 같이 씁니다. 계산할 때 각 헤드의 K·V로 풀어냅니다.`;
+    } else {
+      const per = H / g;
+      $("kv-heads").innerHTML =
+        `<div class="kv-row"><span>Q 헤드</span><span class="kv-cells">${Array.from({ length: H }, (_, i) => `<span class="kv-cell" style="background:${hue(Math.floor(i / per), g)}"></span>`).join("")}</span></div>` +
+        `<div class="kv-row"><span>K·V</span><span class="kv-cells">${Array.from({ length: g }, (_, j) => `<span class="kv-cell" style="background:${hue(j, g)};width:${14 * per + 2 * (per - 1)}px"></span>`).join("")}</span></div>`;
+      $("kv-headnote").textContent = per === 1 ? "헤드마다 자기 K·V를 저장합니다." : `같은 색끼리 K·V 한 벌을 나눠 씁니다. 쿼리 헤드 ${per}개당 한 벌.`;
+    }
+
+    const perTok = m.mla ? kvBytesPerToken(m) : kvBytesGroups(m, g), mha = kvBytesMHA(m);
+    const fit = conversationsFit(m, ctx, mem, perTok), fitMHA = conversationsFit(m, ctx, mem, mha);
+    const w = params(m).total * 2;
+    const st = (k, v, hi) => `<div class="kv-stat${hi ? " hi" : ""}">${k}<b>${v}</b></div>`;
+    $("kv-stats").innerHTML =
+      st("토큰당 KV 캐시", bytes(perTok)) +
+      st(`대화 하나 (${ctx.toLocaleString()} 토큰)`, bytes(perTok * ctx)) +
+      st("MHA 대비", mha === perTok ? "같음 (MHA)" : (mha / perTok).toFixed(1) + "× 작음") +
+      st("bf16 가중치", bytes(w)) +
+      st(`${$("kv-mem").value} GB에 동시 대화`, w >= mem ? "가중치도 안 들어감" : `${fit}개 (MHA면 ${fitMHA}개)`, true);
+  }
+
+  $("kv-model").addEventListener("change", pickModel);
+  for (const id of ["kv-g", "kv-ctx", "kv-mem"]) $(id).addEventListener("input", draw);
+  pickModel();
+</script>

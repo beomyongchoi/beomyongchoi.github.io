@@ -94,3 +94,16 @@ export function kvBytesMHA(m, bytes = 2) {
   if (m.mla) return m.layers * m.heads * (m.mla.nope + m.mla.rope + m.mla.v) * bytes;
   return 2 * m.layers * m.heads * m.headDim * bytes;
 }
+
+// Cache per token if the model had `groups` K/V heads instead of its own setting
+// (groups = heads → MHA, 1 → MQA). MLA models ignore it.
+export function kvBytesGroups(m, groups, bytes = 2) {
+  if (m.mla) return kvBytesPerToken(m, bytes);
+  return 2 * m.layers * groups * m.headDim * bytes;
+}
+
+// How many conversations of `ctx` tokens fit beside the bf16 weights in `memBytes` of GPU memory.
+export function conversationsFit(m, ctx, memBytes, perToken = kvBytesPerToken(m)) {
+  const free = memBytes - params(m).total * 2;
+  return free <= 0 ? 0 : Math.floor(free / (perToken * ctx));
+}

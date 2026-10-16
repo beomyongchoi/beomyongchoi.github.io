@@ -1,0 +1,19 @@
+---
+title: "3. 어텐션 다이어트 — KV 캐시를 줄인 MQA·GQA·MLA"
+description: "긴 대화의 병목은 KV 캐시입니다. 헤드마다 K·V를 두던 MHA에서 MQA·GQA·MLA로 캐시를 줄인 과정을 실제 config.json으로 계산합니다. Llama 3.1 8B는 GQA로 80GB GPU에 32K 대화를 4개가 아니라 16개 올리고, DeepSeek-V3의 MLA 캐시는 MHA보다 71배 작습니다. 문장을 클릭하면 한/영 원문을 볼 수 있습니다."
+pubDate: 2026-10-16T10:00:00
+lang: ko
+translationKey: evolution-kv
+tags: ["AI", "트랜스포머", "LLM", "아키텍처"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/evolutionKv";
+
+<SeriesNav id="evolution" current="evolution-kv" lang="ko" />
+
+<BilingualArticle blocks={blocks} />
+
+<SeriesNext id="evolution" current="evolution-kv" lang="ko" />

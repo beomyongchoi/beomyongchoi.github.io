@@ -1,0 +1,20 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DuelArena from "../../components/DuelArena.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`사람 vs 디시전 모델 — 갤러그 — ${SITE.authorKo}`}
+  description="같은 시드의 갤러그를 왼쪽은 사람이, 오른쪽은 브라우저 안의 디시전 모델(Qwen3-0.6B 또는 Laya)이 플레이합니다. 하네스를 켜고 끄며 모델 성적이 어떻게 달라지는지 비교해 보세요."
+  locale="ko"
+  path="/arcade/galaga/"
+>
+  <header class="mb-5">
+    <a href="/arcade/" class="text-sm text-muted hover:text-accent">← 오락실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">사람 vs 디시전 모델 — 갤러그</h1>
+    <p class="mt-3 text-muted">왼쪽은 내가, 오른쪽은 <strong>디시전 모델</strong>이 같은 적 편대를 상대합니다. 모델은 글을 쓰지 않고 왼쪽·오른쪽·그대로·발사 중 하나를 확률로 고릅니다. 60초 동안 점수가 높은 쪽이 이깁니다. 조작: ← → 이동, 스페이스 발사.</p>
+  </header>
+
+  <DuelArena game="galaga" controls={[{ move: "left", label: "◀" }, { move: "fire", label: "발사" }, { move: "right", label: "▶" }]} />
+</BaseLayout>

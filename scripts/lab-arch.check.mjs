@@ -1,6 +1,6 @@
 // node scripts/lab-arch.check.mjs — params derived from config.json must match officially reported sizes.
 import assert from "node:assert/strict";
-import { MODELS, params, kvBytesPerToken, kvBytesMHA } from "../public/lab/arch.js";
+import { MODELS, params, kvBytesPerToken, kvBytesMHA, kvBytesGroups, conversationsFit } from "../public/lab/arch.js";
 
 const M = Object.fromEntries(MODELS.map((m) => [m.id, m]));
 const near = (x, want, tol, msg) => assert.ok(Math.abs(x - want) / want < tol, `${msg}: ${x} vs ${want}`);
@@ -17,4 +17,10 @@ near(params(M.vanilla).total, 65e6, 0.05, "Transformer base ~65M");
 assert.equal(kvBytesPerToken(M.llama31), 131072);          // 2·32·8·128·2
 assert.equal(kvBytesMHA(M.llama31) / kvBytesPerToken(M.llama31), 4);   // GQA 32/8
 assert.equal(kvBytesPerToken(M.dsv3), 61 * 576 * 2);        // MLA: (512 + 64) per layer
+assert.equal(kvBytesGroups(M.llama31, 8), kvBytesPerToken(M.llama31));
+assert.equal(kvBytesGroups(M.llama31, 32), kvBytesMHA(M.llama31));
+// 80 GB GPU, 32K-token chats beside Llama 3.1 8B's 15 GB of bf16 weights: MHA 4, GQA 16, MQA 130
+assert.equal(conversationsFit(M.llama31, 32768, 80 * 2 ** 30, kvBytesGroups(M.llama31, 32)), 4);
+assert.equal(conversationsFit(M.llama31, 32768, 80 * 2 ** 30), 16);
+assert.equal(conversationsFit(M.llama31, 32768, 80 * 2 ** 30, kvBytesGroups(M.llama31, 1)), 130);
 console.log("arch.js ok");

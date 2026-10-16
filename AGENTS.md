@@ -9,6 +9,12 @@ Key files: post content = `src/data/<slug>.ts` (sentence-aligned ko/en) rendered
 `src/components/BilingualArticle.astro`; post is a `.mdx` embedding that component. Chart sources
 in `scripts/blog-figures/` → PNGs in `public/assets/`.
 
+## Code map
+
+See **`docs/CODEMAP.md`** — where things live (posts, series, playground, arcade, `public/lab` modules),
+per-task checklists (new post / lab / game), and gotchas (rebuild the RAG index after editing posts,
+register playground thumbnails in `FN`, KST pubDate, run `scripts/*.check.mjs`).
+
 ## Development
 
 When starting the dev server, use background mode:
