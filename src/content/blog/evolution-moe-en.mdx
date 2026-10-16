@@ -1,0 +1,19 @@
+---
+title: "4. The Experts — Where MoE Came From and What DeepSeek Changed"
+description: "MoE splits the FFN into experts and switches on only a few per token. We trace the lineage from a 1991 paper through Switch Transformer and Mixtral to DeepSeek-V3, then simulate expert pile-up and DeepSeek's auxiliary-loss-free balancing. Click any sentence to flip between English and Korean."
+pubDate: 2026-10-16T10:00:00
+lang: en
+translationKey: evolution-moe
+tags: ["AI", "Transformer", "LLM", "Architecture", "MoE"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/evolutionMoe";
+
+<SeriesNav id="evolution" current="evolution-moe" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="evolution" current="evolution-moe" lang="en" />

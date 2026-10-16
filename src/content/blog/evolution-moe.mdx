@@ -1,0 +1,19 @@
+---
+title: "4. 전문가들 — MoE는 어디서 왔고 딥시크는 무엇을 바꿨나"
+description: "MoE는 FFN을 전문가로 쪼개 토큰마다 몇 개만 켭니다. 1991년 논문에서 Switch Transformer, Mixtral, DeepSeek-V3까지 계보를 따라가고, 전문가 쏠림과 딥시크의 보조 손실 없는 균형법을 시뮬레이션으로 돌려 봅니다. 문장을 클릭하면 한/영 원문을 볼 수 있습니다."
+pubDate: 2026-10-16T10:00:00
+lang: ko
+translationKey: evolution-moe
+tags: ["AI", "트랜스포머", "LLM", "아키텍처", "MoE"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/evolutionMoe";
+
+<SeriesNav id="evolution" current="evolution-moe" lang="ko" />
+
+<BilingualArticle blocks={blocks} />
+
+<SeriesNext id="evolution" current="evolution-moe" lang="ko" />

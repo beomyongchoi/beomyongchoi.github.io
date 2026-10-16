@@ -1,0 +1,109 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`MoE 라우터 — 전문가 쏠림과 균형 맞추기 — ${SITE.authorKo}`}
+  description="토큰 1,024개가 전문가를 고르는 MoE 라우터 시뮬레이션. 몇몇 전문가에 일이 쏠리는 걸 보고, DeepSeek-V3의 보조 손실 없는 균형법(편향 조정)으로 고르게 만드는 과정을 단계별로 돌려 보세요."
+  locale="ko"
+  path="/playground/moe/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">MoE 라우터</h1>
+    <p class="mt-3 text-muted">
+      토큰 1,024개가 점수가 높은 전문가 <strong>k개</strong>를 고릅니다. 일부러 몇몇 전문가가 인기 있게 시작합니다. <strong>균형 맞추기</strong>를 누르면 붐비는 전문가의 점수를 조금 깎고 한가한 쪽을 조금 올리는 걸 반복합니다.
+    </p>
+  </header>
+
+  <section class="mo">
+    <a class="mo-crosslink" href="/blog/evolution-moe/">개념 더 읽기 → 진화 4편 · 전문가들</a>
+
+    <div class="mo-ctl">
+      <label>전문가 수 <select id="mo-e"><option>8</option><option selected>16</option><option>64</option></select></label>
+      <label>토큰당 켜는 수 (k) <select id="mo-k"><option>1</option><option selected>2</option><option>4</option><option>8</option></select></label>
+      <label>처음 쏠림 <b id="mo-skv"></b><input id="mo-sk" type="range" min="0" max="3" step="0.25" value="1.5" /></label>
+      <div class="mo-btns"><button id="mo-run" type="button">균형 맞추기 ▶</button><button id="mo-reset" type="button">처음으로</button></div>
+    </div>
+
+    <div id="mo-bars" class="mo-bars"></div>
+    <p class="mo-note">막대 = 전문가가 받은 토큰 수. 점선 = 완전히 고를 때의 몫(토큰 × k ÷ 전문가 수). 주황 = 몫의 1.5배 이상.</p>
+
+    <div id="mo-stats" class="mo-stats"></div>
+    <p class="mo-note">시뮬레이션입니다. 라우터 가중치는 무작위(시드 고정)이고 학습은 하지 않습니다. 편향은 전문가를 <em>고를 때만</em> 더하고, 출력에 곱하는 가중치에는 넣지 않습니다(DeepSeek-V3 방식).</p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .mo-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .mo-crosslink:hover { text-decoration: underline; }
+  .mo-ctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 22px; margin-top: 14px; align-items: end; }
+  .mo-ctl label { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted); display: grid; gap: 5px; }
+  .mo-ctl select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+  .mo-ctl input { width: 100%; accent-color: var(--accent); }
+  .mo-ctl b { color: var(--accent); }
+  .mo-btns { display: flex; gap: 8px; }
+  .mo-btns button { font-family: var(--font-mono); font-size: 0.76rem; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+  .mo-btns button:first-child { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .mo-bars { position: relative; display: flex; align-items: flex-end; gap: 2px; height: 180px; margin-top: 20px; border-bottom: 1px solid var(--border); }
+  .mo-bar { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; transition: height 0.12s; }
+  .mo-bar.hot { background: #e0842a; }
+  .mo-even { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--muted); pointer-events: none; }
+  .mo-note { margin-top: 6px; font-size: 0.72rem; color: var(--muted); }
+  .mo-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 18px; }
+  .mo-stat { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 9px 12px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .mo-stat b { display: block; font-size: 1.1rem; color: var(--fg); margin-top: 2px; }
+  .mo-stat.hi b { color: var(--accent); }
+</style>
+
+<script type="module" is:inline>
+  import { makeRouter, route, imbalance, balanceStep, choose } from "/lab/moe.js";
+
+  const $ = (id) => document.getElementById(id);
+  const U = 0.01, STEPS = 200;   // bias step size; one click runs this many updates
+  let R, k, bias, step, start, timer;
+
+  function reset() {
+    clearInterval(timer); timer = null; $("mo-run").textContent = "균형 맞추기 ▶";
+    $("mo-skv").textContent = (+$("mo-sk").value).toFixed(2);
+    R = makeRouter({ experts: +$("mo-e").value, skew: +$("mo-sk").value });
+    k = Math.min(+$("mo-k").value, R.experts);
+    bias = new Array(R.experts).fill(0); step = 0;
+    start = imbalance(route(R, k, bias), R, k);
+    draw();
+  }
+
+  function draw() {
+    const load = route(R, k, bias), even = (R.tokens * k) / R.experts;
+    let top = even * 1.2;
+    for (const v of load) if (v > top) top = v;
+    $("mo-bars").innerHTML = load.map((v) => `<div class="mo-bar${v >= even * 1.5 ? " hot" : ""}" style="height:${(v / top) * 100}%" title="${v} 토큰"></div>`).join("") +
+      `<div class="mo-even" style="bottom:${(even / top) * 100}%"></div>`;
+    let idle = 0;
+    for (const v of load) if (v === 0) idle++;
+    const st = (a, b, hi) => `<div class="mo-stat${hi ? " hi" : ""}">${a}<b>${b}</b></div>`;
+    $("mo-stats").innerHTML =
+      st("편향 업데이트", `${step}번`) +
+      st("가장 바쁜 전문가 ÷ 몫", `${imbalance(load, R, k).toFixed(2)}× (처음 ${start.toFixed(2)}×)`, true) +
+      st("일 없는 전문가", `${idle}개`) +
+      st(`전문가 조합 수 C(${R.experts},${k})`, choose(R.experts, k).toLocaleString());
+    return load;
+  }
+
+  function tick() {
+    bias = balanceStep(route(R, k, bias), bias, U);
+    step++;
+    draw();
+    if (step % STEPS === 0) { clearInterval(timer); timer = null; $("mo-run").textContent = "더 돌리기 ▶"; }
+  }
+
+  $("mo-run").addEventListener("click", () => {
+    if (timer) { clearInterval(timer); timer = null; $("mo-run").textContent = "균형 맞추기 ▶"; return; }
+    $("mo-run").textContent = "멈춤 ❚❚";
+    timer = setInterval(tick, 30);
+  });
+  $("mo-reset").addEventListener("click", reset);
+  for (const id of ["mo-e", "mo-k", "mo-sk"]) $(id).addEventListener("input", reset);
+  reset();
+</script>

@@ -1,0 +1,19 @@
+---
+title: "3. Attention on a Diet — How MQA, GQA, and MLA Shrank the KV Cache"
+description: "The KV cache is the bottleneck of long chats. From real config.json files, we compute how MQA, GQA, and MLA shrank it: GQA lets Llama 3.1 8B fit 16 32K-token chats on an 80 GB GPU instead of 4, and DeepSeek-V3's MLA cache is 71× smaller than MHA. Click any sentence to flip between English and Korean."
+pubDate: 2026-10-16T10:00:00
+lang: en
+translationKey: evolution-kv
+tags: ["AI", "Transformer", "LLM", "Architecture"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/evolutionKv";
+
+<SeriesNav id="evolution" current="evolution-kv" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="evolution" current="evolution-kv" lang="en" />
