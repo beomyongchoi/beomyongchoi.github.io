@@ -1,7 +1,7 @@
 // node scripts/lab-galaga.check.mjs — deterministic per seed; a bot that reads the harness
 // outlook scores far more and survives longer than one that only fires in place.
 import assert from "node:assert/strict";
-import { TICKS, newGame, step, outlook, rawText, harnessText } from "../public/lab/galaga.js";
+import { TICKS, newGame, step, outlook, rawText, harnessText, allowed } from "../public/lab/galaga.js";
 
 function play(seed, policy) {
   let s = newGame();
@@ -26,4 +26,13 @@ for (let seed = 1; seed <= 30; seed++) {
 assert.ok(b > a * 1.2, `harnessed ${b} vs turret ${a}`);
 assert.ok(livesB > livesA * 1.5, `harnessed keeps more lives: ${livesB} vs ${livesA}`);
 assert.match(rawText(newGame()), /P/);
+// The guardrail never offers a move that loses a life (when any survivable move exists).
+for (let seed = 1; seed <= 10; seed++) {
+  let s = newGame();
+  for (let i = 0; i < 80 && !s.dead; i++) {
+    const ok = allowed(s, seed);
+    for (const m of ok) { const n = step(s, seed, m); assert.ok(!(n.dead === "car" || n.lives < s.lives) || ok.length === 1, `allowed ${m} kills (seed ${seed})`); }
+    s = step(s, seed, ok[0]);
+  }
+}
 console.log(`galaga.js ok (30 seeds: turret ${(a / 30).toFixed(0)} pts, harnessed bot ${(b / 30).toFixed(0)} pts)`);

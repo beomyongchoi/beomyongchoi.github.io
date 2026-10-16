@@ -90,6 +90,11 @@ export function rawText(s, seed) {
   return `You are P. C = car, T = tree. Row +1 is ahead.\n${rows.join("\n")}`;
 }
 
+// Harness guardrail: offer only moves that survive the next tick (blocked hops are no-ops, so out too).
+export const allowed = (s, seed) => { const o = outlook(s, seed), ok = MOVES.filter((m) => o[m] === "safe"); return ok.length ? ok : ["stay"]; };
+// The goal itself makes "up" the model's default — dividing that out would erase the goal, so no calibration here.
+export const CALIBRATE = false;
+
 export function harnessText(s, seed) {
   const o = outlook(s, seed);
   return `${MOVES.map((m) => `${m}: ${o[m]}`).join("\n")}\nForward progress only comes from up. ${EAGLE - s.idle} ticks left before the eagle takes you for not moving forward.`;

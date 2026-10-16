@@ -73,6 +73,11 @@ export function outlook(s, seed) {
   }));
 }
 
+// Harness guardrail: drop moves that get you hit, and "fire" while the gun is reloading (a no-op).
+export const allowed = (s, seed) => { const o = outlook(s, seed); return MOVES.filter((m) => !o[m].startsWith("UNSAFE") && !(m === "fire" && s.shot)); };
+// Qwen3 hardly ever says "fire" whatever the screen shows (0.4% on an empty state), so divide that habit out.
+export const CALIBRATE = true;
+
 export function harnessText(s, seed) {
   const o = outlook(s, seed), sw = sway(s.t), cols = [...new Set(s.foes.map(([c]) => c + sw))].sort((a, b) => Math.abs(a - s.x) - Math.abs(b - s.x));
   return `${MOVES.map((m) => `${m}: ${o[m]}`).join("\n")}\nYou are in column ${s.x}. Nearest enemy column: ${cols[0] ?? "none"}. Gun: ${s.shot ? "reloading" : "ready"}.`;

@@ -10,7 +10,7 @@ const { game, controls } = Astro.props;
     <p class="du-label">상대</p>
     <div class="du-opts" id="du-opps"></div>
     <label class="du-harness"><input type="checkbox" id="du-h" checked />
-      <span><b>하네스 켜기</b><small>① 게임이 매 수마다 "이쪽으로 가면 안전/위험"을 미리 계산해 넘기고 ② 모델이 내용과 상관없이 특정 선택지를 고르는 버릇을 빼 줍니다. 끄면 화면을 글자로 옮긴 것만 받습니다.</small></span></label>
+      <span><b>하네스 켜기</b><small>① 게임이 매 수마다 "이쪽으로 가면 안전/위험"을 미리 계산해 넘기고 ② 죽거나 헛도는 수는 선택지에서 뺍니다. 끄면 화면을 글자로 옮긴 것만 받고, 무엇이든 고를 수 있습니다.</small></span></label>
     <button id="du-start" type="button" class="du-btn">모델 내려받고 시작 →</button>
     <p class="du-status" id="du-status">모델은 브라우저 안에서만 돌아갑니다. 서버로 아무것도 보내지 않습니다.</p>
     <p class="du-status" id="du-best"></p>
@@ -72,7 +72,7 @@ const { game, controls } = Astro.props;
 </style>
 
 <script type="module" is:inline>
-  import { OPPONENTS, loadOpponent, decide, habit, calibrate } from "/lab/decide.js";
+  import { OPPONENTS, loadOpponent, decide, habit, calibrate, mask } from "/lab/decide.js";
 
   const $ = (id) => document.getElementById(id);
   const game = document.querySelector(".du").dataset.game;
@@ -124,7 +124,7 @@ const { game, controls } = Astro.props;
   async function run() {
     const seed = Math.floor(Math.random() * 1e6);
     let me = G.newGame(), ai = G.newGame(), msSum = 0, n = 0;
-    const base = harness ? await habit(opp, G.GOAL, G.OPTIONS) : null;
+    const base = harness && G.CALIBRATE ? await habit(opp, G.GOAL, G.OPTIONS) : null;
     render(me, ai, seed);
     $("du-probs").innerHTML = ""; $("du-ms").textContent = "";
     for (const c of ["3", "2", "1"]) { $("du-count").textContent = `${c}… 같은 맵, 같은 시드`; await sleep(600); }
@@ -136,13 +136,15 @@ const { game, controls } = Astro.props;
       const text = aiOn ? (harness ? G.harnessText(ai, seed) : G.rawText(ai, seed)) : null;
       const [d] = await Promise.all([aiOn ? decide(opp, G.GOAL, G.OPTIONS, text) : null, sleep(TICK)]);
       if (d && base) d.probs = calibrate(d.probs, base);
+      const ok = d && harness ? G.allowed(ai, seed) : null;
+      if (ok) d.probs = mask(d.probs, ok);
       if (meOn) { me = G.step(me, seed, latched ?? "stay"); latched = null; }
       if (d) {
         const pick = Object.keys(d.probs).reduce((a, b) => (d.probs[b] > d.probs[a] ? b : a));
         ai = G.step(ai, seed, pick);
         msSum += d.ms; n++;
         $("du-probs").innerHTML = Object.entries(d.probs).map(([k, p]) =>
-          `<div class="du-prob${k === pick ? " pick" : ""}"><span>${k}</span><i style="width:${Math.max(2, p * 100)}%"></i><span>${(p * 100).toFixed(0)}%</span></div>`).join("");
+          `<div class="du-prob${k === pick ? " pick" : ""}"><span>${k}</span><i style="width:${Math.max(2, p * 100)}%"></i><span>${ok && !ok.includes(k) ? "차단" : (p * 100).toFixed(0) + "%"}</span></div>`).join("");
         $("du-ms").textContent = `결정 1회 ${d.ms.toFixed(0)}ms (평균 ${(msSum / n).toFixed(0)}ms)`;
         $("du-text").textContent = text;
       }

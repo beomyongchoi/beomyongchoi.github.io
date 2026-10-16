@@ -87,3 +87,10 @@ export function calibrate(probs, base) {
   const z = Object.values(q).reduce((a, b) => a + b, 0);
   return Object.fromEntries(Object.entries(q).map(([k, v]) => [k, v / z]));
 }
+
+// Zero out moves the harness disallows and renormalise (falls back to the raw probs if none are left).
+export function mask(probs, ok) {
+  const z = ok.reduce((a, k) => a + probs[k], 0);
+  if (!ok.length || z <= 0) return probs;
+  return Object.fromEntries(Object.keys(probs).map((k) => [k, ok.includes(k) ? probs[k] / z : 0]));
+}
