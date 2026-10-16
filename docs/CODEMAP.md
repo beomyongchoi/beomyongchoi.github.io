@@ -55,6 +55,9 @@ scripts/
 | `rag-index.json` | 글을 소제목 단위로 자른 조각 + e5 임베딩 | rag | `build-rag-index.mjs`로 생성 |
 | `arch.js` | 공개 모델 config.json 값 + 파라미터·KV 캐시 계산 | arch | `lab-arch.check.mjs` (공식 발표치와 비교) |
 | `nextword.js` | 다음 단어 게임: 오답 보기 고르기, 모델 선택 | arcade/next-word | `lab-nextword.check.mjs`, `arcade-pool.check.mjs` |
+| `moe.js` | MoE 라우터 시뮬(쏠림 + 보조 손실 없는 편향 균형) | moe | `lab-moe.check.mjs` |
+| `decide.js` | 디시전 모델 상대: Qwen3 디시전 모드(선택지 단어 로짓), Laya(커뮤니티 ONNX, onnxruntime-web). 버릇 보정·차단 | arcade 듀얼 | — |
+| `crossy.js`, `galaga.js` | 듀얼 게임 규칙(시드 고정 순수 함수) + 모델용 날것/하네스 글 + `allowed` 차단 + `draw` | arcade/crossy, galaga (`DuelArena.astro`) | `lab-crossy.check.mjs`, `lab-galaga.check.mjs` |
 
 검사 전부 돌리기:
 
@@ -76,7 +79,7 @@ for f in scripts/*.check.mjs; do node "$f" || break; done
 1. `src/pages/playground/<toy>.astro` (계산 로직은 `public/lab/*.js`에 순수 함수로 + `scripts/*.check.mjs`)
 2. `playground/index.astro`의 `groups`에 카드 추가 **그리고** 썸네일 함수 + `FN` 등록. 빠지면 목록 페이지 JS가 깨짐
 
-**새 게임**: `src/pages/arcade/<game>.astro` + `arcade/index.astro`의 `games` 배열
+**새 게임**: `src/pages/arcade/<game>.astro` + `arcade/index.astro`의 `games` 배열. 사람 vs 모델 1:1이면 `public/lab/<game>.js`에 `DuelArena`가 쓰는 인터페이스(newGame·step·rawText·harnessText·allowed·draw·…)만 맞추면 됨
 
 ## 지켜야 할 것
 
@@ -84,4 +87,5 @@ for f in scripts/*.check.mjs; do node "$f" || break; done
 - 큰 배열에 `Math.max(...arr)` 금지(어휘 15만 개면 스택이 넘친다). 반복문 사용
 - `rag-retrieval` 글은 인덱스에서 제외(평가 질문을 인용하고 있어서). 인덱스는 조각을 1개씩 임베딩(묶으면 값이 흔들림)
 - main 직접 커밋은 훅이 막는다. 작업 브랜치 → PR
+- dev 서버는 `public/` 파일이 바뀌면 페이지를 새로 고친다. 브라우저에서 모델 평가를 돌리는 중엔 파일 수정 금지. 모델은 하나씩 올릴 것(둘 동시 + 연속 추론은 맥이 버거움)
 - 글 수치의 기준 모델은 SmolLM2-135M. 기본값을 바꾸면 기존 글 숫자와 어긋난다
