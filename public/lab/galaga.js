@@ -50,6 +50,13 @@ export function step(s, seed, m) {
   return { x, t: t + 1, lives, score, wave, shot, bombs, foes, dead: lives <= 0 };
 }
 
+// Human controls: keys held (or tapped since the last tick), not a queue. Fire whenever the gun is ready,
+// otherwise move — so holding space + an arrow strafes and shoots. Still one action per tick, like the model.
+export const human = (s, held) => {
+  const l = held.has("left"), r = held.has("right");
+  return held.has("fire") && !s.shot ? "fire" : l && !r ? "left" : r && !l ? "right" : "stay";
+};
+
 export const scoreOf = (s) => s.score;
 export const statusOf = (s) => `${s.score.toLocaleString()}점 · ♥${s.lives}`;
 

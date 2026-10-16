@@ -47,3 +47,14 @@ for (let seed = 1; seed <= 10; seed++) {
   }
 }
 console.log(`crossy.js ok (30 seeds: always-up ${(blindRows / 30).toFixed(1)} rows, harnessed bot ${(smartRows / 30).toFixed(1)} rows)`);
+// draw() at f=0 puts cars exactly where car() says (the sliding render must not lie about danger).
+{
+  const { draw, VIEW, W } = await import("../public/lab/crossy.js");
+  for (const t of [0, 5, 17, 40]) {
+    const s = { ...newGame(), t, y: 3 }, seen = new Set(), cw = 8;
+    const ctx = { fillRect(x, y, w) { if (w === 7 * cw / 8) seen.add(`${Math.round(x / cw - 0.0625)},${Math.floor(y / cw)}`); } };
+    draw(ctx, s, 3, cw, 0);
+    for (let i = 0; i < VIEW; i++) for (let c = 0; c < W; c++)
+      assert.equal(seen.has(`${c},${VIEW - 1 - i}`), car(3, 1 + i, c, t), `t${t} row${1 + i} col${c}`);
+  }
+}

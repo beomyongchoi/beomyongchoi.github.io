@@ -77,13 +77,16 @@ const { game, controls } = Astro.props;
   const $ = (id) => document.getElementById(id);
   const game = document.querySelector(".du").dataset.game;
   const G = await import(`/lab/${game}.js`);
-  const TICK = 250, CW = 32, BEST = `arcade.${game}.best`;
+  const TICK = G.TICK ?? 250, CW = 32, BEST = `arcade.${game}.best`;
   const store = { get: () => { try { return JSON.parse(localStorage.getItem(BEST) || "null"); } catch { return null; } },
                   set: (v) => { try { localStorage.setItem(BEST, JSON.stringify(v)); } catch {} } };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   let opp = "qwen3", harness = true, queue = [], running = false;
   // Inputs queue up (max 3) so a quick double-tap is two hops, not one.
   const press = (m) => { if (queue.length < 3) queue.push(m); };
+  // Games with G.human (galaga) read held keys instead: down now, or tapped since the last tick.
+  const down = new Set(), tapped = new Set();
+  const hold = (m, on) => { if (on) { down.add(m); tapped.add(m); } else down.delete(m); };
 
   $("du-opps").innerHTML = Object.entries(OPPONENTS).map(([k, o], i) =>
     `<label class="du-opt"><input type="radio" name="du-o" value="${k}" ${i === 0 ? "checked" : ""}/><span><b>${o.label}</b><small>${o.size} · ${o.note}</small></span></label>`).join("");
@@ -96,9 +99,15 @@ const { game, controls } = Astro.props;
   addEventListener("keydown", (e) => {
     const m = G.KEYS[e.key] ?? G.KEYS[e.key.toLowerCase?.()];
     if (!running || !m) return;
-    e.preventDefault(); if (!e.repeat || !queue.length) press(m);   // holding a key keeps moving, without piling up
+    e.preventDefault();
+    if (G.human) hold(m, true);
+    else if (!e.repeat || !queue.length) press(m);   // holding a key keeps moving, without piling up
   });
-  document.querySelectorAll(".du-pad button").forEach((b) => b.addEventListener("pointerdown", (e) => { e.preventDefault(); if (running) press(b.dataset.move); }));
+  addEventListener("keyup", (e) => { const m = G.KEYS[e.key] ?? G.KEYS[e.key.toLowerCase?.()]; if (m) hold(m, false); });
+  document.querySelectorAll(".du-pad button").forEach((b) => {
+    b.addEventListener("pointerdown", (e) => { e.preventDefault(); if (!running) return; G.human ? hold(b.dataset.move, true) : press(b.dataset.move); });
+    for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => hold(b.dataset.move, false));
+  });
 
   async function start(newOpp, newHarness) {
     opp = newOpp; harness = newHarness;
@@ -118,7 +127,14 @@ const { game, controls } = Astro.props;
 
   $("du-start").addEventListener("click", () => start(document.querySelector('input[name="du-o"]:checked').value, $("du-h").checked));
 
+  // Between ticks, redraw with how far into the tick we are (crossy slides its cars with it).
+  let view = null, tickAt = 0;
+  (function frame() {
+    if (running && view) { const f = Math.min(1, (performance.now() - tickAt) / TICK); G.draw(ctxMe, view.me, view.seed, CW, f); G.draw(ctxAi, view.ai, view.seed, CW, f); }
+    requestAnimationFrame(frame);
+  })();
   function render(me, ai, seed) {
+    view = { me, ai, seed }; tickAt = performance.now();
     G.draw(ctxMe, me, seed, CW); G.draw(ctxAi, ai, seed, CW);
     $("du-me-st").textContent = G.statusOf(me); $("du-ai-st").textContent = G.statusOf(ai);
   }
@@ -130,7 +146,7 @@ const { game, controls } = Astro.props;
     render(me, ai, seed);
     $("du-probs").innerHTML = ""; $("du-ms").textContent = "";
     for (const c of ["3", "2", "1"]) { $("du-count").textContent = `${c}… 같은 맵, 같은 시드`; await sleep(600); }
-    running = true; queue = [];
+    running = true; queue = []; down.clear(); tapped.clear();
     while (true) {
       const meOn = !me.dead && me.t < G.TICKS, aiOn = !ai.dead && ai.t < G.TICKS;
       if (!meOn && !aiOn) break;
@@ -140,7 +156,10 @@ const { game, controls } = Astro.props;
       if (d && base) d.probs = calibrate(d.probs, base);
       const ok = d && harness ? G.allowed(ai, seed) : null;
       if (ok) d.probs = mask(d.probs, ok);
-      if (meOn) { me = G.step(me, seed, queue.shift() ?? "stay"); }
+      if (meOn) {
+        const m = G.human ? G.human(me, new Set([...down, ...tapped])) : queue.shift() ?? "stay";
+        tapped.clear(); me = G.step(me, seed, m);
+      }
       if (d) {
         const pick = Object.keys(d.probs).reduce((a, b) => (d.probs[b] > d.probs[a] ? b : a));
         ai = G.step(ai, seed, pick);

@@ -57,7 +57,7 @@ scripts/
 | `nextword.js` | 다음 단어 게임: 오답 보기 고르기, 모델 선택 | arcade/next-word | `lab-nextword.check.mjs`, `arcade-pool.check.mjs` |
 | `moe.js` | MoE 라우터 시뮬(쏠림 + 보조 손실 없는 편향 균형) | moe | `lab-moe.check.mjs` |
 | `decide.js` | 디시전 모델 상대: Qwen3 디시전 모드(선택지 단어 로짓), Laya(커뮤니티 ONNX, onnxruntime-web). 버릇 보정·차단 | arcade 듀얼 | — |
-| `crossy.js`, `galaga.js` | 듀얼 게임 규칙(시드 고정 순수 함수) + 모델용 날것/하네스 글 + `allowed` 차단 + `draw` | arcade/crossy, galaga (`DuelArena.astro`) | `lab-crossy.check.mjs`, `lab-galaga.check.mjs` |
+| `crossy.js`, `galaga.js` | 듀얼 게임 규칙(시드 고정 순수 함수) + 모델용 날것/하네스 글 + `allowed` 차단 + `draw(…, f)` 틱 사이 보간. 선택: `TICK`(ms, 기본 250), `human(s, held)`(누른 키로 조작, 없으면 입력 큐) | arcade/crossy, galaga (`DuelArena.astro`) | `lab-crossy.check.mjs`, `lab-galaga.check.mjs` |
 
 검사 전부 돌리기:
 
