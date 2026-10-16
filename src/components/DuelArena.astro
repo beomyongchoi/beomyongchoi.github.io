@@ -77,11 +77,13 @@ const { game, controls } = Astro.props;
   const $ = (id) => document.getElementById(id);
   const game = document.querySelector(".du").dataset.game;
   const G = await import(`/lab/${game}.js`);
-  const TICK = 280, CW = 32, BEST = `arcade.${game}.best`;
+  const TICK = 250, CW = 32, BEST = `arcade.${game}.best`;
   const store = { get: () => { try { return JSON.parse(localStorage.getItem(BEST) || "null"); } catch { return null; } },
                   set: (v) => { try { localStorage.setItem(BEST, JSON.stringify(v)); } catch {} } };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  let opp = "qwen3", harness = true, latched = null, running = false;
+  let opp = "qwen3", harness = true, queue = [], running = false;
+  // Inputs queue up (max 3) so a quick double-tap is two hops, not one.
+  const press = (m) => { if (queue.length < 3) queue.push(m); };
 
   $("du-opps").innerHTML = Object.entries(OPPONENTS).map(([k, o], i) =>
     `<label class="du-opt"><input type="radio" name="du-o" value="${k}" ${i === 0 ? "checked" : ""}/><span><b>${o.label}</b><small>${o.size} · ${o.note}</small></span></label>`).join("");
@@ -94,9 +96,9 @@ const { game, controls } = Astro.props;
   addEventListener("keydown", (e) => {
     const m = G.KEYS[e.key] ?? G.KEYS[e.key.toLowerCase?.()];
     if (!running || !m) return;
-    e.preventDefault(); latched = m;
+    e.preventDefault(); if (!e.repeat || !queue.length) press(m);   // holding a key keeps moving, without piling up
   });
-  document.querySelectorAll(".du-pad button").forEach((b) => b.addEventListener("pointerdown", (e) => { e.preventDefault(); latched = b.dataset.move; }));
+  document.querySelectorAll(".du-pad button").forEach((b) => b.addEventListener("pointerdown", (e) => { e.preventDefault(); if (running) press(b.dataset.move); }));
 
   async function start(newOpp, newHarness) {
     opp = newOpp; harness = newHarness;
@@ -128,7 +130,7 @@ const { game, controls } = Astro.props;
     render(me, ai, seed);
     $("du-probs").innerHTML = ""; $("du-ms").textContent = "";
     for (const c of ["3", "2", "1"]) { $("du-count").textContent = `${c}… 같은 맵, 같은 시드`; await sleep(600); }
-    running = true; latched = null;
+    running = true; queue = [];
     while (true) {
       const meOn = !me.dead && me.t < G.TICKS, aiOn = !ai.dead && ai.t < G.TICKS;
       if (!meOn && !aiOn) break;
@@ -138,7 +140,7 @@ const { game, controls } = Astro.props;
       if (d && base) d.probs = calibrate(d.probs, base);
       const ok = d && harness ? G.allowed(ai, seed) : null;
       if (ok) d.probs = mask(d.probs, ok);
-      if (meOn) { me = G.step(me, seed, latched ?? "stay"); latched = null; }
+      if (meOn) { me = G.step(me, seed, queue.shift() ?? "stay"); }
       if (d) {
         const pick = Object.keys(d.probs).reduce((a, b) => (d.probs[b] > d.probs[a] ? b : a));
         ai = G.step(ai, seed, pick);
