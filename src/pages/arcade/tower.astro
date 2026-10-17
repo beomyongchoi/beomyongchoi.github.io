@@ -1,0 +1,178 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`신호 탑 쌓기 — 정규화로 버티며 높이 쌓기 — ${SITE.authorKo}`}
+  description="층을 하나씩 올리면 신호가 커지고 처음 입력은 묽어집니다. 그냥 쌓기·Pre-LN 받침·Post-LN 뚜껑 중 하나를 골라 신호가 터지지도, 입력을 잊지도 않게 하며 가장 높이 쌓으세요."
+  locale="ko"
+  path="/arcade/tower/"
+>
+  <header class="mb-5">
+    <a href="/arcade/" class="text-sm text-muted hover:text-accent">← 오락실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">신호 탑 쌓기</h1>
+    <p class="mt-3 text-muted">
+      층이 하나씩 내려옵니다. 층을 올릴 때마다 <strong>신호</strong>는 커지고 처음 입력에 대한 <strong>기억</strong>은 묽어집니다. 신호가 100을 넘으면 터지고, 기억이 5% 아래로 떨어지면 무너집니다. 층마다 쌓는 방법을 골라 최대한 높이 올리세요.
+    </p>
+  </header>
+
+  <section class="tw">
+    <div class="tw-card" id="tw-intro">
+      <div class="tw-rules">
+        <p><b>1 · 그냥 쌓기</b> 공짜. 신호가 층 세기만큼 비례해서 커집니다. 기억도 그만큼 묽어집니다.</p>
+        <p><b class="pre">2 · Pre-LN 받침</b> 토큰 1개. 층에 넣기 전에 정규화해서 층이 딱 제 세기만큼만 더합니다. 탑의 신호가 클수록 기억이 덜 묽어집니다.</p>
+        <p><b class="post">3 · Post-LN 뚜껑</b> 공짜. 쌓은 뒤 신호를 1로 되돌립니다. 대신 기억은 그냥 쌓기만큼 묽어집니다.</p>
+        <p class="tw-small">토큰은 3개로 시작해서 2층마다 1개씩 생깁니다. 4초 안에 고르지 않으면 그냥 쌓습니다. 다음 층의 세기는 블록 폭으로 보입니다.</p>
+      </div>
+      <button id="tw-start" type="button" class="tw-btn">쌓기 시작 →</button>
+      <p class="tw-status" id="tw-best"></p>
+    </div>
+
+    <div id="tw-game" hidden>
+      <div class="tw-play">
+        <canvas id="tw-c" width="300" height="420"></canvas>
+        <div class="tw-side">
+          <p class="tw-h"><b id="tw-h">0</b>층</p>
+          <p class="tw-g">신호 <b id="tw-sv"></b></p>
+          <div class="tw-gauge"><i id="tw-s"></i><span class="tw-line" style="left:100%"></span></div>
+          <p class="tw-g">기억 <b id="tw-mv"></b></p>
+          <div class="tw-gauge mem"><i id="tw-m"></i><span class="tw-line" style="left:0%"></span></div>
+          <p class="tw-g">토큰 <b id="tw-tok"></b></p>
+          <p class="tw-g">다음 층 세기 <b id="tw-k"></b></p>
+          <div class="tw-timer"><i id="tw-t"></i></div>
+        </div>
+      </div>
+      <div class="tw-acts">
+        <button type="button" data-a="plain"><b>1 · 그냥</b><small>공짜</small></button>
+        <button type="button" data-a="pre" class="pre" id="tw-pre"><b>2 · Pre-LN</b><small>받침 · 토큰 1</small></button>
+        <button type="button" data-a="post" class="post"><b>3 · Post-LN</b><small>뚜껑 · 공짜</small></button>
+      </div>
+      <p class="tw-msg" id="tw-msg"></p>
+    </div>
+
+    <div class="tw-card" id="tw-end" hidden></div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .tw-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 20px 22px; }
+  .tw-rules p { font-size: 0.88rem; line-height: 1.6; margin: 0 0 8px; }
+  .tw-rules b, .tw-acts button { color: var(--fg); }
+  .tw-rules b.pre, .tw-acts .pre { color: var(--accent); }
+  .tw-rules b.post, .tw-acts .post { color: #9d7cd8; }
+  .tw-small { color: var(--muted); font-size: 0.78rem !important; }
+  .tw-btn { font: inherit; font-size: 0.9rem; font-family: var(--font-mono); padding: 10px 18px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent); color: var(--accent-fg); cursor: pointer; margin-top: 6px; }
+  .tw-btn.ghost { background: transparent; color: var(--accent); }
+  .tw-status { margin-top: 8px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .tw-play { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 14px; align-items: start; }
+  #tw-c { width: 100%; max-width: 340px; height: auto; display: block; border-radius: 12px; background: #1a1b26; }
+  .tw-side { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+  .tw-h { margin: 0 0 10px; } .tw-h b { font-size: 2rem; color: var(--fg); }
+  .tw-g { margin: 8px 0 3px; } .tw-g b { color: var(--fg); }
+  .tw-gauge { position: relative; height: 9px; border-radius: 5px; background: var(--border); overflow: hidden; }
+  .tw-gauge i { position: absolute; left: 0; top: 0; bottom: 0; background: #e0842a; border-radius: 5px; transition: width 0.15s; }
+  .tw-gauge.mem i { background: var(--accent); }
+  .tw-timer { height: 5px; border-radius: 3px; background: var(--border); margin-top: 12px; overflow: hidden; }
+  .tw-timer i { display: block; height: 100%; background: var(--muted); }
+  .tw-acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .tw-acts button { font: inherit; font-family: var(--font-mono); font-size: 0.8rem; padding: 12px 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; touch-action: manipulation; }
+  .tw-acts button b { display: block; font-weight: 700; white-space: nowrap; }
+  .tw-acts button small { display: block; font-size: 0.68rem; color: var(--muted); margin-top: 2px; word-break: keep-all; }
+  .tw-acts button:disabled { opacity: 0.4; cursor: default; }
+  .tw-msg { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); min-height: 1.4em; margin-top: 8px; }
+  .tw-final { font-size: 1.5rem; font-weight: 700; margin: 0 0 6px; }
+  .tw-learn { font-size: 0.9rem; line-height: 1.7; margin: 12px 0 14px; }
+  .tw-learn a { color: var(--accent); }
+  .tw-again { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 520px) { .tw-play { grid-template-columns: minmax(0, 1fr) 118px; gap: 10px; } }
+</style>
+
+<script type="module" is:inline>
+  import { newGame, step, blockAt, MAX_SIGNAL, MIN_MEMORY } from "/lab/tower.js";
+
+  const $ = (id) => document.getElementById(id);
+  const DECIDE = 4000, KEY = "arcade.tower.best", ctx = $("tw-c").getContext("2d"), CW = 300, CH = 420, FH = 22;
+  const COLOR = { plain: "#565f89", pre: "#7aa2f7", post: "#bb9af7" };
+  const store = { get: () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; } },
+                  set: (v) => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} } };
+  let g, deadline, raf, busy = false;
+
+  function draw(now = performance.now()) {
+    ctx.fillStyle = "#1a1b26"; ctx.fillRect(0, 0, CW, CH);
+    const top = Math.max(0, g.h - 13), base = CH - 12;   // keep the newest floors in view
+    ctx.fillStyle = "#2a2e42"; ctx.fillRect(0, base, CW, 12);
+    g.log.slice(top).forEach(({ k, a }, i) => {
+      const w = 60 + k * 170, y = base - (i + 1) * FH;
+      ctx.fillStyle = COLOR[a]; ctx.fillRect((CW - w) / 2, y + 2, w, FH - 3);
+      if (a !== "plain") { ctx.fillStyle = "#1a1b26"; ctx.fillRect((CW - w) / 2, a === "pre" ? y + FH - 5 : y + 2, w, 3); }
+    });
+    if (!g.dead) {
+      const k = blockAt(g.seed, g.h), w = 60 + k * 170, t = Math.min(1, 1 - (deadline - now) / DECIDE);
+      const yTop = base - (g.h - top + 1) * FH, y = 8 + (yTop - 8) * t * 0.85;
+      ctx.strokeStyle = "#e0af68"; ctx.setLineDash([5, 4]); ctx.lineWidth = 2; ctx.strokeRect((CW - w) / 2, y + 2, w, FH - 3); ctx.setLineDash([]);
+      $("tw-t").style.width = `${(1 - t) * 100}%`;
+    }
+  }
+
+  function hud() {
+    $("tw-h").textContent = g.h;
+    $("tw-sv").textContent = g.s.toFixed(g.s < 10 ? 2 : 0);
+    $("tw-s").style.width = `${Math.min(100, (Math.log10(g.s) / Math.log10(MAX_SIGNAL)) * 100)}%`;
+    $("tw-mv").textContent = `${(g.m * 100).toFixed(g.m < 0.1 ? 1 : 0)}%`;
+    $("tw-m").style.width = `${Math.max(0, Math.min(100, (Math.log10(g.m / MIN_MEMORY) / Math.log10(1 / MIN_MEMORY)) * 100))}%`;
+    $("tw-tok").textContent = "◆".repeat(g.tok) || "없음";
+    $("tw-k").textContent = g.dead ? "—" : blockAt(g.seed, g.h).toFixed(2);
+    $("tw-pre").disabled = g.tok < 1;
+  }
+
+  function loop(now) {
+    if (g.dead) return;
+    if (now >= deadline) act("plain"); else draw(now);
+    raf = requestAnimationFrame(loop);
+  }
+
+  function act(a) {
+    if (busy || g.dead) return;
+    busy = true;
+    const prev = g; g = step(g, a);
+    const used = g.log.at(-1)?.a, name = { plain: "그냥", pre: "Pre-LN", post: "Post-LN" }[used];
+    $("tw-msg").textContent = g.dead ? "" : `${name} · 신호 ${prev.s.toFixed(2)} → ${g.s.toFixed(2)} · 기억 ${(prev.m * 100).toFixed(1)}% → ${(g.m * 100).toFixed(1)}%`;
+    deadline = performance.now() + DECIDE;
+    hud(); draw();
+    busy = false;
+    if (g.dead) finish();
+  }
+
+  function start() {
+    g = newGame(Math.floor(Math.random() * 1e6));
+    $("tw-intro").hidden = true; $("tw-end").hidden = true; $("tw-game").hidden = false; $("tw-msg").textContent = "";
+    deadline = performance.now() + DECIDE;
+    hud(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+  }
+
+  function finish() {
+    cancelAnimationFrame(raf); draw();
+    const prev = store.get(), why = g.dead === "explode" ? "💥 신호가 100을 넘어 터졌습니다" : "🌫️ 처음 입력을 잊었습니다 (기억 5% 아래)";
+    if (!prev || g.h > prev.h) store.set({ h: g.h });
+    const n = (a) => g.log.filter((x) => x.a === a).length;
+    $("tw-end").innerHTML =
+      `<p class="tw-final">${g.h}층 — ${why}</p>` +
+      `<p class="tw-status">그냥 ${n("plain")} · Pre-LN ${n("pre")} · Post-LN ${n("post")}${prev ? ` · 이전 최고 ${prev.h}층` : ""} · 시드 ${g.seed}</p>` +
+      `<p class="tw-learn">정규화 없이 쌓으면 신호가 층마다 곱해져 터집니다. Post-LN은 크기를 1로 되돌리지만, 층이 더하는 양이 탑 전체와 맞먹어서 처음 입력이 금방 묽어집니다. Pre-LN은 층이 늘 같은 크기만 더하게 해서, 탑이 클수록 한 층이 입력을 덜 덮습니다. 그래서 GPT-2 이후 큰 모델은 정규화를 층 앞에 둡니다. 보통 30층 가까이 가면 잘한 겁니다. ` +
+      `<a href="/blog/evolution-depth/">글로 읽기 →</a> · <a href="/playground/depth/">실험실에서 재 보기 →</a></p>` +
+      `<div class="tw-again"><button class="tw-btn" id="tw-again">다시 쌓기 →</button></div>`;
+    $("tw-end").hidden = false;
+    $("tw-again").addEventListener("click", start);
+  }
+
+  const best = store.get();
+  if (best) $("tw-best").textContent = `내 최고 기록: ${best.h}층`;
+  $("tw-start").addEventListener("click", start);
+  document.querySelector(".tw-acts").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b && !b.disabled) act(b.dataset.a); });
+  addEventListener("keydown", (e) => {
+    if ($("tw-game").hidden || g?.dead) return;
+    const a = { 1: "plain", 2: "pre", 3: "post", a: "plain", s: "pre", d: "post" }[e.key];
+    if (a) { e.preventDefault(); if (a !== "pre" || g.tok >= 1) act(a); }
+  });
+</script>
