@@ -23,8 +23,8 @@ export const blocks: BiBlock[] = [
   {
     type: "callout",
     tone: "tip",
-    ko: "단어 앞에 다른 단어를 끼워 가며 점수가 그대로인지, 학습 길이를 넘으면 어떤 바늘이 처음 보는 각도로 가는지 직접 볼 수 있습니다. <a href=\"/playground/rope/\">RoPE 회전 시계 →</a>",
-    en: "You can insert words in front and check whether the score holds, and see which hands swing to unseen angles past the training length. <a href=\"/playground/rope/\">RoPE rotation clock →</a>",
+    ko: "단어 앞에 다른 단어를 끼워 가며 점수가 그대로인지, 학습 길이를 넘으면 어떤 바늘이 처음 보는 각도로 가는지 직접 볼 수 있습니다. <a href=\"/playground/rope/\">RoPE 회전 시계 →</a> · 오락실: <a href=\"/arcade/safe/\">바늘 금고 →</a>",
+    en: "You can insert words in front and check whether the score holds, and see which hands swing to unseen angles past the training length. <a href=\"/playground/rope/\">RoPE rotation clock →</a> · Arcade: <a href=\"/arcade/safe/\">Needle safe →</a>",
   },
 
   { type: "hr" },

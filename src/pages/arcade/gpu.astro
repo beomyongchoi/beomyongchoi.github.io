@@ -1,0 +1,185 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`GPU 테트리스 — KV 캐시로 대화 받기 — ${SITE.authorKo}`}
+  description="80GB GPU 한 장에 Llama 3.1 8B를 올리고 들어오는 대화를 받습니다. 대화마다 KV 캐시가 자라고, 넘치면 전부 터집니다. 같은 손님을 MHA·GQA·MQA로 세 번 받아 보며 K·V 헤드 수가 얼마나 차이를 만드는지 느껴 보세요."
+  locale="ko"
+  path="/arcade/gpu/"
+>
+  <header class="mb-5">
+    <a href="/arcade/" class="text-sm text-muted hover:text-accent">← 오락실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">GPU 테트리스</h1>
+    <p class="mt-3 text-muted">
+      GPU 한 장(80GB)에 Llama 3.1 8B가 올라가 있습니다. 대화가 줄을 서면 골라서 받으세요. 받은 대화는 말이 길어질수록 <strong>KV 캐시</strong>가 자라고, GPU가 넘치면 받은 대화가 전부 날아갑니다(OOM). 같은 손님을 K·V 헤드 수만 바꿔 세 라운드 받습니다.
+    </p>
+  </header>
+
+  <section class="gp">
+    <div class="gp-card" id="gp-intro">
+      <div class="gp-rules">
+        <p><b>받기</b> 오른쪽 대기 카드를 누르거나 숫자키 1~4. 카드에는 그 대화가 끝날 때 차지할 메모리가 적혀 있습니다.</p>
+        <p><b>내보내기</b> GPU 안의 대화 블록을 누르면 끊고 내보냅니다(점수 없음). 넘치기 직전 비상용.</p>
+        <p><b>점수</b> 끝까지 마친 대화의 토큰 수. 대기 카드는 3초 지나거나 줄이 넘치면 떠납니다.</p>
+        <p class="gp-small">라운드 1 MHA(K·V 헤드 32) → 2 GQA(8, 실제 Llama 3.1) → 3 MQA(1). 라운드당 45초, 손님은 세 라운드 모두 같습니다.</p>
+      </div>
+      <button id="gp-start" type="button" class="gp-btn">GPU 켜기 →</button>
+      <p class="gp-status" id="gp-best"></p>
+    </div>
+
+    <div id="gp-game" hidden>
+      <div class="gp-top"><span id="gp-round"></span><span id="gp-time"></span></div>
+      <div class="gp-play">
+        <canvas id="gp-c" width="220" height="460"></canvas>
+        <div>
+          <div class="gp-hud" id="gp-hud"></div>
+          <p class="gp-label">대기 중인 대화</p>
+          <div class="gp-queue" id="gp-queue"></div>
+          <p class="gp-msg" id="gp-msg"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="gp-card" id="gp-between" hidden></div>
+    <div class="gp-card" id="gp-end" hidden></div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .gp-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 20px 22px; }
+  .gp-rules p { font-size: 0.88rem; line-height: 1.6; margin: 0 0 8px; }
+  .gp-small { color: var(--muted); font-size: 0.78rem !important; }
+  .gp-btn { font: inherit; font-size: 0.9rem; font-family: var(--font-mono); padding: 10px 18px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent); color: var(--accent-fg); cursor: pointer; margin-top: 6px; }
+  .gp-status { margin-top: 8px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .gp-top { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 8px; }
+  .gp-top span:last-child { color: var(--accent); }
+  .gp-play { display: grid; grid-template-columns: minmax(0, 200px) 1fr; gap: 14px; align-items: start; }
+  #gp-c { width: 100%; height: auto; display: block; border-radius: 12px; background: #1a1b26; cursor: pointer; touch-action: manipulation; }
+  .gp-hud { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+  .gp-hud div { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; background: var(--surface); }
+  .gp-hud b { display: block; font-size: 0.95rem; color: var(--fg); }
+  .gp-hud .warn b { color: #e0842a; }
+  .gp-label { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); margin: 12px 0 6px; }
+  .gp-queue { display: grid; gap: 6px; min-height: 180px; }
+  .gp-offer { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; text-align: left; font: inherit; font-family: var(--font-mono); font-size: 0.75rem; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; position: relative; overflow: hidden; touch-action: manipulation; }
+  .gp-offer.no { border-color: #e0842a; }
+  .gp-offer .k { color: var(--muted); }
+  .gp-offer .gb { color: var(--accent); font-weight: 700; }
+  .gp-offer.no .gb { color: #e0842a; }
+  .gp-offer i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--muted); }
+  .gp-msg { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); min-height: 1.4em; margin-top: 8px; }
+  .gp-final { font-size: 1.4rem; font-weight: 700; margin: 0 0 8px; }
+  .gp-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.78rem; margin: 6px 0 10px; }
+  .gp-table td, .gp-table th { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: right; }
+  .gp-table td:first-child, .gp-table th:first-child { text-align: left; }
+  .gp-table th { color: var(--muted); font-weight: 500; }
+  .gp-learn { font-size: 0.9rem; line-height: 1.7; margin: 12px 0 14px; }
+  .gp-learn a { color: var(--accent); }
+  @media (max-width: 520px) { .gp-play { grid-template-columns: 130px 1fr; gap: 10px; } }
+</style>
+
+<script type="module" is:inline>
+  import { ROUNDS, newRound, step, used, promised, perToken, GPU, WEIGHTS, TICKS, TICK_MS, OFFER_TTL } from "/lab/gpu.js";
+
+  const $ = (id) => document.getElementById(id);
+  const ctx = $("gp-c").getContext("2d"), CW = 220, CH = 460, KEY = "arcade.gpu.best";
+  const store = { get: () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; } },
+                  set: (v) => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} } };
+  const GB = (b) => (b / 1e9).toFixed(b < 1e10 ? 1 : 0);
+  const hue = (id) => `hsl(${(id * 47) % 360} 55% 58%)`;
+  let seed, ri, s, pending = null, timer, results, layout = [];
+
+  function draw() {
+    ctx.fillStyle = "#1a1b26"; ctx.fillRect(0, 0, CW, CH);
+    // Zoom out when promises overflow, so every block stays visible and clickable.
+    const scale = (CH - 20) / Math.max(GPU, promised(s)), pt = perToken(s.round), x = 30, w = CW - 40;
+    let y = CH;
+    const wh = WEIGHTS * scale;
+    ctx.fillStyle = "#3b4261"; ctx.fillRect(x, y - wh, w, wh);
+    ctx.fillStyle = "#a9b1d6"; ctx.font = "11px ui-monospace, monospace"; ctx.fillText(`모델 ${GB(WEIGHTS)}GB`, x + 6, y - wh / 2 + 4);
+    y -= wh; layout = [];
+    for (const c of s.chats) {
+      const full = c.target * pt * scale, now = c.tok * pt * scale;
+      ctx.strokeStyle = hue(c.id); ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y - full + 0.5, w - 1, full - 1); ctx.setLineDash([]);
+      ctx.fillStyle = hue(c.id); ctx.fillRect(x, y - now, w, Math.max(1, now - 1));
+      layout.push({ id: c.id, y0: y - full, y1: y });
+      y -= full;
+    }
+    const top = CH - GPU * scale;
+    ctx.strokeStyle = "#f7768e"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, top); ctx.lineTo(CW, top); ctx.stroke();
+    ctx.fillStyle = "#f7768e"; ctx.fillText("80GB", 2, top + 13);
+    if (top > 12) { ctx.fillStyle = "rgba(247,118,142,.08)"; ctx.fillRect(0, 0, CW, top); }
+    if (s.oom) { ctx.fillStyle = "rgba(247,118,142,.35)"; ctx.fillRect(0, 0, CW, CH); ctx.fillStyle = "#fff"; ctx.font = "bold 22px ui-monospace, monospace"; ctx.fillText("OOM 💥", CW / 2 - 50, CH / 2); }
+  }
+
+  function hud() {
+    const u = used(s), p = promised(s), pt = perToken(s.round);
+    const box = (k, v, cls = "") => `<div class="${cls}">${k}<b>${v}</b></div>`;
+    $("gp-hud").innerHTML =
+      box("지금 사용", `${GB(u)} GB`) + box("다 자라면", `${GB(p)} GB`, p > GPU ? "warn" : "") +
+      box("마친 토큰", `${(s.served / 1000).toFixed(0)}K`) + box("토큰당 KV", `${(pt / 1024).toFixed(0)} KiB`);
+    $("gp-queue").innerHTML = s.offers.map((o, i) => {
+      const need = o.target * pt, no = p + need > GPU;
+      return `<button type="button" class="gp-offer${no ? " no" : ""}" data-id="${o.id}"><span class="k">${i + 1}</span><span>${(o.target / 1000).toFixed(0)}K 토큰</span><span class="gb">+${GB(need)}GB</span><i style="width:${((o.until - s.t) / OFFER_TTL) * 100}%"></i></button>`;
+    }).join("");
+    $("gp-time").textContent = `${(((TICKS - s.t) * TICK_MS) / 1000).toFixed(0)}초`;
+  }
+
+  function startRound(i) {
+    ri = i; s = newRound(seed, ROUNDS[i]); pending = null;
+    $("gp-between").hidden = true; $("gp-game").hidden = false; $("gp-msg").textContent = "";
+    $("gp-round").textContent = `라운드 ${i + 1}/3 · ${ROUNDS[i].name} (K·V 헤드 ${ROUNDS[i].kv}개)`;
+    draw(); hud();
+    clearInterval(timer);
+    timer = setInterval(() => {
+      s = step(s, pending); pending = null;
+      draw(); hud();
+      if (s.oom || s.t >= TICKS) { clearInterval(timer); setTimeout(endRound, s.oom ? 900 : 200); }
+    }, TICK_MS);
+  }
+
+  function endRound() {
+    results.push({ name: s.round.name, kv: s.round.kv, served: s.oom ? 0 : s.served, done: s.oom ? 0 : s.done, oom: s.oom, missed: s.missed });
+    $("gp-game").hidden = true;
+    if (ri + 1 < ROUNDS.length) {
+      const r = results.at(-1), n = ROUNDS[ri + 1];
+      $("gp-between").innerHTML = `<p class="gp-final">${r.oom ? "💥 OOM — 이번 라운드 점수 0" : `라운드 ${ri + 1} 끝 — ${(r.served / 1000).toFixed(0)}K 토큰`}</p>` +
+        `<p class="gp-learn">다음은 <b>${n.name}</b>: K·V 헤드가 ${s.round.kv}개에서 ${n.kv}개로 줄어 토큰당 KV 캐시가 ${perToken(s.round) / perToken(n)}분의 1이 됩니다. 손님은 똑같습니다.</p>` +
+        `<button class="gp-btn" id="gp-next">라운드 ${ri + 2} →</button>`;
+      $("gp-between").hidden = false;
+      $("gp-next").addEventListener("click", () => startRound(ri + 1));
+    } else finish();
+  }
+
+  function finish() {
+    const total = results.reduce((a, r) => a + r.served, 0), prev = store.get();
+    if (!prev || total > prev.total) store.set({ total });
+    $("gp-end").innerHTML = `<p class="gp-final">총 ${(total / 1000).toFixed(0)}K 토큰 서빙${prev ? ` · 이전 최고 ${(prev.total / 1000).toFixed(0)}K` : ""}</p>` +
+      `<table class="gp-table"><tr><th>라운드</th><th>K·V 헤드</th><th>마친 대화</th><th>토큰</th><th>놓친 손님</th></tr>` +
+      results.map((r) => `<tr><td>${r.name}</td><td>${r.kv}</td><td>${r.oom ? "OOM" : r.done}</td><td>${(r.served / 1000).toFixed(0)}K</td><td>${r.missed}</td></tr>`).join("") + `</table>` +
+      `<p class="gp-learn">모델도 손님도 같았는데, K·V 헤드 수만 바꿔도 받을 수 있는 대화가 크게 달라집니다. MHA에서는 몇 개만 받아도 넘치고, 실제 Llama 3.1이 쓰는 GQA에서는 훨씬 여유롭습니다. MQA는 더 넉넉하지만 품질이 조금 떨어질 수 있어서, 요즘 모델은 대부분 GQA나 DeepSeek의 MLA를 씁니다. ` +
+      `<a href="/blog/evolution-kv/">글로 읽기 →</a> · <a href="/playground/kv/">실험실에서 계산하기 →</a></p>` +
+      `<button class="gp-btn" id="gp-again">다시 하기 →</button>`;
+    $("gp-end").hidden = false;
+    $("gp-again").addEventListener("click", start);
+  }
+
+  function start() {
+    seed = Math.floor(Math.random() * 1e6); results = [];
+    $("gp-intro").hidden = true; $("gp-end").hidden = true;
+    startRound(0);
+  }
+
+  const best = store.get();
+  if (best) $("gp-best").textContent = `내 최고 기록: ${(best.total / 1000).toFixed(0)}K 토큰`;
+  $("gp-start").addEventListener("click", start);
+  $("gp-queue").addEventListener("pointerdown", (e) => { const b = e.target.closest(".gp-offer"); if (b) { e.preventDefault(); pending = { accept: +b.dataset.id }; } });
+  addEventListener("keydown", (e) => { if ($("gp-game").hidden || !s) return; const o = s.offers[+e.key - 1]; if (o) { e.preventDefault(); pending = { accept: o.id }; } });
+  $("gp-c").addEventListener("pointerdown", (e) => {
+    if (!s || s.oom) return;
+    const r = $("gp-c").getBoundingClientRect(), y = ((e.clientY - r.top) / r.height) * CH, hit = layout.find((l) => y >= l.y0 && y <= l.y1);
+    if (hit) { pending = { kick: hit.id }; $("gp-msg").textContent = "대화 하나를 끊고 내보냈습니다"; }
+  });
+</script>

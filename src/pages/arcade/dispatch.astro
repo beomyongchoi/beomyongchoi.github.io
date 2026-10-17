@@ -1,0 +1,143 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`전문가 배차 — MoE 라우터 대결 — ${SITE.authorKo}`}
+  description="밀려드는 토큰을 전문가 6명에게 나눠 주는 MoE 라우터가 되어 보세요. 잘 맞는 전문가에게 보낼수록 점수가 높지만, 인기 전문가는 금방 꽉 찹니다. DeepSeek-V3식 편향 균형 봇과 같은 토큰으로 겨룹니다."
+  locale="ko"
+  path="/arcade/dispatch/"
+>
+  <header class="mb-5">
+    <a href="/arcade/" class="text-sm text-muted hover:text-accent">← 오락실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">전문가 배차</h1>
+    <p class="mt-3 text-muted">
+      당신이 MoE의 <strong>라우터</strong>입니다. 토큰이 하나씩 들어오면 전문가 6명 중 한 명에게 보내세요. 막대는 그 전문가가 이 토큰에 얼마나 잘 맞는지(점수)입니다. 다만 인기 있는 전문가는 금방 줄이 꽉 차고, 꽉 찬 전문가에게 보낸 토큰은 버려집니다.
+    </p>
+  </header>
+
+  <section class="dx">
+    <div class="dx-card" id="dx-intro">
+      <div class="dx-rules">
+        <p><b>보내기</b> 전문가 칸을 누르거나 숫자키 1~6. 2.5초 안에 안 고르면 기본 라우터가 점수 1등에게 보냅니다(꽉 찼어도).</p>
+        <p><b>점수</b> 보낸 전문가의 적합도(0~100). 꽉 찬 전문가(대기 3개)에게 보내면 토큰이 버려지고 −50.</p>
+        <p><b>상대</b> DeepSeek-V3 방식 봇: 전문가마다 편향을 두고, 붐비면 내리고 한가하면 올립니다. 같은 토큰 60개로 겨룹니다.</p>
+      </div>
+      <button id="dx-start" type="button" class="dx-btn">라우터 켜기 →</button>
+      <p class="dx-status" id="dx-best"></p>
+    </div>
+
+    <div id="dx-game" hidden>
+      <div class="dx-top"><span id="dx-i"></span><span class="dx-sc">나 <b id="dx-me">0</b> : <b id="dx-bot">0</b> 봇</span></div>
+      <div class="dx-timer"><i id="dx-t"></i></div>
+      <div class="dx-lanes" id="dx-lanes"></div>
+      <p class="dx-msg" id="dx-msg"></p>
+    </div>
+
+    <div class="dx-card" id="dx-end" hidden></div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .dx-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 20px 22px; }
+  .dx-rules p { font-size: 0.88rem; line-height: 1.6; margin: 0 0 8px; }
+  .dx-btn { font: inherit; font-size: 0.9rem; font-family: var(--font-mono); padding: 10px 18px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent); color: var(--accent-fg); cursor: pointer; margin-top: 6px; }
+  .dx-status { margin-top: 8px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .dx-top { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.85rem; }
+  .dx-sc b { color: var(--accent); font-size: 1.1rem; }
+  .dx-timer { height: 5px; border-radius: 3px; background: var(--border); margin: 8px 0 12px; overflow: hidden; }
+  .dx-timer i { display: block; height: 100%; background: var(--accent); }
+  .dx-lanes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .dx-lane { font: inherit; font-family: var(--font-mono); display: grid; grid-template-rows: auto 90px auto 70px; gap: 6px; align-items: end; padding: 8px 4px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; touch-action: manipulation; }
+  .dx-lane:hover { border-color: var(--accent); }
+  .dx-lane.full { border-color: #e0842a; background: color-mix(in srgb, #e0842a 8%, var(--surface)); }
+  .dx-lane .n { font-size: 0.7rem; color: var(--muted); }
+  .dx-aff { position: relative; height: 90px; display: flex; align-items: flex-end; justify-content: center; }
+  .dx-aff i { width: 60%; background: var(--accent); border-radius: 4px 4px 0 0; }
+  .dx-aff span { position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 0.8rem; font-weight: 700; }
+  .dx-lane .lbl { font-size: 0.62rem; color: var(--muted); }
+  .dx-q { display: flex; flex-direction: column-reverse; gap: 3px; height: 70px; }
+  .dx-q b { height: 20px; border-radius: 4px; border: 1px dashed var(--border); }
+  .dx-q b.on { background: #9d7cd8; border: 0; }
+  .dx-lane.full .dx-q b.on { background: #e0842a; }
+  .dx-msg { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); min-height: 1.4em; margin-top: 10px; text-align: center; }
+  .dx-msg.bad { color: #e0842a; }
+  .dx-final { font-size: 1.5rem; font-weight: 700; margin: 0 0 8px; }
+  .dx-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.75rem; margin: 6px 0 10px; }
+  .dx-table td, .dx-table th { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: right; }
+  .dx-table td:first-child, .dx-table th:first-child { text-align: left; }
+  .dx-table th { color: var(--muted); font-weight: 500; }
+  .dx-learn { font-size: 0.9rem; line-height: 1.7; margin: 12px 0 14px; }
+  .dx-learn a { color: var(--accent); }
+</style>
+
+<script type="module" is:inline>
+  import { E, CAP, TOKENS, newGame, route, over, greedy, deepseek, affinity } from "/lab/dispatch.js";
+
+  const $ = (id) => document.getElementById(id);
+  const DECIDE = 2500, KEY = "arcade.dispatch.best";
+  const store = { get: () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; } },
+                  set: (v) => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} } };
+  let me, bot, deadline, raf, auto = 0;
+
+  function draw() {
+    const a = affinity(me.seed, me.i);
+    $("dx-i").textContent = `토큰 ${me.i + 1} / ${TOKENS}`;
+    $("dx-me").textContent = me.score; $("dx-bot").textContent = bot.score;
+    $("dx-lanes").innerHTML = a.map((v, e) => `<button type="button" class="dx-lane${me.q[e] >= CAP ? " full" : ""}" data-e="${e}">
+      <span class="n">${e + 1}</span>
+      <span class="dx-aff"><span>${v}</span><i style="height:${Math.max(4, v * 0.7)}px"></i></span>
+      <span class="lbl">${me.q[e] >= CAP ? "꽉 참" : "대기"}</span>
+      <span class="dx-q">${Array.from({ length: CAP }, (_, k) => `<b class="${k < me.q[e] ? "on" : ""}"></b>`).join("")}</span></button>`).join("");
+  }
+
+  function send(e, byRouter = false) {
+    const before = me;
+    me = route(me, e); bot = deepseek(bot);
+    if (byRouter) auto++;
+    const a = affinity(before.seed, before.i)[e], dropped = me.dropped > before.dropped;
+    $("dx-msg").className = `dx-msg${dropped ? " bad" : ""}`;
+    $("dx-msg").textContent = dropped ? `전문가 ${e + 1}이 꽉 차서 토큰이 버려졌습니다 −50` : `${byRouter ? "기본 라우터가 " : ""}전문가 ${e + 1}에게 +${a}`;
+    if (over(me)) return finish();
+    deadline = performance.now() + DECIDE; draw();
+  }
+
+  function loop(now) {
+    if (over(me)) return;
+    if (now >= deadline) send(greedy(me), true);
+    $("dx-t").style.width = `${Math.max(0, (deadline - now) / DECIDE) * 100}%`;
+    raf = requestAnimationFrame(loop);
+  }
+
+  function start() {
+    const seed = Math.floor(Math.random() * 1e6);
+    me = newGame(seed); bot = newGame(seed); auto = 0;
+    $("dx-intro").hidden = true; $("dx-end").hidden = true; $("dx-game").hidden = false; $("dx-msg").textContent = "";
+    deadline = performance.now() + DECIDE; draw();
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+  }
+
+  function finish() {
+    cancelAnimationFrame(raf);
+    $("dx-game").hidden = true;
+    const prev = store.get();
+    if (!prev || me.score > prev.score) store.set({ score: me.score });
+    const head = me.score > bot.score ? "🎉 봇보다 나은 라우터" : me.score < bot.score ? "🤖 DeepSeek 봇 승리" : "🤝 무승부";
+    $("dx-end").innerHTML = `<p class="dx-final">${head} — ${me.score} : ${bot.score}</p>` +
+      `<p class="dx-status">버린 토큰: 나 ${me.dropped} · 봇 ${bot.dropped} · 시간 초과로 기본 라우터가 보낸 토큰 ${auto}${prev ? ` · 이전 최고 ${prev.score}` : ""}</p>` +
+      `<table class="dx-table"><tr><th>전문가</th>${Array.from({ length: E }, (_, e) => `<th>${e + 1}</th>`).join("")}</tr>` +
+      `<tr><td>나</td>${me.sent.map((x) => `<td>${x}</td>`).join("")}</tr><tr><td>봇</td>${bot.sent.map((x) => `<td>${x}</td>`).join("")}</tr></table>` +
+      `<p class="dx-learn">점수만 보고 1등 전문가에게 몰아주면 인기 전문가가 꽉 차서 토큰이 버려집니다. 기본 라우터만 쓰면 평균 2,700점 안팎입니다. 그래서 Switch Transformer는 쏠리면 벌점을 주는 보조 손실을 썼고, DeepSeek-V3는 고를 때만 더하는 편향으로 붐빈 전문가를 살짝 밀어냅니다. 봇은 평균 4,000점 정도입니다. 줄을 보며 미리 피하면 그보다 잘할 수 있습니다. ` +
+      `<a href="/blog/evolution-moe/">글로 읽기 →</a> · <a href="/playground/moe/">실험실에서 균형 맞춰 보기 →</a></p>` +
+      `<button class="dx-btn" id="dx-again">다시 하기 →</button>`;
+    $("dx-end").hidden = false;
+    $("dx-again").addEventListener("click", start);
+  }
+
+  const best = store.get();
+  if (best) $("dx-best").textContent = `내 최고 기록: ${best.score}점`;
+  $("dx-start").addEventListener("click", start);
+  $("dx-lanes").addEventListener("pointerdown", (e) => { const b = e.target.closest(".dx-lane"); if (b) { e.preventDefault(); send(+b.dataset.e); } });
+  addEventListener("keydown", (e) => { if ($("dx-game").hidden) return; const k = +e.key; if (k >= 1 && k <= E) { e.preventDefault(); send(k - 1); } });
+</script>
