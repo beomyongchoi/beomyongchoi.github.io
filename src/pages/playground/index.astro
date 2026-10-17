@@ -41,6 +41,7 @@ const groups = [
     desc: "2017년 설계도에서 DeepSeek-V3·Qwen3까지 — 실제 설정 파일로 따라가는 부품별 진화.",
     toys: [
       { href: "/playground/arch/", toy: "arch", title: "설계도 비교기", tag: "0편 · 지도", desc: "실제 config.json 7개를 나란히. 바뀐 부품, 전체·활성 파라미터, 컨텍스트별 KV 캐시 메모리 계산." },
+      { href: "/playground/rope/", toy: "rope", title: "RoPE 회전 시계", tag: "1편 · 위치", desc: "위치만큼 벡터를 돌리면 단어를 앞에 끼워도 두 단어 점수가 그대로. 학습 길이를 넘으면 어떤 바늘이 길을 잃나."},
       { href: "/playground/kv/", toy: "kv", title: "KV 캐시 다이어트", tag: "3편 · GQA·MLA", desc: "K·V 헤드 수를 MHA→GQA→MQA로 줄이면 캐시와 GPU 한 장에 들어가는 동시 대화 수가 어떻게 바뀌나." },
       { href: "/playground/moe/", toy: "moe", title: "MoE 라우터", tag: "4편 · 전문가", desc: "토큰이 전문가를 고를 때 생기는 쏠림을, DeepSeek-V3식 편향 조정으로 고르게 만드는 과정." },
     ],
@@ -323,6 +324,19 @@ const groups = [
     ctx.globalAlpha = 1;
   }
 
+  // Clock hands at different speeds, each turning by position × its own speed.
+  function rope(ctx, W, H, f) {
+    const cs = getComputedStyle(document.documentElement);
+    ctx.fillStyle = cs.getPropertyValue("--surface").trim() || "#f2f3f5"; ctx.fillRect(0, 0, W, H);
+    const acc = cs.getPropertyValue("--accent").trim() || "#2b4a7e", n = 5, r = Math.min(H * 0.32, (W - 40) / n / 2 - 4);
+    for (let i = 0; i < n; i++) {
+      const cx = 20 + (W - 40) * (i + 0.5) / n, cy = H / 2, a = (f / 30) * 2 * Math.PI * 0.35 ** i;
+      ctx.strokeStyle = "#c9ccd3"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.stroke();
+      ctx.strokeStyle = i === 0 ? "#e0842a" : acc; ctx.lineWidth = 3; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + r * 0.8 * Math.sin(a), cy - r * 0.8 * Math.cos(a)); ctx.stroke();
+    }
+  }
+
   // Query heads (top) collapse onto fewer shared K/V blocks (bottom): MHA → GQA → MQA, looping.
   function kv(ctx, W, H, f) {
     const cs = getComputedStyle(document.documentElement);
@@ -591,7 +605,7 @@ const groups = [
     ctx.beginPath(); ctx.roundRect((W * 3) / 4 - 20, H / 2 - 15, 40, 30, 6); ctx.fill();
   }
 
-  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, train, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, rag, arch, kv, moe, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
+  const FN = { vectors, matmul, linearmap, neurallayer, loss, gradient, backprop, train, lotto, transformer, fanout, transformerblock, bert, gpt, sampling, rag, arch, rope, kv, moe, embeddings, thinkingeffort, agenttopology, longhorizon, agentcompare };
   let f = 0;
   function loop() {
     f++;

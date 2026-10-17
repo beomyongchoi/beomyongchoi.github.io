@@ -1,0 +1,19 @@
+---
+title: "1. Knowing Position — From Added Positions to Rotating RoPE"
+description: "Attention doesn't know word order. In 2017 we added position vectors; most open models now use RoPE, which rotates each vector by its position. We compute why the score then depends only on distance, why models break past their training length, and how Llama 3.1 and DeepSeek-V3 stretched to 128K, from real configs. Click any sentence to flip between English and Korean."
+pubDate: 2026-10-17T10:00:00
+lang: en
+translationKey: evolution-position
+tags: ["AI", "Transformer", "LLM", "Architecture", "RoPE"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/evolutionPosition";
+
+<SeriesNav id="evolution" current="evolution-position" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="evolution" current="evolution-position" lang="en" />

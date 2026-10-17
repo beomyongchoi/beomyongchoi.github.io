@@ -14,7 +14,7 @@ export const SERIES: Record<string, Series> = {
     },
     parts: [
       { slug: "evolution-map", toy: "/playground/arch/", published: true, title: { ko: "0. 지도 — 무엇이 바뀌었나", en: "0. The map — what changed" } },
-      { slug: "evolution-position", published: false, title: { ko: "1. 위치를 아는 법 — RoPE", en: "1. Knowing position — RoPE" } },
+      { slug: "evolution-position", toy: "/playground/rope/", published: true, title: { ko: "1. 위치를 아는 법 — RoPE", en: "1. Knowing position — RoPE" } },
       { slug: "evolution-depth", published: false, title: { ko: "2. 깊게 쌓기 — Pre-norm·RMSNorm·SwiGLU", en: "2. Going deep — Pre-norm, RMSNorm, SwiGLU" } },
       { slug: "evolution-kv", toy: "/playground/kv/", published: true, title: { ko: "3. 어텐션 다이어트 — KV 캐시·GQA·MLA", en: "3. Attention on a diet — KV cache, GQA, MLA" } },
       { slug: "evolution-moe", toy: "/playground/moe/", published: true, title: { ko: "4. 전문가들 — MoE", en: "4. The experts — MoE" } },

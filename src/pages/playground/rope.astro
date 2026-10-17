@@ -1,0 +1,156 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`RoPE 회전 시계 — 위치를 돌려서 표시하기 — ${SITE.authorKo}`}
+  description="단어마다 위치만큼 벡터를 돌리는 RoPE를 시계 바늘로 봅니다. 앞에 단어를 끼워도 두 단어의 어텐션 점수가 그대로인지, 학습 길이를 넘으면 어떤 바늘이 처음 보는 각도로 가는지 실제 모델 설정값으로 확인해 보세요."
+  locale="ko"
+  path="/playground/rope/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">RoPE 회전 시계</h1>
+    <p class="mt-3 text-muted">
+      RoPE는 단어 벡터를 숫자 두 개씩 짝지어, 위치만큼 <strong>돌립니다</strong>. 짝마다 도는 속도가 달라서 시계 바늘 여러 개처럼 보입니다. 두 단어 모두 같은 만큼 밀리면 각도 차이가 그대로라 어텐션 점수도 그대로입니다.
+    </p>
+  </header>
+
+  <section class="ro">
+    <a class="ro-crosslink" href="/blog/evolution-position/">개념 더 읽기 → 진화 1편 · 위치를 아는 법</a>
+
+    <div class="ro-ctl">
+      <label>모델 설정 <select id="ro-m"></select></label>
+      <div class="ro-btns"><button id="ro-ins" type="button">앞에 단어 끼우기 +1</button><button id="ro-ins10" type="button">+10</button><button id="ro-reset" type="button">처음으로</button></div>
+    </div>
+
+    <p class="ro-note">원래 세 단어 중 하나를 누르면 비교할 두 단어(A·B)가 바뀝니다. 바늘 = 그 짝이 지금 위치에서 돈 각도. 숫자 = 한 바퀴에 걸리는 토큰 수.</p>
+    <div id="ro-rows" class="ro-rows"></div>
+
+    <div id="ro-stats" class="ro-stats"></div>
+    <p class="ro-note">단어 벡터는 단어마다 고정한 임의의 값입니다(실제 모델은 학습한 가중치에서 나옴). 더하는 방식 = 2017년 원조 트랜스포머처럼 사인·코사인 위치 벡터를 단어 벡터에 더한 뒤 점수를 냄. 값의 크기보다 <em>바뀌는지</em>를 보세요.</p>
+
+    <h2 class="ro-h2">학습 길이를 넘으면</h2>
+    <div class="ro-ctl">
+      <label>글 길이 <b id="ro-lv"></b><input id="ro-l" type="range" min="10" max="17" step="0.25" value="13" /></label>
+      <label class="ro-chk" id="ro-scl-wrap"><input type="checkbox" id="ro-scl" /> Llama 3.1 방식으로 느린 바늘 늦추기</label>
+    </div>
+    <div id="ro-bars" class="ro-bars"></div>
+    <p class="ro-note">막대 하나 = 바늘 하나(왼쪽이 가장 빠름). 높이 = 학습 길이 동안 돈 양(꽉 차면 한 바퀴 이상). <span class="ro-hot-key">주황</span> = 학습 때 한 바퀴도 못 돌았는데, 지금 글 길이에서는 학습 때 본 적 없는 각도까지 간 바늘.</p>
+    <div id="ro-lstats" class="ro-stats"></div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .ro-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .ro-crosslink:hover { text-decoration: underline; }
+  .ro-h2 { font-size: 1.15rem; font-weight: 700; margin: 32px 0 4px; }
+  .ro-ctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 22px; margin-top: 14px; align-items: end; }
+  .ro-ctl label { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted); display: grid; gap: 5px; }
+  .ro-ctl label.ro-chk { display: flex; gap: 6px; align-items: center; }
+  .ro-ctl select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+  .ro-ctl input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .ro-ctl b { color: var(--accent); }
+  .ro-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ro-btns button { font-family: var(--font-mono); font-size: 0.76rem; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+  .ro-btns button:first-child { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .ro-note { margin-top: 6px; font-size: 0.72rem; color: var(--muted); }
+  .ro-rows { display: grid; gap: 4px; margin-top: 10px; }
+  .ro-row { display: grid; grid-template-columns: 92px 1fr; gap: 8px; align-items: center; }
+  .ro-word { font: inherit; font-size: 0.85rem; text-align: left; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ro-word small { color: var(--muted); font-family: var(--font-mono); font-size: 0.66rem; margin-right: 4px; }
+  .ro-word.a { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .ro-word.b { border-color: #e0842a; box-shadow: inset 3px 0 0 #e0842a; }
+  .ro-clocks { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .ro-clocks svg { width: 100%; max-width: 46px; height: auto; display: block; margin: 0 auto; }
+  .ro-head .ro-clocks span { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); text-align: center; }
+  .ro-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 14px; }
+  .ro-stat { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 9px 12px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .ro-stat b { display: block; font-size: 1.05rem; color: var(--fg); margin-top: 2px; }
+  .ro-stat.hi b { color: var(--accent); }
+  .ro-stat.warn b { color: #e0842a; }
+  .ro-bars { display: flex; align-items: flex-end; gap: 1px; height: 120px; margin-top: 14px; border-bottom: 1px solid var(--border); }
+  .ro-bar { flex: 1; background: var(--accent); border-radius: 1px 1px 0 0; }
+  .ro-bar.hot { background: #e0842a; }
+  .ro-hot-key { color: #e0842a; font-weight: 700; }
+</style>
+
+<script type="module" is:inline>
+  import { MODELS, freqs, wavelengths, ropeScore, addScore, wordVec, llama3Scale } from "/lab/rope.js";
+
+  const $ = (id) => document.getElementById(id);
+  const WORDS = ["개가", "사람을", "물었다"], FILL = ["어제", "그러니까", "아마"], SHOW = 4;
+  // offset = words inserted in front; a, b = which of WORDS are compared. True position = offset + index.
+  let M, fs, offset, a, b, base;
+
+  $("ro-m").innerHTML = MODELS.map((m) => `<option value="${m.id}">${m.name} · base ${m.base.toLocaleString()}</option>`).join("");
+  const fmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(n >= 1e4 ? 0 : 1) + "K" : n.toFixed(1));
+  const st = (k, v, cls = "") => `<div class="ro-stat ${cls}">${k}<b>${v}</b></div>`;
+
+  function clock(angle, color) {
+    const x = 20 + 15 * Math.sin(angle), y = 20 - 15 * Math.cos(angle);
+    return `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="var(--border)" stroke-width="2"/><line x1="20" y1="20" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="${color}" stroke-width="3" stroke-linecap="round"/></svg>`;
+  }
+
+  function scores() {
+    const q = wordVec(WORDS[a], M.dim, 1), k = wordVec(WORDS[b], M.dim, 2), m = offset + a, n = offset + b;
+    return { rope: ropeScore(q, k, m, n, fs), add: addScore(q, k, m, n) };
+  }
+
+  function draw() {
+    const h = fs.length, ps = [0, 4, 10, Math.floor(h * 0.35), Math.floor(h * 0.6), h - 1], w = wavelengths(fs);
+    const fill = Math.min(offset, SHOW), rows = [];
+    for (let j = offset - fill; j < offset; j++) rows.push({ pos: j, word: FILL[j % FILL.length], idx: -1 });
+    WORDS.forEach((word, idx) => rows.push({ pos: offset + idx, word, idx }));
+    $("ro-rows").innerHTML =
+      `<div class="ro-row ro-head"><span></span><div class="ro-clocks">${ps.map((i) => `<span>${fmt(w[i])}</span>`).join("")}</div></div>` +
+      (offset > fill ? `<p class="ro-note">… 앞에 ${offset - fill}단어 더</p>` : "") +
+      rows.map(({ pos, word, idx }) => {
+        const cls = idx === a ? " a" : idx === b ? " b" : "", color = idx === a ? "var(--accent)" : idx === b ? "#e0842a" : "var(--muted)";
+        return `<div class="ro-row"><button type="button" class="ro-word${cls}" data-idx="${idx}"><small>${pos}</small>${word}</button>` +
+          `<div class="ro-clocks">${ps.map((i) => clock(pos * fs[i], color)).join("")}</div></div>`;
+      }).join("");
+    const s = scores();
+    const delta = (now, was) => (!offset ? "" : Math.abs(now - was) < 1e-9 ? " (그대로)" : ` (${now > was ? "+" : ""}${(now - was).toFixed(3)})`);
+    $("ro-stats").innerHTML =
+      st("A와 B의 거리", `${b - a} 토큰 (위치 ${offset + a}, ${offset + b})`) +
+      st("RoPE 점수", s.rope.toFixed(4) + delta(s.rope, base.rope), "hi") +
+      st("더하는 방식 점수", s.add.toFixed(4) + delta(s.add, base.add), "warn");
+  }
+
+  function drawLong() {
+    const L = Math.round(2 ** +$("ro-l").value);
+    $("ro-lv").textContent = `${L.toLocaleString()} 토큰 (학습 ${M.train.toLocaleString()})`;
+    const sp = $("ro-scl").checked && M.scaling ? llama3Scale(fs, M.train, M.scaling) : fs;
+    let hot = 0, never = 0;
+    $("ro-bars").innerHTML = fs.map((f, i) => {
+      const seen = M.train * f, short = seen < 2 * Math.PI, isHot = short && L * sp[i] > seen + 1e-9;
+      never += short; hot += isHot;
+      return `<div class="ro-bar${isHot ? " hot" : ""}" style="height:${Math.max(2, Math.min(1, seen / (2 * Math.PI)) * 100)}%" title="바늘 ${i}: 한 바퀴 ${fmt((2 * Math.PI) / f)} 토큰"></div>`;
+    }).join("");
+    $("ro-lstats").innerHTML = st("학습 중 한 바퀴도 못 돈 바늘", `${never} / ${fs.length}`) + st("처음 보는 각도로 간 바늘", `${hot}개`, hot ? "warn" : "hi");
+  }
+
+  function reset() {
+    M = MODELS.find((m) => m.id === $("ro-m").value);
+    fs = freqs(M.dim, M.base); offset = 0;
+    a ??= 0; b ??= 2; base = scores();
+    $("ro-scl-wrap").hidden = !M.scaling; if (!M.scaling) $("ro-scl").checked = false;
+    draw(); drawLong();
+  }
+
+  $("ro-rows").addEventListener("click", (e) => {
+    const idx = +e.target.closest(".ro-word")?.dataset.idx;
+    if (!(idx >= 0) || idx === a || idx === b) return;
+    if (idx < b) a = idx; else b = idx;
+    reset();
+  });
+  $("ro-ins").addEventListener("click", () => { offset += 1; draw(); });
+  $("ro-ins10").addEventListener("click", () => { offset += 10; draw(); });
+  $("ro-reset").addEventListener("click", reset);
+  $("ro-m").addEventListener("input", reset);
+  $("ro-l").addEventListener("input", drawLong);
+  $("ro-scl").addEventListener("change", drawLong);
+  reset();
+</script>
