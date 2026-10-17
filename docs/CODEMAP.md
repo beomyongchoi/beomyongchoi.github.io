@@ -8,8 +8,8 @@
 | 축 | 경로 | 하는 일 |
 |---|---|---|
 | 글 | `/blog/`, `/en/blog/` | 한/영 문장 단위로 정렬된 글. 문장을 클릭하면 반대 언어가 뜬다 |
-| 실험실 | `/playground/` | 글마다 하나씩 붙는 인터랙티브. 가능하면 가짜 데이터 말고 진짜 계산 |
-| 오락실 | `/arcade/` | 브라우저 안의 진짜 모델과 겨루는 게임 |
+| 실험실 | `/playground/` | 글마다 붙는 **실험**: 변수를 바꿔 재고 가설을 확인/반박. 가짜 데이터 말고 진짜 계산 |
+| 오락실 | `/arcade/` | 글 개념을 규칙으로 삼은 **게임**(점수·승패, 창의적으로) + 브라우저 안 진짜 모델과 겨루는 게임 |
 
 시리즈(`/series/`)가 글과 실험실을 순서대로 묶는다.
 
@@ -56,6 +56,9 @@ scripts/
 | `arch.js` | 공개 모델 config.json 값 + 파라미터·KV 캐시 계산 | arch | `lab-arch.check.mjs` (공식 발표치와 비교) |
 | `nextword.js` | 다음 단어 게임: 오답 보기 고르기, 모델 선택 | arcade/next-word | `lab-nextword.check.mjs`, `arcade-pool.check.mjs` |
 | `moe.js` | MoE 라우터 시뮬(쏠림 + 보조 손실 없는 편향 균형) | moe | `lab-moe.check.mjs` |
+| `rope.js` | RoPE 회전·사인파 더하기 점수, 바늘 파장, 학습 길이 내 못 돈 바늘 수, Llama 3.1 스케일링·위치 보간 (모델 설정 = 실제 config) | rope | `lab-rope.check.mjs` |
+| `depth.js` | 무작위 층 쌓기: 정규화 없음·Post-LN·Pre-LN × LayerNorm·RMSNorm, 신호 크기·남은 입력(코사인)·역전파(유한차분 검증), SwiGLU FFN 파라미터 | depth | `lab-depth.check.mjs` |
+| `safe.js` | 오락실 바늘 금고: RoPE식 바늘 주기(2π·6^i), 단계, 맞물림(=RoPE 상대 점수) | arcade/safe | `lab-safe.check.mjs` |
 | `decide.js` | 디시전 모델 상대: Qwen3 디시전 모드(선택지 단어 로짓), Laya(커뮤니티 ONNX, onnxruntime-web). 버릇 보정·차단 | arcade 듀얼 | — |
 | `crossy.js`, `galaga.js` | 듀얼 게임 규칙(시드 고정 순수 함수) + 모델용 날것/하네스 글 + `allowed` 차단 + `draw(…, f)` 틱 사이 보간. 선택: `TICK`(ms, 기본 250), `human(s, held)`(누른 키로 조작, 없으면 입력 큐) | arcade/crossy, galaga (`DuelArena.astro`) | `lab-crossy.check.mjs`, `lab-galaga.check.mjs` |
 

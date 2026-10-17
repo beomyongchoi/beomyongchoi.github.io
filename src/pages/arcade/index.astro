@@ -3,11 +3,12 @@ import ArcTitle from "../../components/ArcTitle.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { SITE } from "../../consts";
 
-// Games against a real model running in your browser. "soon" entries render without a link.
+// Games played with a post's idea, or against a real model running in your browser. "soon" entries render without a link.
 const games = [
   { href: "/arcade/next-word/", title: "사람 vs GPT — 다음 단어 맞히기", tag: "LIVE 실모델 · 10라운드", desc: "끊긴 문장의 원문 단어를 맞혀라. 진짜 언어 모델이 같은 보기로 함께 맞힌다. 관용구는 모델이, 반전은 사람이 강하다?" },
   { href: "/arcade/crossy/", title: "사람 vs 디시전 모델 — 길 건너기", tag: "LIVE 실모델 · 1:1 · 하네스", desc: "같은 길을 나는 왼쪽에서, 디시전 모델은 오른쪽에서 건넌다. 하네스를 끄면 모델이 차에 뛰어든다?" },
   { href: "/arcade/galaga/", title: "사람 vs 디시전 모델 — 갤러그", tag: "LIVE 실모델 · 1:1 · 하네스", desc: "같은 적 편대를 두고 나와 모델이 동시에 쏜다. 모델이 매 수 고른 확률이 실시간으로 보인다." },
+  { href: "/arcade/safe/", title: "바늘 금고", tag: "글 연계 · 진화 1편 RoPE", desc: "비밀번호는 자리 번호, 보이는 건 속도가 다른 시계 바늘뿐. 모델이 RoPE로 위치를 읽듯 바늘을 읽어 금고 5개를 열어라." },
   { title: "의미 스무고개", tag: "곧", desc: "숨은 단어를 맞혀라. 추측할 때마다 임베딩 유사도로 얼마나 가까운지 알려 준다." },
   { title: "모델 조종하기", tag: "곧", desc: "앞 문장만 바꿔서 모델의 1위 다음 단어를 목표 단어로 만들어라." },
 ];
@@ -15,14 +16,14 @@ const games = [
 
 <BaseLayout
   title={`오락실 — ${SITE.authorKo}`}
-  description="브라우저 안에서 진짜 AI 모델과 겨루는 게임. 이기다 보면 모델이 어떻게 생각하는지 알게 됩니다."
+  description="글에서 배운 개념을 규칙으로 삼은 게임과, 브라우저 안의 진짜 AI 모델과 겨루는 게임. 놀다 보면 모델이 어떻게 생각하는지 알게 됩니다."
   locale="ko"
   path="/arcade/"
 >
   <header class="mb-10 text-center">
     <ArcTitle text="오락실" />
     <p class="mx-auto mt-2 max-w-xl text-balance text-muted">
-      브라우저 안에서 진짜 AI 모델과 겨룹니다. 이기다 보면 모델이 어떻게 생각하는지 저절로 알게 됩니다.
+      글에서 배운 개념으로 놀고, 브라우저 안의 진짜 AI 모델과 겨룹니다. 이기다 보면 모델이 어떻게 생각하는지 저절로 알게 됩니다.
     </p>
   </header>
 

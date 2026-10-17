@@ -1,0 +1,162 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`바늘 금고 — RoPE 바늘로 자리 맞히기 — ${SITE.authorKo}`}
+  description="금고 비밀번호는 토큰의 자리 번호이고, 보이는 건 RoPE처럼 속도가 다른 시계 바늘뿐입니다. 빠른 바늘로 끝자리를, 느린 바늘로 큰 자리를 읽어 금고 5개를 최대한 빨리 여세요."
+  locale="ko"
+  path="/arcade/safe/"
+>
+  <header class="mb-5">
+    <a href="/arcade/" class="text-sm text-muted hover:text-accent">← 오락실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">바늘 금고</h1>
+    <p class="mt-3 text-muted">
+      비밀번호는 문장 속 <strong>자리 번호</strong>입니다. 금고에는 그 자리만큼 돌아간 바늘만 보입니다. 모델이 RoPE로 위치를 읽듯, 빠른 바늘로 가까운 자리를, 느린 바늘로 먼 자리를 읽으세요. 금고 5개를 여는 시간을 겨룹니다.
+    </p>
+  </header>
+
+  <section class="sf">
+    <div class="sf-card" id="sf-intro">
+      <p class="sf-rule">숫자를 바꾸면 <span class="sf-ghost-key">점선 바늘</span>이 그 자리만큼 돌아갑니다. 모든 바늘이 겹치면 <b>열기</b>. 틀리면 5초 벌점이고, 바늘이 얼마나 맞물렸는지(맞물림 %) 알려 줍니다.</p>
+      <button id="sf-start" type="button" class="sf-btn">금고 털기 시작 →</button>
+      <p class="sf-status" id="sf-best"></p>
+    </div>
+
+    <div id="sf-game" hidden>
+      <div class="sf-top"><span id="sf-lv"></span><span id="sf-time"></span></div>
+      <p class="sf-hint" id="sf-hint"></p>
+      <div class="sf-clocks" id="sf-clocks"></div>
+      <div class="sf-ctl">
+        <div class="sf-steps" id="sf-minus"></div>
+        <input id="sf-n" type="number" inputmode="numeric" min="0" />
+        <div class="sf-steps" id="sf-plus"></div>
+      </div>
+      <button id="sf-open" type="button" class="sf-btn sf-open">열기 🔓</button>
+      <p class="sf-msg" id="sf-msg"></p>
+    </div>
+
+    <div class="sf-card" id="sf-end" hidden></div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .sf-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 20px 22px; }
+  .sf-rule { font-size: 0.9rem; line-height: 1.7; margin: 0 0 14px; }
+  .sf-ghost-key { color: #e0842a; font-weight: 700; }
+  .sf-btn { font: inherit; font-size: 0.9rem; font-family: var(--font-mono); padding: 10px 18px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  .sf-btn.ghost { background: transparent; color: var(--accent); }
+  .sf-status { margin-top: 8px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .sf-top { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.85rem; }
+  .sf-top span:last-child { color: var(--accent); }
+  .sf-hint { font-size: 0.82rem; color: var(--muted); margin: 6px 0 10px; min-height: 1.4em; }
+  .sf-clocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+  .sf-clock { text-align: center; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .sf-clock svg { width: 100%; max-width: 170px; height: auto; display: block; margin: 0 auto 4px; }
+  .sf-clock.off svg { opacity: 0.25; }
+  .sf-ctl { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-top: 16px; }
+  .sf-steps { display: flex; gap: 6px; }
+  #sf-minus { justify-content: flex-end; }
+  .sf-steps button { font-family: var(--font-mono); font-size: 0.8rem; min-width: 44px; padding: 9px 6px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; touch-action: manipulation; }
+  #sf-n { width: 6.5em; font: inherit; font-family: var(--font-mono); font-size: 1.4rem; text-align: center; padding: 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); }
+  .sf-open { display: block; margin: 14px auto 0; font-size: 1rem; padding: 11px 28px; }
+  .sf-msg { text-align: center; font-family: var(--font-mono); font-size: 0.85rem; min-height: 1.4em; margin-top: 10px; }
+  .sf-msg.bad { color: #e0842a; }
+  .sf-msg.good { color: var(--accent); }
+  .sf-final { font-size: 1.5rem; font-weight: 700; margin: 0 0 6px; }
+  .sf-learn { font-size: 0.9rem; line-height: 1.7; margin: 12px 0 14px; }
+  .sf-learn a { color: var(--accent); }
+  .sf-again { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 560px) { .sf-ctl { grid-template-columns: 1fr; justify-items: center; } #sf-minus, #sf-plus { justify-content: center; } }
+</style>
+
+<script type="module" is:inline>
+  import { LEVELS, periods, angles, shown, grip, newSecret } from "/lab/safe.js";
+
+  const $ = (id) => document.getElementById(id);
+  const PENALTY = 5, KEY = "arcade.safe.best";
+  const store = { get: () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; } },
+                  set: (v) => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} } };
+  const HINTS = [
+    "바늘 하나. 6.3칸에 한 바퀴 — RoPE에서 가장 빠른 바늘과 같은 속도입니다.",
+    "느린 바늘이 하나 늘었습니다. 느린 바늘로 대략 어디쯤인지, 빠른 바늘로 정확한 칸을 찾으세요.",
+    "바늘 셋. 느린 바늘부터 맞추고 빠른 바늘로 내려가세요.",
+    "바늘 넷, 1,000칸까지. 가장 느린 바늘은 한 바퀴가 1,357칸입니다.",
+    "마지막 금고: 가장 빠른 바늘이 고장 났습니다. 두 번째 바늘은 1칸에 약 9.5°씩 돕니다. 그 작은 차이로 맞히세요.",
+  ];
+  let lv, li, secret, t0, penalty, tries, timer;
+
+  const fmt = (p) => (p >= 100 ? Math.round(p).toLocaleString() : p.toFixed(1));
+  function hand(a, len, cls) {
+    const x = 50 + len * Math.sin(a), y = 50 - len * Math.cos(a);
+    return `<line x1="50" y1="50" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" class="${cls}" />`;
+  }
+  function draw() {
+    const g = Math.max(0, Math.floor(+$("sf-n").value || 0)), A = angles(secret, lv), G = angles(g, lv), on = shown(lv);
+    $("sf-clocks").innerHTML = periods(lv).map((p, i) => `<div class="sf-clock${on[i] ? "" : " off"}"><svg viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="3"/>
+      ${Array.from({ length: 12 }, (_, k) => { const a = (k / 12) * 2 * Math.PI; return `<line x1="${50 + 40 * Math.sin(a)}" y1="${50 - 40 * Math.cos(a)}" x2="${50 + 45 * Math.sin(a)}" y2="${50 - 45 * Math.cos(a)}" stroke="var(--border)" stroke-width="2"/>`; }).join("")}
+      ${on[i] ? `<g stroke="var(--accent)" stroke-width="6" stroke-linecap="round">${hand(A[i], 38, "")}</g>` : `<text x="50" y="56" text-anchor="middle" font-size="14" fill="var(--muted)">고장</text>`}
+      <g stroke="#e0842a" stroke-width="3" stroke-dasharray="5 4" stroke-linecap="round">${hand(G[i], 42, "")}</g>
+      <circle cx="50" cy="50" r="4" fill="var(--fg)"/></svg>한 바퀴 ${fmt(p)}칸</div>`).join("");
+  }
+
+  function load(i) {
+    li = i; lv = LEVELS[i]; secret = newSecret(lv);
+    $("sf-lv").textContent = `금고 ${i + 1} / ${LEVELS.length} · 자리 0~${(lv.range - 1).toLocaleString()}`;
+    $("sf-hint").textContent = HINTS[i];
+    const steps = [1, 10, 100].filter((s) => s < lv.range);
+    $("sf-minus").innerHTML = steps.slice().reverse().map((s) => `<button type="button" data-d="${-s}">−${s}</button>`).join("");
+    $("sf-plus").innerHTML = steps.map((s) => `<button type="button" data-d="${s}">+${s}</button>`).join("");
+    $("sf-n").max = lv.range - 1; $("sf-n").value = 0;
+    $("sf-msg").textContent = ""; $("sf-msg").className = "sf-msg";
+    draw();
+  }
+
+  function tick() { $("sf-time").textContent = `${((performance.now() - t0) / 1000 + penalty).toFixed(1)}초`; }
+
+  function start() {
+    $("sf-intro").hidden = true; $("sf-end").hidden = true; $("sf-game").hidden = false;
+    t0 = performance.now(); penalty = 0; tries = 0;
+    clearInterval(timer); timer = setInterval(tick, 100);
+    load(0); $("sf-n").focus();
+  }
+
+  function open() {
+    const g = Math.floor(+$("sf-n").value || 0); tries++;
+    if (g === secret) {
+      if (li + 1 < LEVELS.length) { load(li + 1); $("sf-msg").textContent = `철컥! 금고 ${li}을 열었습니다.`; $("sf-msg").className = "sf-msg good"; return; }
+      return finish();
+    }
+    penalty += PENALTY; tick();
+    $("sf-msg").className = "sf-msg bad";
+    $("sf-msg").textContent = `잠겨 있음 · 맞물림 ${(grip(secret, g, lv) * 100).toFixed(1)}% · +${PENALTY}초`;
+  }
+
+  function finish() {
+    clearInterval(timer);
+    const total = (performance.now() - t0) / 1000 + penalty, prev = store.get();
+    if (!prev || total < prev.t) store.set({ t: total, tries });
+    $("sf-game").hidden = true;
+    $("sf-end").innerHTML =
+      `<p class="sf-final">🔓 금고 5개 전부 열림 — ${total.toFixed(1)}초</p>` +
+      `<p class="sf-status">시도 ${tries}번 · 벌점 ${penalty}초${prev ? ` · 이전 최고 ${prev.t.toFixed(1)}초` : ""}</p>` +
+      `<p class="sf-learn">방금 한 일이 RoPE를 쓰는 모델이 위치를 읽는 방식입니다. 빠른 바늘은 바로 옆 자리를 가르고, 느린 바늘은 먼 자리를 가릅니다. 바늘 하나로는 금방 한 바퀴를 돌아 헷갈리지만, 속도가 다른 바늘을 겹쳐 보면 자리가 하나로 정해집니다. 맞물림 %는 RoPE 점수와 같은 계산이라, 두 자리의 거리에만 달라집니다. ` +
+      `<a href="/blog/evolution-position/">글로 읽기 →</a> · <a href="/playground/rope/">실험실에서 재 보기 →</a></p>` +
+      `<div class="sf-again"><button class="sf-btn" id="sf-again">다시 하기 →</button></div>`;
+    $("sf-end").hidden = false;
+    $("sf-again").addEventListener("click", start);
+  }
+
+  const best = store.get();
+  if (best) $("sf-best").textContent = `내 최고 기록: ${best.t.toFixed(1)}초 (시도 ${best.tries}번)`;
+  $("sf-start").addEventListener("click", start);
+  $("sf-open").addEventListener("click", open);
+  $("sf-n").addEventListener("input", draw);
+  $("sf-n").addEventListener("keydown", (e) => { if (e.key === "Enter") open(); });
+  for (const id of ["sf-minus", "sf-plus"]) $(id).addEventListener("click", (e) => {
+    const d = +e.target.closest("button")?.dataset.d; if (!d) return;
+    $("sf-n").value = Math.min(lv.range - 1, Math.max(0, Math.floor(+$("sf-n").value || 0) + d)); draw();
+  });
+</script>
