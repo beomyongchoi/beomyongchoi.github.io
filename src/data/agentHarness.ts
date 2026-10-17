@@ -3,6 +3,8 @@ import type { BiBlock } from "./aiParadox";
 // Model scores: measured 2026-10-16 in Chrome WebGPU on /arcade/crossy/ and /arcade/galaga/, model side only,
 // 3 games each (random seeds). No-model baselines: public/lab/crossy.js + galaga.js, seeds 1–30, guardrail =
 // allowed(); a blocked pick falls back to a random allowed move. Same rules as the arcade (TICKS 240).
+// 4-1 hint experiment (2026-10-17, not shipped): outlook.fire = "WILL HIT"/"will miss" via playing "stay"
+// until the bullet lands; Qwen3 run in Node CPU q8 (scratch duel-eval.mjs), seed 1, 80 ticks, guardrail on.
 export const blocks: BiBlock[] = [
   {
     type: "callout",
@@ -160,6 +162,34 @@ export const blocks: BiBlock[] = [
       { ko: "모델이 쓸모없다는 뜻은 아닙니다. 게임이 단순해서 한 틱 앞만 보면 거의 풀리기 때문입니다.", en: "That doesn't make the model useless. These games are simple enough that looking one tick ahead nearly solves them." },
       { ko: "앞을 더 길게 내다봐야 하는 문제라면 모델의 몫이 커집니다.", en: "On problems that need longer lookahead, the model's share grows." },
       { ko: "다만 이 측정 없이 \"모델이 10배 잘한다\"고 썼다면 하네스의 공을 모델에게 준 셈입니다.", en: "But writing \"the model does 10× better\" without this measurement would have handed the harness's credit to the model." },
+    ],
+  },
+
+  { type: "h2", ko: "4-1. 힌트를 더 주면 모델이 나아질까", en: "4-1. Does a better hint help the model?" },
+  {
+    type: "p",
+    s: [
+      { ko: "갤러그 하네스는 \"맞는가\"만 알려 주고, 어디를 쏴야 맞는지는 알려 주지 않습니다.", en: "The Galaga harness only says whether you'll get hit. It never says where to shoot." },
+      { ko: "그래서 \"지금 쏘면 맞는다 / 빗나간다\"를 한 줄 더 넣어 봤습니다.", en: "So we added one more line: \"this shot will hit / will miss.\"" },
+    ],
+  },
+  {
+    type: "code",
+    code: "$ galaga --hint \"fire: the shot WILL HIT\"     # before -> after\n  rule bot (fires on WILL HIT), 30 seeds      1203 -> 2857\n  Qwen3 + harness, 1 seed, 80 ticks            200 ->  200   # picked \"right\" 64/80 times",
+  },
+  {
+    type: "p",
+    s: [
+      { ko: "규칙 하나짜리 프로그램은 이 한 줄로 점수가 두 배 넘게 올랐습니다. Qwen3는 그대로였습니다.", en: "A one-rule program more than doubled its score from that line. Qwen3 didn't move." },
+      { ko: "0.6B 모델은 문장을 읽고 그대로 따르지 못했습니다. 짧게 한 판만 잰 값이지만, 차이는 분명했습니다.", en: "The 0.6B model couldn't read the sentence and act on it. It was one short game, but the gap was clear." },
+    ],
+  },
+  {
+    type: "p",
+    s: [
+      { ko: "남은 방법은 맞힐 수 있을 때 \"쏘기\" 말고는 고를 수 없게 막는 것입니다.", en: "What's left is to block every option except \"fire\" whenever a shot would hit." },
+      { ko: "모델 대신 무작위로 고르게 해도 이렇게 막으면 평균 2,003점이 나옵니다.", en: "With that block, even random picks instead of a model average 2,003 points." },
+      { ko: "점수는 오르지만, 이건 모델이 잘해서가 아닙니다. 하네스가 판단을 하나 더 가져간 것입니다.", en: "The score goes up, but not because the model got better. The harness took over one more decision." },
     ],
   },
 
