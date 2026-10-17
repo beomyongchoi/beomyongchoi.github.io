@@ -1,0 +1,19 @@
+---
+title: "2. Going Deep — Pre-norm, RMSNorm, SwiGLU"
+description: "Stack 48 layers without normalization and the signal grows 12 million times. We look at why normalization moved from Post-LN (2017) to Pre-LN (GPT-2), RMSNorm dropping the mean, and the gated SwiGLU FFN — the three parts LLaMA bundled into the standard — with a simulation and real configs. Click any sentence to flip between English and Korean."
+pubDate: 2026-10-17T11:50:00
+lang: en
+translationKey: evolution-depth
+tags: ["AI", "Transformer", "LLM", "Architecture", "Normalization"]
+---
+
+import BilingualArticle from "../../components/BilingualArticle.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
+import SeriesNext from "../../components/SeriesNext.astro";
+import { blocks } from "../../data/evolutionDepth";
+
+<SeriesNav id="evolution" current="evolution-depth" lang="en" />
+
+<BilingualArticle blocks={blocks} lang="en" />
+
+<SeriesNext id="evolution" current="evolution-depth" lang="en" />

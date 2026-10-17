@@ -1,0 +1,126 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../consts";
+---
+
+<BaseLayout
+  title={`층 쌓기 — 정규화가 없으면, 어디에 두면 — ${SITE.authorKo}`}
+  description="무작위 층을 최대 96개까지 쌓으며 신호 크기와 처음 입력이 얼마나 남는지 봅니다. 정규화 없음·Post-LN(2017)·Pre-LN(GPT-2 이후)을 나란히 비교하고, LayerNorm과 RMSNorm을 바꿔 보세요. SwiGLU FFN 크기도 실제 설정값으로 계산합니다."
+  locale="ko"
+  path="/playground/depth/"
+>
+  <header class="mb-5">
+    <a href="/playground/" class="text-sm text-muted hover:text-accent">← 실험실</a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">층 쌓기</h1>
+    <p class="mt-3 text-muted">
+      층마다 작은 신경망이 결과를 <strong>더해</strong> 나갑니다(잔차 연결). 정규화를 어디에 두느냐에 따라 깊이 쌓았을 때 신호가 어떻게 되는지 봅니다. 학습은 하지 않고, 무작위 초기값에서 한 번 통과시킨 결과입니다.
+    </p>
+  </header>
+
+  <section class="dp">
+    <a class="dp-crosslink" href="/blog/evolution-depth/">개념 더 읽기 → 진화 2편 · 깊게 쌓기</a>
+
+    <div class="dp-ctl">
+      <label>층 수 <b id="dp-lv"></b><input id="dp-l" type="range" min="1" max="96" value="48" /></label>
+      <label>정규화 종류 <select id="dp-k"><option value="layer">LayerNorm</option><option value="rms" selected>RMSNorm</option></select></label>
+      <div class="dp-btns"><button id="dp-seed" type="button">다른 초기값 ↻</button></div>
+    </div>
+
+    <div class="dp-legend"><span class="none">정규화 없음</span><span class="post">Post-LN (2017)</span><span class="pre">Pre-LN (GPT-2 이후)</span></div>
+
+    <p class="dp-cap">신호 크기 (RMS, 로그 눈금) — 층을 지날 때마다</p>
+    <svg id="dp-c1" class="dp-chart" viewBox="0 0 640 200" preserveAspectRatio="none"></svg>
+    <p class="dp-cap">처음 입력이 남은 정도 (입력과의 코사인) — 점선 = 1/√(층+1)</p>
+    <svg id="dp-c2" class="dp-chart" viewBox="0 0 640 200" preserveAspectRatio="none"></svg>
+    <div id="dp-stats" class="dp-stats"></div>
+    <p class="dp-note">층 하나 = 무작위 가중치의 2층 MLP(SiLU, 폭 128). 무작위 초기값 4벌의 평균입니다. 실제 모델의 어텐션·FFN 대신 쓴 단순한 대역입니다. 학습 중에 생기는 문제(학습률 워밍업 필요 등)는 이 그림에 나오지 않습니다.</p>
+
+    <h2 class="dp-h2">SwiGLU FFN은 얼마나 큰가</h2>
+    <p class="dp-note">일반 FFN은 d→4d→d(행렬 2개). SwiGLU는 행렬이 3개라, 같은 크기를 맞추려면 중간 폭을 4d의 2/3(≈2.67d)로 줄입니다. 실제 모델은 이 값을 조금씩 다르게 골랐습니다.</p>
+    <div id="dp-ffn" class="dp-table"></div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .dp-crosslink { font-size: 0.82rem; color: var(--accent); text-decoration: none; }
+  .dp-crosslink:hover { text-decoration: underline; }
+  .dp-h2 { font-size: 1.15rem; font-weight: 700; margin: 32px 0 4px; }
+  .dp-ctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 22px; margin-top: 14px; align-items: end; }
+  .dp-ctl label { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted); display: grid; gap: 5px; }
+  .dp-ctl select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+  .dp-ctl input { width: 100%; accent-color: var(--accent); }
+  .dp-ctl b { color: var(--accent); }
+  .dp-btns button { font-family: var(--font-mono); font-size: 0.76rem; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+  .dp-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 16px; font-family: var(--font-mono); font-size: 0.72rem; }
+  .dp-legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; background: currentColor; }
+  .dp-legend .none, .dp-chart .none { color: #e0842a; stroke: #e0842a; }
+  .dp-legend .post, .dp-chart .post { color: #9d7cd8; stroke: #9d7cd8; }
+  .dp-legend .pre, .dp-chart .pre { color: var(--accent); stroke: var(--accent); }
+  .dp-cap { margin: 14px 0 4px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+  .dp-chart { width: 100%; height: 160px; display: block; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  .dp-chart polyline { fill: none; stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .dp-chart .ref { stroke: var(--muted); stroke-dasharray: 5 4; stroke-width: 1.5; }
+  .dp-chart .grid { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .dp-chart text { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+  .dp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 14px; }
+  .dp-stat { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 9px 12px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+  .dp-stat b { display: block; font-size: 1.05rem; color: var(--fg); margin-top: 2px; }
+  .dp-note { margin-top: 6px; font-size: 0.72rem; color: var(--muted); }
+  .dp-table { overflow-x: auto; margin-top: 10px; }
+  .dp-table table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.72rem; }
+  .dp-table th, .dp-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+  .dp-table th:first-child, .dp-table td:first-child { text-align: left; }
+  .dp-table th { color: var(--muted); font-weight: 500; }
+</style>
+
+<script type="module" is:inline>
+  import { makeStack, run, ffnParams } from "/lab/depth.js";
+
+  const $ = (id) => document.getElementById(id);
+  const MODES = ["none", "post", "pre"], W = 640, H = 200, P = 26;
+  let seed = 1, stacks = null;   // average 4 random stacks (width 128) so one lucky draw doesn't decide the picture
+
+  function chart(svg, series, { lo, hi, log, ref }) {
+    const n = series[0].length, X = (i) => P + (i / Math.max(1, n - 1)) * (W - P - 8);
+    const Y = (v) => { const t = log ? Math.log10(Math.max(v, 1e-12)) : v; return H - 18 - ((t - lo) / (hi - lo)) * (H - 30); };
+    const ticks = log ? Array.from({ length: hi - lo + 1 }, (_, k) => lo + k).filter((t) => (hi - lo) <= 8 || t % 2 === 0) : [0, 0.5, 1];
+    let s = ticks.map((t) => { const y = H - 18 - ((t - lo) / (hi - lo)) * (H - 30); return `<line class="grid" x1="${P}" x2="${W - 8}" y1="${y}" y2="${y}"/><text x="2" y="${y + 4}">${log ? (t === 0 ? "1" : `1e${t}`) : t}</text>`; }).join("");
+    if (ref) s += `<polyline class="ref" points="${ref.map((v, i) => `${X(i)},${Y(v)}`).join(" ")}"/>`;
+    s += series.map((d, m) => `<polyline class="${MODES[m]}" points="${d.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}"/>`).join("");
+    s += `<text x="${P}" y="${H - 3}">입력</text><text x="${W - 60}" y="${H - 3}">${n - 1}층 뒤</text>`;
+    svg.innerHTML = s;
+  }
+
+  function draw() {
+    const L = +$("dp-l").value, kind = $("dp-k").value;
+    $("dp-lv").textContent = `${L}층`;
+    stacks ??= [0, 1, 2, 3].map((k) => makeStack({ layers: 96, d: 128, seed: seed * 4 + k }));
+    const mean = (rs, key) => rs[0][key].map((_, i) => rs.reduce((s, r) => s + r[key][i], 0) / rs.length);
+    const R = MODES.map((m) => { const rs = stacks.map((S) => run(S, m, kind, L)); return { fwd: mean(rs, "fwd"), keep: mean(rs, "keep") }; });
+    const top = Math.max(1, Math.ceil(Math.log10(Math.max(...R[0].fwd))));
+    chart($("dp-c1"), R.map((r) => r.fwd), { lo: -1, hi: top, log: true });
+    chart($("dp-c2"), R.map((r) => r.keep.map((v) => Math.max(-0.1, v))), { lo: -0.1, hi: 1, ref: R[0].keep.map((_, i) => 1 / Math.sqrt(i + 1)) });
+    const st = (k, v) => `<div class="dp-stat">${k}<b>${v}</b></div>`, f = (v) => (v >= 1e4 ? v.toExponential(1) : v.toFixed(2));
+    $("dp-stats").innerHTML =
+      st("마지막 신호 크기 · 없음", `${f(R[0].fwd.at(-1))}배`) +
+      st("남은 입력 · Post-LN", R[1].keep.at(-1).toFixed(3)) +
+      st("남은 입력 · Pre-LN", `${R[2].keep.at(-1).toFixed(3)} (1/√${L + 1} = ${(1 / Math.sqrt(L + 1)).toFixed(3)})`);
+  }
+
+  // Real config.json values (Hugging Face, fetched 2026-10-17).
+  const FFN = [
+    { name: "GPT-2 (일반 FFN, GELU)", d: 768, h: 3072, glu: false },
+    { name: "Llama 2 7B", d: 4096, h: 11008, glu: true },
+    { name: "Llama 3.1 8B", d: 4096, h: 14336, glu: true },
+    { name: "Qwen3-8B", d: 4096, h: 12288, glu: true },
+    { name: "DeepSeek-V3 (밀집 층)", d: 7168, h: 18432, glu: true },
+  ];
+  const M = (n) => (n / 1e6).toFixed(0) + "M";
+  $("dp-ffn").innerHTML = `<table><tr><th>모델</th><th>d</th><th>중간 폭</th><th>÷ d</th><th>FFN 파라미터/층</th><th>일반 4d FFN이면</th></tr>` +
+    FFN.map((r) => `<tr><td>${r.name}</td><td>${r.d.toLocaleString()}</td><td>${r.h.toLocaleString()}</td><td>${(r.h / r.d).toFixed(2)}</td><td>${M(ffnParams(r.d, r.h, r.glu))}</td><td>${M(ffnParams(r.d, 4 * r.d, false))}</td></tr>`).join("") + `</table>`;
+
+  $("dp-l").addEventListener("input", draw);
+  $("dp-k").addEventListener("input", draw);
+  $("dp-seed").addEventListener("click", () => { seed++; stacks = null; draw(); });
+  draw();
+</script>

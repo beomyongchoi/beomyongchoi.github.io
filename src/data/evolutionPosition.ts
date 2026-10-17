@@ -166,7 +166,7 @@ export const blocks: BiBlock[] = [
     s: [
       { ko: "위치를 더하던 방식은 \"몇 번째\"를 알려 줬습니다. RoPE는 \"몇 칸 떨어졌나\"를 알려 줍니다.", en: "Adding positions told the model \"which slot.\" RoPE tells it \"how far apart.\"" },
       { ko: "문장의 뜻은 대개 절대 위치보다 거리에 달려 있어서 이쪽이 잘 맞았습니다.", en: "Meaning usually depends more on distance than on absolute place, so this fit better." },
-      { ko: "다음 편은 층을 깊게 쌓아도 학습이 버티게 만든 부품들입니다. Pre-norm, RMSNorm, SwiGLU를 봅니다.", en: "Next up: the parts that keep training stable as layers stack deep — Pre-norm, RMSNorm, and SwiGLU." },
+      { ko: "다음 편은 층을 깊게 쌓아도 학습이 버티게 만든 부품들입니다. <a href=\"/blog/evolution-depth/\">2편</a>에서 Pre-norm, RMSNorm, SwiGLU를 봅니다.", en: "Next up, in <a href=\"/blog/evolution-depth/\">Part 2</a>: the parts that keep training stable as layers stack deep — Pre-norm, RMSNorm, and SwiGLU." },
     ],
   },
 
