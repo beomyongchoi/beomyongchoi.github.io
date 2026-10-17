@@ -22,8 +22,8 @@ export const blocks: BiBlock[] = [
   {
     type: "callout",
     tone: "tip",
-    ko: "층 수를 1에서 96까지 바꿔 가며 세 방식을 나란히 볼 수 있습니다. <a href=\"/playground/depth/\">층 쌓기 →</a>",
-    en: "You can change the depth from 1 to 96 and watch the three setups side by side. <a href=\"/playground/depth/\">Layer stacking →</a>",
+    ko: "층 수를 1에서 96까지 바꿔 가며 세 방식을 나란히 볼 수 있습니다. <a href=\"/playground/depth/\">층 쌓기 →</a> · 오락실: <a href=\"/arcade/tower/\">신호 탑 쌓기 →</a>",
+    en: "You can change the depth from 1 to 96 and watch the three setups side by side. <a href=\"/playground/depth/\">Layer stacking →</a> · Arcade: <a href=\"/arcade/tower/\">Signal tower →</a>",
   },
 
   { type: "hr" },

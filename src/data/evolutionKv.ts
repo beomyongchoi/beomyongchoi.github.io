@@ -22,8 +22,8 @@ export const blocks: BiBlock[] = [
   {
     type: "callout",
     tone: "tip",
-    ko: "K·V 헤드 수를 직접 줄여 보며 캐시와 동시 대화 수를 계산할 수 있습니다. <a href=\"/playground/kv/\">KV 캐시 다이어트 →</a>",
-    en: "You can shrink the number of K/V heads yourself and watch the cache and the number of concurrent chats change. <a href=\"/playground/kv/\">KV cache diet →</a>",
+    ko: "K·V 헤드 수를 직접 줄여 보며 캐시와 동시 대화 수를 계산할 수 있습니다. <a href=\"/playground/kv/\">KV 캐시 다이어트 →</a> · 오락실: <a href=\"/arcade/gpu/\">GPU 테트리스 →</a>",
+    en: "You can shrink the number of K/V heads yourself and watch the cache and the number of concurrent chats change. <a href=\"/playground/kv/\">KV cache diet →</a> · Arcade: <a href=\"/arcade/gpu/\">GPU Tetris →</a>",
   },
 
   { type: "hr" },
