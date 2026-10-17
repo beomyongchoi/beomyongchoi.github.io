@@ -22,21 +22,21 @@ const nav = [
 ---
 
 <header class="border-b border-border">
-  <div class="mx-auto flex max-w-4xl items-center justify-between px-5 py-4">
-    <a href={`${base}/`} class="text-lg font-semibold tracking-tight hover:text-accent">
+  <div class="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
+    <a href={`${base}/`} class="whitespace-nowrap text-lg font-semibold tracking-tight hover:text-accent">
       {s.siteName}
     </a>
-    <nav class="flex items-center gap-4 text-sm">
+    <nav class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm sm:gap-x-4">
       {
         nav.slice(1).map((item) => (
-          <a href={item.href} class="text-muted transition-colors hover:text-fg">
+          <a href={item.href} class="whitespace-nowrap text-muted transition-colors hover:text-fg">
             {item.label}
           </a>
         ))
       }
       <a
         href={otherHref}
-        class="rounded border border-border px-2 py-0.5 text-xs font-medium text-muted transition-colors hover:border-accent hover:text-accent"
+        class="whitespace-nowrap rounded border border-border px-2 py-0.5 text-xs font-medium text-muted transition-colors hover:border-accent hover:text-accent"
         aria-label="Switch language"
       >
         {s.langSwitch}
