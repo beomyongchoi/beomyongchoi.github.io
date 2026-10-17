@@ -59,6 +59,7 @@ scripts/
 | `rope.js` | RoPE 회전·사인파 더하기 점수, 바늘 파장, 학습 길이 내 못 돈 바늘 수, Llama 3.1 스케일링·위치 보간 (모델 설정 = 실제 config) | rope | `lab-rope.check.mjs` |
 | `depth.js` | 무작위 층 쌓기: 정규화 없음·Post-LN·Pre-LN × LayerNorm·RMSNorm, 신호 크기·남은 입력(코사인)·역전파(유한차분 검증), SwiGLU FFN 파라미터 | depth | `lab-depth.check.mjs` |
 | `safe.js` | 오락실 바늘 금고: RoPE식 바늘 주기(2π·6^i), 단계, 맞물림(=RoPE 상대 점수) | arcade/safe | `lab-safe.check.mjs` |
+| `tower.js` | 오락실 신호 탑 쌓기: 그냥·Pre-LN·Post-LN 선택에 따른 신호 크기·입력 기억(잔차 수식), 시드별 블록 | arcade/tower | `lab-tower.check.mjs` |
 | `decide.js` | 디시전 모델 상대: Qwen3 디시전 모드(선택지 단어 로짓), Laya(커뮤니티 ONNX, onnxruntime-web). 버릇 보정·차단 | arcade 듀얼 | — |
 | `crossy.js`, `galaga.js` | 듀얼 게임 규칙(시드 고정 순수 함수) + 모델용 날것/하네스 글 + `allowed` 차단 + `draw(…, f)` 틱 사이 보간. 선택: `TICK`(ms, 기본 250), `human(s, held)`(누른 키로 조작, 없으면 입력 큐) | arcade/crossy, galaga (`DuelArena.astro`) | `lab-crossy.check.mjs`, `lab-galaga.check.mjs` |
 
