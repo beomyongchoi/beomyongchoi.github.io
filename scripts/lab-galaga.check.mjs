@@ -36,3 +36,11 @@ for (let seed = 1; seed <= 10; seed++) {
   }
 }
 console.log(`galaga.js ok (30 seeds: turret ${(a / 30).toFixed(0)} pts, harnessed bot ${(b / 30).toFixed(0)} pts)`);
+{
+  const { human, newGame: ng } = await import("../public/lab/galaga.js");
+  const s = ng();
+  assert.equal(human(s, new Set(["fire", "left"])), "fire");
+  assert.equal(human({ ...s, shot: { x: 4, y: 5 } }, new Set(["fire", "left"])), "left");
+  assert.equal(human(s, new Set(["left", "right"])), "stay");
+  console.log("galaga human controls ok");
+}

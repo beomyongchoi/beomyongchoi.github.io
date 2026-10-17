@@ -7,6 +7,8 @@ export const W = 9, VIEW = 10, TICKS = 240, MOVES = ["up", "left", "right", "dow
 export const OPTIONS = { up: "hop forward one row", left: "hop one column left", right: "hop one column right", down: "hop back one row", stay: "wait in place" };
 export const KEYS = { ArrowUp: "up", w: "up", ArrowLeft: "left", a: "left", ArrowRight: "right", d: "right", ArrowDown: "down", s: "down" };
 export const SIZE = { cols: W, rows: VIEW };
+// Slower than galaga's 250 ms so people can track the cars: 240 ticks × 375 ms = 90 s.
+export const TICK = 375;
 
 function rng(seed) {
   let a = seed >>> 0;
@@ -105,8 +107,9 @@ export const GOAL = "Cross as many rows as possible by moving up, without gettin
 export const scoreOf = (s) => s.best;
 export const statusOf = (s) => `${s.best}줄${s.dead === "eagle" ? " · 독수리!" : s.dead ? " · 쾅!" : ""}`;
 
-// Camera keeps the player 2 rows above the bottom edge.
-export function draw(ctx, s, seed, cw) {
+// Camera keeps the player 2 rows above the bottom edge. f (0..1) is how far into the current tick
+// we are: a car that moves this tick slides across both cells, which are exactly the cells that hit.
+export function draw(ctx, s, seed, cw, f = 0) {
   const base = Math.max(0, s.y - 2), u = cw / 8;
   for (let i = 0; i < VIEW; i++) {
     const y = base + i, Y = (VIEW - 1 - i) * cw, l = lane(seed, y);
@@ -118,12 +121,18 @@ export function draw(ctx, s, seed, cw) {
         ctx.fillStyle = "#1f3320"; ctx.fillRect(X + 2 * u, Y + u, 4 * u, 5 * u);
         ctx.fillStyle = "#5c4033"; ctx.fillRect(X + 3.5 * u, Y + 6 * u, u, 2 * u);
       }
-      if (l.kind === "road") {
-        ctx.fillStyle = "#3b4261"; if (c % 2 === 0) ctx.fillRect(X + 3 * u, Y + 3.5 * u, 2 * u, u * 0.6);
-        if (car(seed, y, c, s.t)) {
-          ctx.fillStyle = l.dir > 0 ? "#ff9e64" : "#7dcfff"; ctx.fillRect(X + u * 0.5, Y + 1.5 * u, 7 * u, 5 * u);
-          ctx.fillStyle = "#1a1b26"; ctx.fillRect(X + (l.dir > 0 ? 5 : 1) * u, Y + 2.5 * u, 2 * u, 3 * u);
-        }
+      if (l.kind === "road") { ctx.fillStyle = "#3b4261"; if (c % 2 === 0) ctx.fillRect(X + 3 * u, Y + 3.5 * u, 2 * u, u * 0.6); }
+    }
+    if (l.kind !== "road") continue;
+    const k0 = Math.floor(s.t / l.every), slide = (s.t + 1) % l.every === 0 ? f * l.dir : 0;
+    for (let k = 0; k < l.len; k++) {
+      if (!l.pat[k]) continue;
+      const c = (((k + k0 * l.dir) % l.len) + l.len) % l.len;
+      for (const x of [c, c - l.len]) {   // second copy: a car wrapping in from the far side
+        const X = (x + slide) * cw;
+        if (X <= -cw || X >= W * cw) continue;
+        ctx.fillStyle = l.dir > 0 ? "#ff9e64" : "#7dcfff"; ctx.fillRect(X + u * 0.5, Y + 1.5 * u, 7 * u, 5 * u);
+        ctx.fillStyle = "#1a1b26"; ctx.fillRect(X + (l.dir > 0 ? 5 : 1) * u, Y + 2.5 * u, 2 * u, 3 * u);
       }
     }
   }

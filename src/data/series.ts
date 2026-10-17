@@ -74,6 +74,7 @@ export const SERIES: Record<string, Series> = {
       { slug: "agent-subagents-fanout", toy: "/playground/agent-topology/", published: true, title: { ko: "1. 병렬 오케스트레이션 — 동적 서브에이전트", en: "1. Parallel orchestration — dynamic subagents" } },
       { slug: "agent-deep-reasoning", toy: "/playground/long-horizon/", published: true, title: { ko: "2. 심층 장기 추론 — Claude Fable 5", en: "2. Deep reasoning — Claude Fable 5" } },
       { slug: "agent-architecture-compare", toy: "/playground/agent-compare/", published: true, title: { ko: "3. 아키텍처 비교 — 적재적소의 에이전트", en: "3. Architecture comparison — matching agents to tasks" } },
+      { slug: "agent-harness", toy: "/arcade/crossy/", published: true, title: { ko: "4. 하네스 — 같은 모델이 왜 더 잘하나", en: "4. The harness — why the same model does better" } },
     ],
   },
 };
